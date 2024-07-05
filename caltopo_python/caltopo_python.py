@@ -1,20 +1,22 @@
 # #############################################################################
 #
-#  sartopo_python.py - python interfaces to the sartopo API
+#  caltopo_python.py - python interfaces to the caltopo API
 #
 #   developed for Nevada County Sheriff's Search and Rescue
-#    Copyright (c) 2020 Tom Grundy
+#    Copyright (c) 2024 Tom Grundy
 #
-#   Sartopo / Caltopo currently does not have a publicly available API;
+#   Caltopo currently does not have a publicly available API;
 #    this code calls the non-publicized API that could change at any time.
 #
-#   This module is intended to provide a simple, API-version-agnostic sartopo
+#   This module is intended to provide a simple, API-version-agnostic caltopo
 #    interface to other applications.
 #
 #   This python code is in no way supported or maintained by caltopo LLC
-#    or the authors of caltopo.com or sartopo.com.
+#    or the authors of caltopo.com.
 #
-#  www.github.com/ncssar/sartopo_python
+#   Earlier versions are still available as 'sartopo_python'.
+#
+#  www.github.com/ncssar/caltopo_python
 #
 #  Contact the author at nccaves@yahoo.com
 #   Attribution, feedback, bug reports and feature requests are appreciated
@@ -23,23 +25,23 @@
 #
 # EXAMPLES:
 #
-#     from sartopo_python import SartopoSession
+#     from caltopo_python import CaltopoSession
 #     import time
 #     
-#     sts=SartopoSession('localhost:8080','<offlineMapID>')
-#     fid=sts.addFolder('MyFolder')
-#     sts.addMarker(39,-120,'stuff')
-#     sts.addMarker(39.01,-120.01,'myStuff',folderId=fid)
-#     r=sts.getFeatures('Marker')
+#     cts=CaltopoSession('localhost:8080','<offlineMapID>')
+#     fid=cts.addFolder('MyFolder')
+#     cts.addMarker(39,-120,'stuff')
+#     cts.addMarker(39.01,-120.01,'myStuff',folderId=fid)
+#     r=cts.getFeatures('Marker')
 #     print('r:'+str(r))
 #     print('moving the marker after a pause:'+r[0]['id'])
 #     time.sleep(5)
-#     sts.addMarker(39.02,-120.02,r[0]['properties']['title'],existingId=r[0]['id'])
+#     cts.addMarker(39.02,-120.02,r[0]['properties']['title'],existingId=r[0]['id'])
 #     
-#     sts2=SartopoSession(
-#         'sartopo.com',
+#     sts2=CaltopoSession(
+#         'caltopo.com',
 #         '<onlineMapID>',
-#         configpath='../../sts.ini',
+#         configpath='../../cts.ini',
 #         account='<accountName>')
 #     fid2=sts2.addFolder('MyOnlineFolder')
 #     sts2.addMarker(39,-120,'onlineStuff')
@@ -91,45 +93,6 @@
 #  and responses should be able to synchronize themselves, maybe it's not
 #  needed here?
 # 
-#
-#  REVISION HISTORY
-#-----------------------------------------------------------------------------
-#   DATE   |  AUTHOR  |  NOTES
-#-----------------------------------------------------------------------------
-#  8-29-18    TMG        First version - creates folders and markers
-#  10-7-18    TMG        allow session on network other than localhost; allow
-#                           three-character mapID; overhaul to work with
-#                           significant api changes in v4151 of sar.jar -
-#                           probably not backwards compatible; will require
-#                           changes to code that calls these functions
-# 11-19-18    TMG        clean up for first package release
-#  6-29-19    TMG        add getFeatures to return a list of map features with IDs;
-#                          move an existing marker by specifying existing marker ID
-#   7-3-19    TMG        return folderId, if it exists, with each feature returned
-#                          by getFeatures, to allow filtering by folder; modify
-#                          setupSession to only return API version 1 if the
-#                          API is version 1 AND the map ID is valid
-#  3-30-20    TMG        fix #3: v1.0.6: change the return value structure from getFeatures
-#                          to return the entire json structure for each feature;
-#                          this enables preservation of marker-symbol when moving
-#                          an existing marker
-#  5-30-20    TMG        fix #2: v1.1.0: send signed requests to sartopo.com (online)
-#   6-2-20    TMG        v1.1.1: fix #5 (use correct meaning of 'expires');
-#                           fix #6 (__init__ returns None on failure)
-#   4-5-21    TMG        sync (fix #17)
-#  6-15-21    TMG        add geometry operations cut, expand, crop
-#  6-27-21    TMG        stop sync when main thread terminates (fix #19)
-#  6-28-21    TMG        remove spurs to fix self-intersecting polygons (fix #20)
-#  6-29-21    TMG        return gracefully if shapes do not intersect (fix #21)
-#  6-30-21    TMG        fix #26; various error handling and logging improvements
-#  6-30-21    TMG        do an initial since(0) request even if sync=False (fix #25)
-#   7-4-21    TMG        preserve complex lines during crop (fix #29); other cleanup
-#   8-8-21    TMG        sync and getFeature/s overhaul: sync iteratively instead of
-#                         recursively; handle cache refreshing such that downstream
-#                         apps should never need to access .mapData, but should only
-#                         make calls to getFeature/s (fix #23)
-#   8-9-21    TMG        add new objects to .mapData immediately (fix #28)
-#-----------------------------------------------------------------------------
 
 import hmac
 import base64
@@ -163,7 +126,7 @@ from shapely.ops import split,unary_union
 class STSException(BaseException):
     pass
 
-class SartopoSession():
+class CaltopoSession():
     def __init__(self,
             domainAndPort: str='localhost:8080',
             mapID=None,
@@ -172,7 +135,7 @@ class SartopoSession():
             id=None, # 12-character credential ID
             key=None, # credential key
             accountId=None, # 6-character accountId
-            accountIdInternet=None, # in case CTD requires a different accountId than sartopo.com/caltopo.com
+            accountIdInternet=None, # in case CTD requires a different accountId than caltopo.com
             sync=True,
             syncInterval=5,
             syncTimeout=10,
@@ -233,7 +196,7 @@ class SartopoSession():
         self.mapID=mapID
         self.domainAndPort=domainAndPort
         # configpath, account, id, and key are used to build
-        #  signed requests for sartopo.com
+        #  signed requests for caltopo.com
         self.configpath=configpath
         self.account=account
         self.queue={}
@@ -268,7 +231,7 @@ class SartopoSession():
             if not self.openMap(self.mapID):
                 raise STSException
         else:
-            logging.info('Opening a SartopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
+            logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
     def openMap(self,mapID: str='') -> bool:
         """Open a map for usage in the current session.
@@ -282,7 +245,7 @@ class SartopoSession():
         
         The new map's ID will be stored in the session's .mapID varaiable.
 
-        NOTE: New map creation only works with CalTopo Desktop in this version of the module.  It does not currently work for sartopo.com or caltopo.com.
+        NOTE: New map creation only works with CalTopo Desktop in this version of the module.  It does not currently work for caltopo.com.
 
         :param mapID: 3-to-7-character Map ID, or '[NEW]' with specification described above; defaults to ''
         :type mapID: str, optional
@@ -290,17 +253,17 @@ class SartopoSession():
         :rtype: bool
         """
         if self.mapID and self.lastSuccessfulSyncTimestamp>0:
-            logging.warning('WARNING: this SartopoSession object is already connected to map '+self.mapID+'.  Call to openMap ignored.')
+            logging.warning('WARNING: this CaltopoSession object is already connected to map '+self.mapID+'.  Call to openMap ignored.')
             return
         if not mapID or not isinstance(mapID,str) or ((len(mapID)<3 or len(mapID)>7) and not mapID.startswith('[NEW]')):
-            logging.warning('WARNING: map ID must be a three-to-seven-character sartopo map ID string (end of the URL).  No map will be opened for this SartopoSession object.')
+            logging.warning('WARNING: map ID must be a three-to-seven-character caltopo map ID string (end of the URL).  No map will be opened for this CaltopoSession object.')
             raise STSException
         self.mapID=mapID
         # new map requested
         # 1. send a POST request to /map - payload (tested on CTD 4225; won't work with <4221) =
         if mapID.startswith('[NEW]'):
             if self.domainAndPort.lower() in ['caltopo.com','sartopo.com']:
-                logging.error("New map creation only works with CalTopo Desktop in this version of sartopo_python.")
+                logging.error("New map creation only works with CalTopo Desktop in this version of caltopo_python.")
                 return False
             title='newMap'
             mode='cal'
@@ -446,13 +409,13 @@ class SartopoSession():
 
         if internet:
             if self.id is None:
-                logging.error("sartopo session is invalid: 'id' must be specified for online maps")
+                logging.error("caltopo session is invalid: 'id' must be specified for online maps")
                 return False
             if self.key is None:
-                logging.error("sartopo session is invalid: 'key' must be specified for online maps")
+                logging.error("caltopo session is invalid: 'key' must be specified for online maps")
                 return False
 
-        # # by default, do not assume any sartopo session is running;
+        # # by default, do not assume any caltopo session is running;
         # # send a GET request to http://localhost:8080/api/v1/map/
         # #  response code 200 = new API
         # #  otherwise:
@@ -799,7 +762,7 @@ class SartopoSession():
         """        
         # logging.info('sync marker: '+self.mapID+' begin')
         if not self.mapID or self.apiVersion<0:
-            logging.error('sync request invalid: this sartopo session is not associated with a map.')
+            logging.error('sync request invalid: this caltopo session is not associated with a map.')
             return False
         if self.syncing:
             logging.warning('sync-within-sync requested; returning to calling code.')
@@ -815,7 +778,7 @@ class SartopoSession():
         #     item in state->features, just replace the entire existing cached feature of
         #     the same id
 
-        # logging.info('Sending sartopo "since" request...')
+        # logging.info('Sending caltopo "since" request...')
         rj=self._sendRequest('get','since/'+str(max(0,self.lastSuccessfulSyncTimestamp-500)),None,returnJson='ALL',timeout=self.syncTimeout)
         if rj and rj['status']=='ok':
             if self.syncDumpFile:
@@ -824,7 +787,7 @@ class SartopoSession():
             # response timestamp is an integer number of milliseconds; equivalent to
             # int(time.time()*1000))
             self.lastSuccessfulSyncTimestamp=rj['result']['timestamp']
-            # logging.info('Successful sartopo sync: timestamp='+str(self.lastSuccessfulSyncTimestamp))
+            # logging.info('Successful caltopo sync: timestamp='+str(self.lastSuccessfulSyncTimestamp))
             if self.syncCallback:
                 self.syncCallback()
             rjr=rj['result']
@@ -1007,7 +970,7 @@ class SartopoSession():
         :type forceImmediate: bool, optional
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('refresh request invalid: this sartopo session is not associated with a map.')
+            logging.error('refresh request invalid: this caltopo session is not associated with a map.')
             return False
         msg='refresh requested for map '+self.mapID+': '
         if self.syncing:
@@ -1036,7 +999,7 @@ class SartopoSession():
         suffix=''
         if self.mapID:
             suffix=' for map '+self.mapID
-        logging.info('SartopoSession instance deleted'+suffix+'.')
+        logging.info('CaltopoSession instance deleted'+suffix+'.')
         if self.sync and self.lastSuccessfulSyncTimestamp>0:
             self._stop()
 
@@ -1046,14 +1009,14 @@ class SartopoSession():
 
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('start request invalid: this sartopo session is not associated with a map.')
+            logging.error('start request invalid: this caltopo session is not associated with a map.')
             return False
         self.sync=True
         if self.syncThreadStarted:
-            logging.info('Sartopo sync is already running for map '+self.mapID+'.')
+            logging.info('Caltopo sync is already running for map '+self.mapID+'.')
         else:
             threading.Thread(target=self._syncLoop).start()
-            logging.info('Sartopo syncing initiated for map '+self.mapID+'.')
+            logging.info('Caltopo syncing initiated for map '+self.mapID+'.')
             self.syncThreadStarted=True
 
     def _stop(self):
@@ -1062,9 +1025,9 @@ class SartopoSession():
 
         """    
         if not self.mapID or self.apiVersion<0:
-            logging.error('stop request invalid: this sartopo session is not associated with a map.')
+            logging.error('stop request invalid: this caltopo session is not associated with a map.')
             return False
-        logging.info('Sartopo sync terminating for map '+self.mapID+'.')
+        logging.info('Caltopo sync terminating for map '+self.mapID+'.')
         self.sync=False
 
     def _pause(self):
@@ -1074,7 +1037,7 @@ class SartopoSession():
 
         """    
         if not self.mapID or self.apiVersion<0:
-            logging.error('pause request invalid: this sartopo session is not associated with a map.')
+            logging.error('pause request invalid: this caltopo session is not associated with a map.')
             return False
         logging.info('Pausing sync for map '+self.mapID+'...')
         self.syncPauseManual=True
@@ -1084,7 +1047,7 @@ class SartopoSession():
 
         """       
         if not self.mapID or self.apiVersion<0:
-            logging.error('resume request invalid: this sartopo session is not associated with a map.')
+            logging.error('resume request invalid: this caltopo session is not associated with a map.')
             return False
         logging.info('Resuming sync for map '+self.mapID+'.')
         self.syncPauseManual=False
@@ -1186,7 +1149,7 @@ class SartopoSession():
         timeout=timeout or self.syncTimeout
         newMap='[NEW]' in apiUrlEnd  # specific mapID that indicates a new map should be created
         if self.apiVersion<0:
-            logging.error("sendRequest: sartopo session is invalid or is not associated with a map; request aborted: type="+str(type)+" apiUrlEnd="+str(apiUrlEnd))
+            logging.error("sendRequest: caltopo session is invalid or is not associated with a map; request aborted: type="+str(type)+" apiUrlEnd="+str(apiUrlEnd))
             return False
         mid=self.apiUrlMid
         if 'api/' in apiUrlEnd.lower():
@@ -1227,7 +1190,7 @@ class SartopoSession():
             #     logging.warning('A request is about to be sent to the internet, but accountIdInternet was not specified.  The request will use accountId, but will fail if that ID does not have valid permissions at the internet host.')
             prefix='https://'
             if newMap:
-                logging.error("New map creation only works with CalTopo Desktop in this version of sartopo_python.")
+                logging.error("New map creation only works with CalTopo Desktop in this version of caltopo_python.")
                 return False
             if not self.key or not self.id:
                 logging.error("There was an attempt to send an internet request, but 'id' and/or 'key' was not specified for this session.  The request will not be sent.")
@@ -1432,7 +1395,7 @@ class SartopoSession():
         :return: ID of the created folder, or 0 if queued; False if there was a failure
         """                      
         if not self.mapID or self.apiVersion<0:
-            logging.error('addFolder request invalid: this sartopo session is not associated with a map.')
+            logging.error('addFolder request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         j['properties']={}
@@ -1498,7 +1461,7 @@ class SartopoSession():
         :return: ID of the created marker, or 0 if queued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
-            logging.error('addMarker request invalid: this sartopo session is not associated with a map.')
+            logging.error('addMarker request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -1577,7 +1540,7 @@ class SartopoSession():
         :return: ID of the created line, or 0 if queued; False if there was a failure
         """           
         if not self.mapID or self.apiVersion<0:
-            logging.error('addLine request invalid: this sartopo session is not associated with a map.')
+            logging.error('addLine request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -1655,7 +1618,7 @@ class SartopoSession():
         :return: ID of the created polygon, or 0 if queued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
-            logging.error('addPolygon request invalid: this sartopo session is not associated with a map.')
+            logging.error('addPolygon request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -1723,7 +1686,7 @@ class SartopoSession():
         :return: ID of the created operational period, or 0 if queued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
-            logging.error('addOperationalPeriod request invalid: this sartopo session is not associated with a map.')
+            logging.error('addOperationalPeriod request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -1827,7 +1790,7 @@ class SartopoSession():
         :return: ID of the created line assignment, or 0 if queued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
-            logging.error('addLineAssignment request invalid: this sartopo session is not associated with a map.')
+            logging.error('addLineAssignment request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -1962,7 +1925,7 @@ class SartopoSession():
         :return: ID of the created area assignment, or 0 if queued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
-            logging.error('addAreaAssignment request invalid: this sartopo session is not associated with a map.')
+            logging.error('addAreaAssignment request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -2051,7 +2014,7 @@ class SartopoSession():
         # :type since: int, optional
 
         if not self.mapID or self.apiVersion<0:
-            logging.error('addAppTrack request invalid: this sartopo session is not associated with a map.')
+            logging.error('addAppTrack request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -2099,7 +2062,7 @@ class SartopoSession():
         :return: Return value from the delete request, or False if there was an error prior to the request
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('delFeature request invalid: this sartopo session is not associated with a map.')
+            logging.error('delFeature request invalid: this caltopo session is not associated with a map.')
             return False
         self.delFeature(markerOrId,fClass="marker",timeout=timeout)
 
@@ -2116,7 +2079,7 @@ class SartopoSession():
         :return: Return value from the delete request, or False if there was an error prior to the request
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('delFeature request invalid: this sartopo session is not associated with a map.')
+            logging.error('delFeature request invalid: this caltopo session is not associated with a map.')
             return False
         if len(markersOrIds)==0:
             logging.warning('nothing to delete: empty list was passed to delMarkers')
@@ -2143,7 +2106,7 @@ class SartopoSession():
         :return: Return value from the delete request, or False if there was an error prior to the request
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('delFeature request invalid: this sartopo session is not associated with a map.')
+            logging.error('delFeature request invalid: this caltopo session is not associated with a map.')
             return False
         if type(featureOrId)==str and featureOrId!='':
             id=featureOrId
@@ -2181,7 +2144,7 @@ class SartopoSession():
         :return: Return value of the asynchronous delete loop initialization routine, or False if there was an error prior to the loop
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('delFeature request invalid: this sartopo session is not associated with a map.')
+            logging.error('delFeature request invalid: this caltopo session is not associated with a map.')
             return False
         if len(featuresOrIdAndClassList)==0:
             logging.warning('nothing to delete: empty list was passed to delFeatures')
@@ -2283,7 +2246,7 @@ class SartopoSession():
         # :type since: int, optional
 
         if not self.mapID or self.apiVersion<0:
-            logging.error('getFeatures request invalid: this sartopo session is not associated with a map.')
+            logging.error('getFeatures request invalid: this caltopo session is not associated with a map.')
             return []
         timeout=timeout or self.syncTimeout
         # rj=self._sendRequest('get','since/'+str(since),None,returnJson='ALL',timeout=timeout)
@@ -2382,7 +2345,7 @@ class SartopoSession():
         :return: Data structure (dict) of the feature matching the requested filtering (if any), or False if zero or multiple features matched the fitler, or if there was an error prior to the cache search
         """            
         if not self.mapID or self.apiVersion<0:
-            logging.error('getFeature request invalid: this sartopo session is not associated with a map.')
+            logging.error('getFeature request invalid: this caltopo session is not associated with a map.')
             return False
         r=self.getFeatures(
             featureClass=featureClass,
@@ -2431,16 +2394,16 @@ class SartopoSession():
     #      they will be merged here with the synced dictionary before sending to the server
 
     #  EXAMPLES:
-    #  (assuming sts is a SartopoSession object)
+    #  (assuming sts is a CaltopoSession object)
     
     #  1. move a marker
-    #    sts.editFeature(className='Marker',title='t',geometry={'coordinates':[-120,39,0,0]})
+    #    cts.editFeature(className='Marker',title='t',geometry={'coordinates':[-120,39,0,0]})
 
     #  2. change assignment status to INPROGRESS
-    #    sts.editFeature(className='Assignment',letter='AB',properties={'status':'INPROGRESS'})
+    #    cts.editFeature(className='Assignment',letter='AB',properties={'status':'INPROGRESS'})
 
     #  3. change assignment number
-    #    sts.editFeature(className='Assignment',letter='AB',properties={'number':'111'})
+    #    cts.editFeature(className='Assignment',letter='AB',properties={'number':'111'})
 
     def editFeature(self,
             id=None,
@@ -2480,7 +2443,7 @@ class SartopoSession():
 
         # logging.info('editFeature called:'+str(properties))
         if not self.mapID or self.apiVersion<0:
-            logging.error('editFeature request invalid: this sartopo session is not associated with a map.')
+            logging.error('editFeature request invalid: this caltopo session is not associated with a map.')
             return False
         # PART 1: determine the exact id of the feature to be edited
         if id is None:
@@ -2556,7 +2519,7 @@ class SartopoSession():
             # propToWrite=feature['properties']
             for key in keys:
                 propToWrite[key]=properties[key]
-            # write the correct title for assignments, since sartopo does not internally recalcualte it
+            # write the correct title for assignments, since caltopo does not internally recalcualte it
             if className.lower()=='assignment':
                 propToWrite['title']=(propToWrite['letter']+' '+propToWrite['number']).strip()
 
@@ -2650,7 +2613,7 @@ class SartopoSession():
         #  try 'letter' first; if not found, use 'title'; default to 'NO-TITLE'
         # logging.info('getUsedSuffixList called: base='+str(base))
         if not self.mapID or self.apiVersion<0:
-            logging.error('getUsedSuffixList request invalid: this sartopo session is not associated with a map.')
+            logging.error('getUsedSuffixList request invalid: this caltopo session is not associated with a map.')
             return False
         allTitles=[]
         for f in self.mapData['state']['features']:
@@ -2743,7 +2706,7 @@ class SartopoSession():
         :return: List of resulting feature IDs, or False if a failure occured prior to the cut operation
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('cut request invalid: this sartopo session is not associated with a map.')
+            logging.error('cut request invalid: this caltopo session is not associated with a map.')
             return False
         if isinstance(target,str): # if string, find feature by name; if id, find feature by id
             targetStr=target
@@ -2978,7 +2941,7 @@ class SartopoSession():
         :return: True if successful; False otherwise
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('expand request invalid: this sartopo session is not associated with a map.')
+            logging.error('expand request invalid: this caltopo session is not associated with a map.')
             return False
         if isinstance(target,str): # if string, find feature by name; if id, find feature by id
             targetStr=target
@@ -3173,7 +3136,7 @@ class SartopoSession():
         :return: Bounding box of the features in question, optionally oversized as above; returned as a list, in the same format as shapely.bounds: [min X, min Y, max X, max Y]
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('getBounds request invalid: this sartopo session is not associated with a map.')
+            logging.error('getBounds request invalid: this caltopo session is not associated with a map.')
             return False
         rval=[9e12,9e12,-9e12,-9e12]
         for obj in objectList:
@@ -3300,7 +3263,7 @@ class SartopoSession():
         :return: Resulting feature IDs, or resulting coordinate list(s) (see noDraw), or False if a failure occurred prior to the crop operation
         """        
         if not self.mapID or self.apiVersion<0:
-            logging.error('crop request invalid: this sartopo session is not associated with a map.')
+            logging.error('crop request invalid: this caltopo session is not associated with a map.')
             return False
         if isinstance(target,str): # if string, find feature by name; if id, find feature by id
             targetStr=target
