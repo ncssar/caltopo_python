@@ -1,7 +1,4 @@
-.. sartopo_python documentation master file, created by
-   sphinx-quickstart on Fri May 17 19:27:57 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. caltopo_python documentation master file
 
 :tocdepth: 1
 
@@ -10,21 +7,21 @@
 ..    :caption: Other pages:
 
 ..    credentials
-..    sartopo_python
+..    caltopo_python
 
-sartopo_python
+caltopo_python
 ==========================================
 
 CalTopo is a very popular web-browser-based and smartphone-app-based mapping tool.  SARTopo is a mostly-obsolete
 name that refers to a set of Search-And-Rescue-specific features inside the CalTopo tool. See |caltopo_link| and |training_link|.
 
-Being a web-based tool, CalTopo / SARTopo uses a web API to accomplish most user actions.  The API is not currently documented or developed for general public use, and could change at any time.
+Being a web-based tool, CalTopo uses a web API to accomplish most user actions.  The API is not currently documented or developed for general public use, and could change at any time.
 
 This module provides a 'session' object which manages a data connection to a hosted map, and provides several wrapper methods and convenience methods that make calls to the non-publicized CalTopo API.
 
-**This third-party module is not written or maintained by CalTopo LLC or the authors of caltopo.com or sartopo.com.**
+**This third-party module is not written or maintained by CalTopo LLC or the authors of caltopo.com.**
 
-**DISCLAIMER: This module can edit and delete CalTopo / SARTopo map features.  At the time of this module's publication, CalTopo and SARTopo do not have any 'undo' capability.**
+**DISCLAIMER: This module can edit and delete CalTopo map features.  At the time of this module's publication, CalTopo does not have any 'undo' capability.**
 Only you can take steps to prevent loss of map data due to use of this module - whether due to accidental misuse, or due to an unexpected bug in the module.  You should always consider exporting a full GeoJSON from your map before using this code.
 
 Categories of provided class methods:
@@ -35,7 +32,7 @@ Categories of provided class methods:
    - feature deletion
    - geometry operations
 
-See the `SartopoSession Class Reference <./sartopo_python.html>`_ for details.
+See the `CaltopoSession Class Reference <./caltopo_python.html>`_ for details.
 
 Installation
 ============
@@ -43,14 +40,12 @@ Install this package in the usual manner:
 
 .. code-block:: python
    
-   pip install sartopo_python
+   pip install caltopo_python
 
 To activate online requests, you will need to determine your account ID, credential ID, and public key.  See details at the :doc:`credentials` page.
 
-**NOTE: sartopo_python is changing names to caltopo_python.**
+**NOTE: caltopo_python was formerly called sartopo_python.**
 caltopo_python 1.0.x will be identical to sartopo_python 2.0.x.
-
-We suggest that you change to caltopo_python as soon as possible.  If you are just getting started with sartopo_python, we suggest that you use caltopo_python instead.
 
 For more information, see the :doc:`migration` page.
 
@@ -59,12 +54,12 @@ Key Features
 
 Internet or locally-hosted
 --------------------------
-In addition to the standard caltopo.com or sartopo.com web interface, CalTopo provides a downloadable local HTTP server
+In addition to the standard caltopo.com web interface, CalTopo provides a downloadable local HTTP server
 called CalTopo Desktop (formerly CalTopo Offline or SARTopo Offline).  This module works with either solution.
 
 Configuration file
 ------------------
-User account details, including the authentication public key (used to generate signed requests, as required by caltopo.com and sartopo.com),
+User account details, including the authentication public key (used to generate signed requests, as required by caltopo.com),
 are kept in a local configuration file that you control.  A template configuration file comes with this package.
 
 See the bottom of the Examples section for configuration file examples.  See the :doc:`credentials` page for details on authentication.
@@ -101,25 +96,25 @@ Opening a session
 
 .. code-block:: python
 
-   from sartopo_python import SartopoSession
+   from caltopo_python import CaltopoSession
 
    # open an online session and map
-   sts=SartopoSession('caltopo.com','A1B2C',
-         configpath='../../sts.ini',
+   cts=CaltopoSession('caltopo.com','A1B2C',
+         configpath='../../cts.ini',
          account='joe@domain.com')
 
    # open a CalTopo Desktop session and map
-   sts=SartopoSession('localhost:8080','A1B2C',
-         configpath='../../sts.ini',
+   cts=CaltopoSession('localhost:8080','A1B2C',
+         configpath='../../cts.ini',
          account='joe@domain.com')
 
    # open an online mapless session
-   sts=SartopoSession('caltopo.com',
-         configpath='../../sts.ini',
+   cts=CaltopoSession('caltopo.com',
+         configpath='../../cts.ini',
          account='joe@domain.com')
 
    # open a map, for a session that was initially mapless
-   sts.openMap('A1B2C')
+   cts.openMap('A1B2C')
 
 Syncing and callbacks
 ---------------------
@@ -141,8 +136,8 @@ Syncing and callbacks
 
    # open a session, connecting to the defined callbacks;
    #  syncing is enabled by default, since the 'sync' argument defaults to True
-   sts=SartopoSession('caltopo.com','A1B2C',
-         configpath='../../sts.ini',
+   cts=CaltopoSession('caltopo.com','A1B2C',
+         configpath='../../cts.ini',
          account='joe@domain.com',
          propUpdateCallback=pucb,
          geometryUpdateCallback=gucb,
@@ -155,19 +150,19 @@ Getting map data and account data
 .. code-block:: python
 
    # get the personal map list (for joe@domain.com)
-   sts.getMapList()
+   cts.getMapList()
 
    # get the MyTeam map list (assuming joe@domain.com is a member of MyTeam)
-   sts.getMapList('MyTeam')
+   cts.getMapList('MyTeam')
 
    # get a dict of all map lists (for joe@domain.com)
-   sts.getAllMapLists()
+   cts.getAllMapLists()
 
    # get the title of a map (assuming joe@domain.com has access to the map)
-   sts.getMapTitle('A1B2C')
+   cts.getMapTitle('A1B2C')
 
    # get the list of titles of group accounts of which joe@domain.com is a member
-   sts.getGroupAccountTitles()
+   cts.getGroupAccountTitles()
 
 Adding features
 ---------------
@@ -175,32 +170,32 @@ Adding features
 .. code-block:: python
 
    # add a marker
-   sts.addMarker(39,-120,'MyMarker')
+   cts.addMarker(39,-120,'MyMarker')
 
    # add a folder
-   fid=sts.addFolder('MyFolder')
+   fid=cts.addFolder('MyFolder')
 
    # add a marker in the folder
-   myMarker2=sts.addMarker(39.01,-120.01,'MyMarker2',folderId=fid)
+   myMarker2=cts.addMarker(39.01,-120.01,'MyMarker2',folderId=fid)
    
    # add a line
-   sts.addLine([[39,-120],[39.1,-120.1]],'MyLine')
+   cts.addLine([[39,-120],[39.1,-120.1]],'MyLine')
 
    # prepare to add a polygon - queue it for later
-   sts.addPolygon([[39,-120],[39.1,-120.1],[39.1,-120]],'MyPolygon',queue=True)
+   cts.addPolygon([[39,-120],[39.1,-120.1],[39.1,-120]],'MyPolygon',queue=True)
 
    # add an Operational Period
-   op1=sts.addOperationalPeriod('1')
+   op1=cts.addOperationalPeriod('1')
 
    # prepare to add a line assignment - queue it for later
-   aa=sts.addLineAssignment([[39.2,-120],[39.2,-120.1]],
+   aa=cts.addLineAssignment([[39.2,-120],[39.2,-120.1]],
          letter='AA',
          opId=op1,
          resourceType='DOG-TRAIL',
          description='FindEm',
          queue=True)
 
-   sts.addAreaAssignment([[39.3,-120],[39.4,-120.1],[39.4,-120]],
+   cts.addAreaAssignment([[39.3,-120],[39.4,-120.1],[39.4,-120]],
          letter='AB',
          number='104',
          opId=op1,
@@ -210,20 +205,20 @@ Adding features
          priority='HIGH')
 
    # add the queued features now (MyPolygon and AA)
-   sts.flush()
+   cts.flush()
 
 Querying and editing features
 -----------------------------
 
 .. code-block:: python
 
-   myMarker=sts.getFeature('Marker','MyMarker')
+   myMarker=cts.getFeature('Marker','MyMarker')
 
-   sts.editFeature(myMarker['id'],properties={'title','NewTitle'})
+   cts.editFeature(myMarker['id'],properties={'title','NewTitle'})
 
-   sts.moveMarker(39,-121.5,myMarker['id'])
+   cts.moveMarker(39,-121.5,myMarker['id'])
 
-   sts.editMarkerDescription('New marker description',myMarker['id'])
+   cts.editMarkerDescription('New marker description',myMarker['id'])
 
 Geometry operations
 -------------------
@@ -233,43 +228,43 @@ Geometry operations
    # assuming all of the named features below have already been drawn
 
    # cut area assignment AC 103, using line b0
-   sts.cut('AC 103','b0')
+   cts.cut('AC 103','b0')
 
    # cut line a1, using line b1
-   sts.cut('a1','b1')
+   cts.cut('a1','b1')
 
    # cut polygon a8, using polygon b8, but do not delete b8 afterwards
-   sts.cut('a8','b8',deleteCutter=False)
+   cts.cut('a8','b8',deleteCutter=False)
 
    # arguments are ids instead of entire features
-   sts.cut(a12['id'],b12['id'])
+   cts.cut(a12['id'],b12['id'])
 
    # expand polygon a7 to include polygon b7, a.k.a. "a7 = a7 OR b7"
-   sts.expand('a7','b7')
+   cts.expand('a7','b7')
 
    # crop line a14 using boundary poygon b14
-   sts.crop('a14','b14')
+   cts.crop('a14','b14')
 
    # crop line a15 using boundary polygon b15, with zero oversize
-   sts.crop('a15','b15',beyond=0)
+   cts.crop('a15','b15',beyond=0)
 
 Deleting features
 -----------------
 
 .. code-block:: python
 
-   sts.delFeature(aa)
+   cts.delFeature(aa)
 
-   sts.delMarkers([myMarker,myMarker2])
+   cts.delMarkers([myMarker,myMarker2])
 
 Configuration file
 ------------------
 
 .. code-block:: python
 
-   # sartopo_python config file
+   # caltopo_python config file
    # This file contains credentials used to send API map requests
-   #  to caltopo.com, sartopo.com, or CalTopo Desktop.
+   #  to caltopo.com or CalTopo Desktop.
    # Protect and do not distribute these credentials.
 
    [joe@domain.com] # section referenced by 'account' session object attribute / argument

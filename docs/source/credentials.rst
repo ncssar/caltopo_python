@@ -39,7 +39,7 @@ To create a new credential and to determine its credential ID and public key, fo
    as indicated by a red square-in-circle near the top left, which would stop monitoring network traffic
    when clicked.
 
-4. Type 'sartopo_python' or a similar name for 'Your device will be synced as'.  The exact name is not important,
+4. Type 'caltopo_python' or a similar name for 'Your device will be synced as'.  The exact name is not important,
    but can help you keep track of credentials in case you have several.  Afterwards, the name you enter here will
    show up in the Credentials section of the Your Account dialog as above.
 
@@ -87,9 +87,9 @@ To create a new credential and to determine its credential ID and public key, fo
 10. Enter the 12-character 'code' value as 'id' in the configuration file.  Enter the 44-character value of 'key'
     as 'key' in the configuration file.  Enter the 6-character 'id' value as 'accountId' in the configuration file::
 
-	# sartopo_python config file
+	# caltopo_python config file
 	# This file contains credentials used to send API map requests
-	#  to sartopo.com.  Protect and do not distribute these credentials.
+	#  to caltopo.com.  Protect and do not distribute these credentials.
 	[joe@example.com]
 	id=XXXXXXXXXXXX
 	key=xXXXXxXXXXXXXXXxxxXXXXxXxXXXXXXXXXXXX=
@@ -101,19 +101,19 @@ To create a new credential and to determine its credential ID and public key, fo
 .. code-block:: python
 
 	# to use the config file: specify filename and account name
-	sts=SartopoSession('sartopo.com',
-		configpath='../../sts.ini',
+	cts=CaltopoSession('caltopo.com',
+		configpath='../../cts.ini',
 		account='joe@gmail.com')
 
 	# to use arguments instead of the config file:
-	sts=SartopoSession('sartopo.com',
+	cts=CaltopoSession('caltopo.com',
 		id='XXXXXXXXXXXX',
 		key='xXXXXxXXXXXXXXXxxxXXXXxXxXXXXXXXXXXXX=',
 		accountId='ABC123')
 
 	# to use the config file, but use arguments to override values from the config file:
-	sts=SartopoSession('sartopo.com',
-		configpath='../../sts.ini',
+	cts=CaltopoSession('caltopo.com',
+		configpath='../../cts.ini',
 		account='joe@gmail.com',
 		id='XXXXXXXXXXXX',
 		key='xXXXXxXXXXXXXXXxxxXXXXxXxXXXXXXXXXXXX=',
