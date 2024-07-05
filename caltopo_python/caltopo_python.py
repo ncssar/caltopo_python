@@ -38,20 +38,20 @@
 #     time.sleep(5)
 #     cts.addMarker(39.02,-120.02,r[0]['properties']['title'],existingId=r[0]['id'])
 #     
-#     sts2=CaltopoSession(
+#     cts2=CaltopoSession(
 #         'caltopo.com',
 #         '<onlineMapID>',
 #         configpath='../../cts.ini',
 #         account='<accountName>')
-#     fid2=sts2.addFolder('MyOnlineFolder')
-#     sts2.addMarker(39,-120,'onlineStuff')
-#     sts2.addMarker(39.01,-119.99,'onlineStuff2',folderId=fid2)
-#     r2=sts2.getFeatures('Marker')
+#     fid2=cts2.addFolder('MyOnlineFolder')
+#     cts2.addMarker(39,-120,'onlineStuff')
+#     cts2.addMarker(39.01,-119.99,'onlineStuff2',folderId=fid2)
+#     r2=cts2.getFeatures('Marker')
 #     print('return value from getFeatures('Marker'):')
 #     print(json.dumps(r2,indent=3))
 #     time.sleep(15)
 #     print('moving online after a pause:'+r2[0]['id'])
-#     sts2.addMarker(39.02,-119.98,r2[0]['properties']['title'],existingId=r2[0]['id'])
+#     cts2.addMarker(39.02,-119.98,r2[0]['properties']['title'],existingId=r2[0]['id'])
 #
 #
 #  Threading
@@ -123,7 +123,7 @@ from shapely.ops import split,unary_union
 
 # silent exception class to be raised during __init__ and handlded by the caller,
 #  since __init__ should always return None: https://stackoverflow.com/questions/20059766
-class STSException(BaseException):
+class CTSException(BaseException):
     pass
 
 class CaltopoSession():
@@ -225,11 +225,11 @@ class CaltopoSession():
         self.accountData=None
         # call _setupSession even if this is a mapless session, to read the config file, setup fidddler proxy, get userdata/cookies, etc.
         if not self._setupSession():
-            raise STSException
+            raise CTSException
         # if a map is specified, open it (or create it if '[NEW'])
         if self.mapID:
             if not self.openMap(self.mapID):
-                raise STSException
+                raise CTSException
         else:
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
@@ -257,7 +257,7 @@ class CaltopoSession():
             return
         if not mapID or not isinstance(mapID,str) or ((len(mapID)<3 or len(mapID)>7) and not mapID.startswith('[NEW]')):
             logging.warning('WARNING: map ID must be a three-to-seven-character caltopo map ID string (end of the URL).  No map will be opened for this CaltopoSession object.')
-            raise STSException
+            raise CTSException
         self.mapID=mapID
         # new map requested
         # 1. send a POST request to /map - payload (tested on CTD 4225; won't work with <4221) =
@@ -341,7 +341,7 @@ class CaltopoSession():
     def _setupSession(self) -> bool:
         """Called internally from __init__, regardless of whether this is a mapless session.  Reads account information from the config file and takes care of various other setup tasks.
 
-        :return: True if setup was successful; False otherwise (which will raise STSException from __init__).
+        :return: True if setup was successful; False otherwise (which will raise CTSException from __init__).
         :rtype: bool
         """        
         # set a flag: is this an internet session?
@@ -2394,7 +2394,7 @@ class CaltopoSession():
     #      they will be merged here with the synced dictionary before sending to the server
 
     #  EXAMPLES:
-    #  (assuming sts is a CaltopoSession object)
+    #  (assuming cts is a CaltopoSession object)
     
     #  1. move a marker
     #    cts.editFeature(className='Marker',title='t',geometry={'coordinates':[-120,39,0,0]})
