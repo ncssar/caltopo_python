@@ -128,11 +128,11 @@ Syncing and callbacks
    def gucb(*args):
       print('Geometry Updated: gucb called with args '+str(args))
 
-   def nocb(*args):
-      print('New Object: nocb called with args '+str(args))
+   def nfcb(*args):
+      print('New Feature: nfcb called with args '+str(args))
 
-   def docb(*args):
-      print('Deleted Object: docb called with args '+str(args))
+   def dfcb(*args):
+      print('Deleted Feature: dfcb called with args '+str(args))
 
    # open a session, connecting to the defined callbacks;
    #  syncing is enabled by default, since the 'sync' argument defaults to True
@@ -141,8 +141,8 @@ Syncing and callbacks
          account='joe@domain.com',
          propUpdateCallback=pucb,
          geometryUpdateCallback=gucb,
-         newObjectCallback=nocb,
-         deletedObjectCallback=docb)
+         newFeatureCallback=nfcb,
+         deletedFeatureCallback=dfcb)
 
 Getting map data and account data
 ---------------------------------
@@ -167,6 +167,15 @@ Getting map data and account data
 Adding features
 ---------------
 
+A word on longitude / latitude sequence:
+
+caltopo.com expects each point in point lists to have longitude first, followed by latutude, e.g. [120,-39].
+
+While the code will swap coordinates if needed and if detectable (which is only the case for half of the globe), it's best to get in the habit of
+specifying points in [lon,lat] sequence.  See the *._validatePoints* documentation for details.
+
+This is opposite of the Marker functions, which call for the latitude argument first.  
+
 .. code-block:: python
 
    # add a marker
@@ -179,23 +188,23 @@ Adding features
    myMarker2=cts.addMarker(39.01,-120.01,'MyMarker2',folderId=fid)
    
    # add a line
-   cts.addLine([[39,-120],[39.1,-120.1]],'MyLine')
+   cts.addLine([[-120,39],[-120.1,39.1]],'MyLine')
 
    # prepare to add a polygon - queue it for later
-   cts.addPolygon([[39,-120],[39.1,-120.1],[39.1,-120]],'MyPolygon',queue=True)
+   cts.addPolygon([[-120,39],[-120.1,39.1],[-120,39.1]],'MyPolygon',queue=True)
 
    # add an Operational Period
    op1=cts.addOperationalPeriod('1')
 
    # prepare to add a line assignment - queue it for later
-   aa=cts.addLineAssignment([[39.2,-120],[39.2,-120.1]],
+   aa=cts.addLineAssignment([[-120,39.2],[-120.1,39.2]],
          letter='AA',
          opId=op1,
          resourceType='DOG-TRAIL',
          description='FindEm',
          queue=True)
 
-   cts.addAreaAssignment([[39.3,-120],[39.4,-120.1],[39.4,-120]],
+   cts.addAreaAssignment([[-120,39.3],[-120.1,39.4],[-120,39.4]],
          letter='AB',
          number='104',
          opId=op1,
@@ -287,5 +296,6 @@ Configuration file
 .. |training_link| raw:: html
 
    <a href="https://training.caltopo.com" target="_blank">training.caltopo.com</a>
+   
 
 

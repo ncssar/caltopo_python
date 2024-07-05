@@ -109,6 +109,7 @@ These methods are typically only called internally, from other class methods.  T
    .. automethod:: CaltopoSession._removeSpurs
    .. automethod:: CaltopoSession._getUsedSuffixList
    .. automethod:: CaltopoSession._getNextAvailableSuffix
+   .. automethod:: CaltopoSession._validatePoints
    .. automethod:: CaltopoSession._getToken
 
 .. |shapely_link| raw:: html
