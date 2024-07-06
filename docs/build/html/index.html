@@ -206,7 +206,7 @@ the number of web requests needed, which reduces the time taken for most tasks.<
 <section id="adding-features">
 <h2>Adding features<a class="headerlink" href="#adding-features" title="Link to this heading">¶</a></h2>
 <p>A word on longitude / latitude sequence:</p>
-<p>caltopo.com expects each point in point lists to have longitude first, followed by latutude, e.g. [120,-39].</p>
+<p>caltopo.com expects each point of every type of geometry to have longitude first, followed by latutude, e.g. [120,-39].</p>
 <p>While the code will swap coordinates if needed and if detectable (which is only the case for half of the globe), it’s best to get in the habit of
 specifying points in [lon,lat] sequence.  See the <em>._validatePoints</em> documentation for details.</p>
 <p>This is opposite of the Marker functions, which call for the latitude argument first.</p>
