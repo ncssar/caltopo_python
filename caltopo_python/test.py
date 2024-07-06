@@ -27,6 +27,7 @@ cts=CaltopoSession('caltopo.com',
         # mapID='DEKFJ',
         # syncInterval=10,
         # syncDumpFile='syncDump',
+        sync=False,
         # propertyUpdateCallback=pucb,
         # geometryUpdateCallback=gucb,
         # newFeatureCallback=nfcb,
@@ -56,6 +57,9 @@ cts.openMap('DEKFJ')
 # cts._stop() # stop sync
 # time.sleep(120)
 
+##############
+# test feature creation methods
+##############
 # fid=cts.addFolder('newFolder')
 # cts.addMarker(39,-120,'newMarker',description='desc',color='#00FF00',symbol='fire',size=4,folderId=fid)
 # cts.addLine([[-120,39],[-120.1,39.1],[-120,39.1]],title='newLine',description='desc',width=8,opacity=0.6,pattern='M12 -7M0 5M9 0A3 3 0 1 0 6 0 A3 3 0 0 0 9 0,2,20,T;M0 0L12 0,15,20',folderId=fid)
@@ -101,14 +105,28 @@ cts.openMap('DEKFJ')
 #         description='t101')
 
 
+##############
+# test feature query methods
+##############
 
-
+# print(str(cts.getFeatures('Assignment')))
 # print(str(cts.getFeature(title='AB')))
+
+
+##############
+# test feature editing methods
+##############
+
 # aa=cts.getFeature(title='AA 101')
 # cts.editFeature(id=aa['id'],properties={'description':'other'})
-# nm=cts.getFeature(title='newMarker')
+# # nm=cts.getFeature(title='newMarker')
 # cts.moveMarker([-119.9,39],title='newMarker')
 # cts.editMarkerDescription('newDesc2',title='newMarker')
+
+##############
+# test feature deletion methods
+##############
+
 # cts.delFeature(aa)
 # cts.delFeatures(cts.getFeatures(featureClass='Marker'))
 # cts.delMarkers(cts.getFeatures(featureClass='Marker'))
@@ -168,28 +186,28 @@ cts.openMap('DEKFJ')
 
 # cts.validatePoints='warn'
 
-cts.addMarker(39,-120,'a')
-cts.addMarker(-120.1,39.1,'b')
+# cts.addMarker(39,-120,'a')
+# cts.addMarker(-120.1,39.1,'b')
 
-testList=[
-        [[-120,39],[-120.1,39],[-120,39.1]], # all valid
-        [[39,-120],[39,-120.1],[39.1,-120]], # all swapped
-        [[39,-120],[-120.1,39],[-120,39.1]],  # mixed
-        [[50,50],[50.1,50],[50,50.1]], # all ambiguous
-        [[-120,39,1],[-120.1,39,1],[-120,39.1,1]], # all valid (3-element)
-        [[39,-120,1],[39,-120.1,1],[39.1,-120,1]], # all swapped (3-element)
-        [[39,-120,1],[-120.1,39,1],[-120,39.1,1]],  # mixed (3-element)
-        [[50,50,1],[50.1,50,1],[50,50.1,1]], # all ambiguous (3-element)
-        [[-120,39,1,2],[-120.1,39,1,2],[-120,39.1,1,2]], # all valid (4-element)
-        [[39,-120,1,2],[39,-120.1,1,2],[39.1,-120,1,2]], # all swapped (4-element)
-        [[39,-120,1,2],[-120.1,39,1,2],[-120,39.1,1,2]],  # mixed (4-element)
-        [[50,50,1,2],[50.1,50,1,2],[50,50.1,1,2]] # all ambiguous (4-element)
-]
-for pointsList in testList:
-        # print('\n\ninitial points:'+json.dumps(pointsList,indent=3))
-        # print('validated points:'+json.dumps(cts._validatePoints(pointsList),indent=3))
-        cts.addLine(pointsList,'testLine')
-        cts.addPolygon(pointsList,'testPolygon')
+# testList=[
+#         [[-120,39],[-120.1,39],[-120,39.1]], # all valid
+#         [[39,-120],[39,-120.1],[39.1,-120]], # all swapped
+#         [[39,-120],[-120.1,39],[-120,39.1]],  # mixed
+#         [[50,50],[50.1,50],[50,50.1]], # all ambiguous
+#         [[-120,39,1],[-120.1,39,1],[-120,39.1,1]], # all valid (3-element)
+#         [[39,-120,1],[39,-120.1,1],[39.1,-120,1]], # all swapped (3-element)
+#         [[39,-120,1],[-120.1,39,1],[-120,39.1,1]],  # mixed (3-element)
+#         [[50,50,1],[50.1,50,1],[50,50.1,1]], # all ambiguous (3-element)
+#         [[-120,39,1,2],[-120.1,39,1,2],[-120,39.1,1,2]], # all valid (4-element)
+#         [[39,-120,1,2],[39,-120.1,1,2],[39.1,-120,1,2]], # all swapped (4-element)
+#         [[39,-120,1,2],[-120.1,39,1,2],[-120,39.1,1,2]],  # mixed (4-element)
+#         [[50,50,1,2],[50.1,50,1,2],[50,50.1,1,2]] # all ambiguous (4-element)
+# ]
+# for pointsList in testList:
+#         # print('\n\ninitial points:'+json.dumps(pointsList,indent=3))
+#         # print('validated points:'+json.dumps(cts._validatePoints(pointsList),indent=3))
+#         cts.addLine(pointsList,'testLine')
+#         cts.addPolygon(pointsList,'testPolygon')
 
 # # from caltopo_python_authTest import CaltopoSession
 # import logging
@@ -233,6 +251,7 @@ for pointsList in testList:
 #         caseSensitiveComparisons=True,
 #         sync=False)
         # syncDumpFile='../../HB0U.txt')
+
 
 
 # cts.cut('AB','zz') # cut area assignment using line
@@ -373,55 +392,100 @@ for pointsList in testList:
 # cts.editFeature(className='Assignment',letter='ArEaAssign1',properties={'title':'tmgAreaAssign1'})
 # cts.editFeature(className='Assignment',letter='LiNeAssign1',properties={'title':'tmgLineAssign1'})
 
+####################
+# geometry operations tests
+# start by deleting all objects / with a blank map,
+# then import geomTest.json
 
-# # geometry operations tests
-# # start by deleting all objects / with a blank map,
-# # then import geomTest.json
+cts.cut('AC 103','b0') # cut area assignment using line
+cts.cut('a1','b1') # cut polygon using line; preserve folder
+cts.cut('a2','b2') # cut line using line
+cts.cut('a3','b3') # cut line using line (multiple intersections)
 
-# cts.cut('AC 103','b0') # cut area assignment using line
-# cts.cut('a1','b1') # cut polygon using line; preserve folder
-# cts.cut('a2','b2') # cut line using line
-# cts.cut('a3','b3') # cut line using line (multiple intersections)
+cts.expand('a4','b4') # expand polygon using polygon (partial crossing)
+cts.cut('AD 111','b00') # cut line using line (preserve attrinutes)
+cts.cut('a5','b5') # cut polygon using polygon (preserve attributes)
+cts.cut('a6','b6') # cut line using polygon
+cts.expand('a7','b7') # expand polygon using polygon (complete crossing)
+cts.cut('a8','b8') # cut polygon using line
+cts.expand('a9','b9') # expand polygon (partial crossing)
 
-# cts.expand('a4','b4') # expand polygon using polygon (partial crossing)
-# cts.cut('AD 111','b00') # cut line using line (preserve attrinutes)
-# cts.cut('a5','b5') # cut polygon using polygon (preserve attributes)
-# cts.cut('a6','b6') # cut line using polygon
-# cts.expand('a7','b7') # expand polygon using polygon (complete crossing)
-# cts.cut('a8','b8') # cut polygon using line
-# cts.expand('a9','b9') # expand polygon (partial crossing)
+# arguments are features
+a10=cts.getFeatures(title='a10')[0]
+b10=cts.getFeatures(title='b10')[0]
+cts.cut(a10,b10)
 
-# # arguments are features
-# a10=cts.getFeatures(title='a10')[0]
-# b10=cts.getFeatures(title='b10')[0]
-# cts.cut(a10,b10)
+# arguments are id strings
+a11id=cts.getFeatures(title='a11')[0]['id']
+b11id=cts.getFeatures(title='b11')[0]['id']
+cts.expand(a11id,b11id)
 
-# # arguments are id strings
-# a11id=cts.getFeatures(title='a11')[0]['id']
-# b11id=cts.getFeatures(title='b11')[0]['id']
-# cts.expand(a11id,b11id)
+cts.cut('a12','b12')
+cts.expand('a13','b13')
+cts.crop('a14','b14') # crop line using polygon
+cts.crop('a15','b15') # crop line using area assignment
+cts.crop('a16','b16') # crop polygon (multiple intersections)
 
-# cts.cut('a12','b12')
-# cts.expand('a13','b13')
-# cts.crop('a14','b14') # crop line using polygon
-# cts.crop('a15','b15') # crop line using area assignment
-# cts.crop('a16','b16') # crop polygon (multiple intersections)
+# objects don't intersect - make sure we return gracefully
+cts.expand('a11','a13')
+cts.cut('a11','a6')
+cts.crop('a14','b15')
 
-# # objects don't intersect - make sure we return gracefully
-# cts.expand('a11','a13')
-# cts.cut('a11','a6')
-# cts.crop('a14','b15')
+# objects don't exist = make sure we return gracefully
+cts.cut('foo','bar')
+cts.expand('foo','bar')
+cts.crop('foo','bar') 
 
-# # objects don't exist = make sure we return gracefully
-# cts.cut('foo','bar')
-# cts.expand('foo','bar')
-# cts.crop('foo','bar') 
+cts.cut('a1','bar')
+cts.expand('a1','bar')
+cts.crop('a1','bar')
 
-# cts.cut('a1','bar')
-# cts.expand('a1','bar')
-# cts.crop('a1','bar')
+# getBounds at this point might not include all recent features!
+assignments=cts.getFeatures('Assignment',forceRefresh=True)
+print('assignments:'+str([a['properties']['title'] for a in assignments]))
+print(str(cts.getBounds(assignments,0)))
 
-# print(str(cts.getBounds(cts.getFeatures('Assignment'))))
+# cts._refresh()
+
+# assignments=cts.getFeatures('Assignment')
+# print('assignments:'+str([a['properties']['title'] for a in assignments]))
+# print(str(cts.getBounds(assignments,0)))
+
+
+
+#### twoify test
+# a=[
+#    [
+#       -121.1133059877452,
+#       39.30596151413845
+#    ],
+#    [
+#       -121.11791109653225,
+#       39.30575648321715
+#    ],
+#    [
+#       -121.11675901750955,
+#       39.307236931228026
+#    ],
+#    [
+#       -121.1189477000657,
+#       39.310424652426924
+#    ],
+#    [
+#       -121.11839298070474,
+#       39.312954607507756
+#    ],
+#    [
+#       -121.1138031892344,
+#       39.31337594231999
+#    ],
+#    [
+#       -121.1133059877452,
+#       39.30596151413845
+#    ]
+# ]
+# a=cts._twoify(a)
+# print('after _twoify:'+json.dumps(a,indent=3))
 
 # QA of .buffer2 and .intersection2 would be a bit more complicated
 #  since they operate on shapely geometries, rather than caltopo features.
