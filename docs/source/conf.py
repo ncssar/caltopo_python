@@ -10,10 +10,10 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'sartopo_python'
+project = 'caltopo_python'
 copyright = '2024, Tom Grundy'
 author = 'Tom Grundy'
-release = '2.0.0'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

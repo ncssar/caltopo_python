@@ -1,12 +1,14 @@
 Migration
 ==========================================
 
+*This page is a verbatim copy of the same page in the sartopo_python package.*
+
 There are two categories of migration that you might be concerned with:
 
 1. sartopo_python is changing names to caltopo_python
 -----------------------------------------------------
 
-This module began as 'sartopo_python'.  There are several reasons for chaning the module name, including:
+This module began as 'sartopo_python'.  There are several reasons for changing the module name, including:
 
 - most of the features in this module are not SAR-specific
 - sartopo.com is now effectively the same as caltopo.com; the only difference is the 'SAR' vs. 'Recreation' mode setting for each map

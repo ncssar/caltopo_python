@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="caltopo_python",
-    version="2.0.0",
+    version="1.0.0",
     author="Tom Grundy",
     author_email="nccaves@yahoo.com",
     description="Python interface to unofficial CalTopo API",
