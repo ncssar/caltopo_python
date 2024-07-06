@@ -19,6 +19,8 @@ Being a web-based tool, CalTopo uses a web API to accomplish most user actions. 
 
 This module provides a 'session' object which manages a data connection to a hosted map, and provides several wrapper methods and convenience methods that make calls to the non-publicized CalTopo API.
 
+If your CalTopo account is a member of a SAR team account, you can use this module for SAR-specific features on a caltopo.com map.
+
 **This third-party module is not written or maintained by CalTopo LLC or the authors of caltopo.com.**
 
 **DISCLAIMER: This module can edit and delete CalTopo map features.  At the time of this module's publication, CalTopo does not have any 'undo' capability.**
