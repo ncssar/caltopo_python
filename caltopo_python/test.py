@@ -2,17 +2,17 @@ from caltopo_python import CaltopoSession
 import time
 import json
 
-# def pucb(*args):
-#     print("pucb called with args "+str(args))
+def pucb(*args):
+    print("pucb called with args "+str(args))
 
-# def gucb(*args):
-#     print("gucb called with args "+str(args))
+def gucb(*args):
+    print("gucb called with args "+str(args))
 
-# def nfcb(*args):
-#     print("nfcb called with args "+str(args))
+def nfcb(*args):
+    print("nfcb called with args "+str(args))
 
-# def dfcb(*args):
-#     print("dfcb called with args "+str(args))
+def dfcb(*args):
+    print("dfcb called with args "+str(args))
 
 # open a session
 cts=CaltopoSession('caltopo.com',
@@ -24,14 +24,14 @@ cts=CaltopoSession('caltopo.com',
         # mapID='[NEW]test:new4240',
         # mapID='QDJKMQQ',
         # mapID='CA4L4',
-        mapID='DEKFJ',
+        # mapID='DEKFJ',
         # syncInterval=10,
         # syncDumpFile='syncDump',
         # propertyUpdateCallback=pucb,
         # geometryUpdateCallback=gucb,
         # newFeatureCallback=nfcb,
         # deletedFeatureCallback=dfcb,
-        account='caver456@gmail.com')
+account='caver456@gmail.com')
 
 # cts.addLine([[39,-120],[39.1,-120]],'a')
 # cts.addLine([[39,-120,1,2],[39.1,-120,1,2]],'b')
@@ -39,15 +39,20 @@ cts=CaltopoSession('caltopo.com',
 # cts.addLine([[-120.1,39],[-120.1,39.1]],'a')
 # cts.addLine([[-120.1,39,1,2],[-120.1,39.1,1,2]],'b')
 
-cts.addLine([[80,80,1,2],[80.1,80,1,1,2]],'a')
+# cts.addLine([[80,80,1,2],[80.1,80,1,1,2]],'a')
 
 # cts.getFeatures('Shape')
 # print('account data:')
 # d=cts.getAccountData()
 # with open('accountData.json','w') as f:
 #         json.dump(d,f,indent=3)
+# print(json.dumps(cts.getMapList('NCSSAR'),indent=3))
+# print(json.dumps(cts.getAllMapLists(),indent=3))
+# print('title:'+cts.getMapTitle('DEKFJ'))
+# print('group accounts:'+str(cts.getGroupAccountTitles()))
 
-# cts.openMap('CA4L4')
+cts.openMap('DEKFJ')
+# cts.openMap('QDJKMQQ')
 # cts._stop() # stop sync
 # time.sleep(120)
 
@@ -142,6 +147,7 @@ cts.addLine([[80,80,1,2],[80.1,80,1,1,2]],'a')
 # markers=cts.getFeatures(featureClass='Marker')
 
 # cts.openMap('[NEW]newMap')
+
 # cts.addPolygon([[-120,39],[-120.1,39.1],[-120.1,39]],'a')
 # cts.addPolygon([[39,-120.2],[39.1,-120.3],[39,-120.3]],'b')
 # time.sleep(10)
@@ -151,22 +157,39 @@ cts.addLine([[80,80,1,2],[80.1,80,1,1,2]],'a')
 # time.sleep(10)
 # cts.addAreaAssignment([[-120.3,39.3],[-120.4,39.4],[-120.5,39]],letter='AA',opId=op1)
 
-# testList=[
-#         [[-120,39],[-120.1,39],[-120,39.1]], # all valid
-#         [[39,-120],[39,-120.1],[39.1,-120]], # all swapped
-#         [[39,-120],[-120.1,39],[-120,39.1]],  # mixed
-#         [[50,50],[50.1,50],[50,50.1]], # all ambiguous
-#         [[-120,39,1],[-120.1,39,1],[-120,39.1,1]], # all valid (3-element)
-#         [[39,-120,1],[39,-120.1,1],[39.1,-120,1]], # all swapped (3-element)
-#         [[39,-120,1],[-120.1,39,1],[-120,39.1,1]],  # mixed (3-element)
-#         [[50,50,1],[50.1,50,1],[50,50.1,1]], # all ambiguous (3-element)
-#         [[-120,39,1,2],[-120.1,39,1,2],[-120,39.1,1,2]], # all valid (4-element)
-#         [[39,-120,1,2],[39,-120.1,1,2],[39.1,-120,1,2]], # all swapped (4-element)
-#         [[39,-120,1,2],[-120.1,39,1,2],[-120,39.1,1,2]],  # mixed (4-element)
-#         [[50,50,1,2],[50.1,50,1,2],[50,50.1,1,2]]] # all ambiguous (4-element)
-# for pointsList in testList:
-#         print('\n\ninitial points:'+json.dumps(pointsList,indent=3))
-#         print('validated points:'+json.dumps(cts._validatePoints(pointsList),indent=3))
+######################
+# test _validatePoints
+######################
+#  - marker, line, and polygon
+#  - 2-element points and 4-element points
+#  - all-obviously-valid, one-obviously-swapped, one-of-each
+#  - cts.validatePoints: modify, warn, False
+
+
+# cts.validatePoints='warn'
+
+cts.addMarker(39,-120,'a')
+cts.addMarker(-120.1,39.1,'b')
+
+testList=[
+        [[-120,39],[-120.1,39],[-120,39.1]], # all valid
+        [[39,-120],[39,-120.1],[39.1,-120]], # all swapped
+        [[39,-120],[-120.1,39],[-120,39.1]],  # mixed
+        [[50,50],[50.1,50],[50,50.1]], # all ambiguous
+        [[-120,39,1],[-120.1,39,1],[-120,39.1,1]], # all valid (3-element)
+        [[39,-120,1],[39,-120.1,1],[39.1,-120,1]], # all swapped (3-element)
+        [[39,-120,1],[-120.1,39,1],[-120,39.1,1]],  # mixed (3-element)
+        [[50,50,1],[50.1,50,1],[50,50.1,1]], # all ambiguous (3-element)
+        [[-120,39,1,2],[-120.1,39,1,2],[-120,39.1,1,2]], # all valid (4-element)
+        [[39,-120,1,2],[39,-120.1,1,2],[39.1,-120,1,2]], # all swapped (4-element)
+        [[39,-120,1,2],[-120.1,39,1,2],[-120,39.1,1,2]],  # mixed (4-element)
+        [[50,50,1,2],[50.1,50,1,2],[50,50.1,1,2]] # all ambiguous (4-element)
+]
+for pointsList in testList:
+        # print('\n\ninitial points:'+json.dumps(pointsList,indent=3))
+        # print('validated points:'+json.dumps(cts._validatePoints(pointsList),indent=3))
+        cts.addLine(pointsList,'testLine')
+        cts.addPolygon(pointsList,'testPolygon')
 
 # # from caltopo_python_authTest import CaltopoSession
 # import logging
