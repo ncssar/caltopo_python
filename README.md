@@ -2,7 +2,7 @@
 
 # caltopo_python
 
-See this project's ReadTheDocs page.
+See this project's [ReadTheDocs page](https://caltopo-python.readthedocs.io/en/latest/index.html).
 
 CalTopo is a very popular web-browser-based and smartphone-app-based mapping tool. SARTopo is a mostly-obsolete name that refers to a set of Search-And-Rescue-specific features inside the CalTopo tool. See [caltopo.com](https://caltopo.com) and [training.caltopo.com](https://training.caltopo.com).
 
@@ -30,8 +30,8 @@ Install this package in the usual manner:
 pip install caltopo_python
 ```
 
-To activate online requests, you will need to determine your account ID, credential ID, and public key. See details at the ReadTheDocs Credentials page.
+To activate online requests, you will need to determine your account ID, credential ID, and public key. See details at the [ReadTheDocs Credentials page](https://caltopo-python.readthedocs.io/en/latest/credentials.html).
 
 **NOTE: caltopo_python was formerly called sartopo_python. caltopo_python 1.0.x will be identical to sartopo_python 2.0.x.**
 
-For more information, see the ReadTheDocs Migration page.
+For more information, see the [ReadTheDocs Migration page](https://caltopo-python.readthedocs.io/en/latest/migration.html).
