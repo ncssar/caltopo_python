@@ -148,7 +148,8 @@ class CaltopoSession():
             syncCallback=None,
             useFiddlerProxy=False,
             caseSensitiveComparisons=False,  # case-insensitive comparisons by default, see _caseMatch()
-            validatePoints='modify'):
+            validatePoints='modify',
+            verbose=False):
         """The core session object.
 
         :param domainAndPort: Domain-and-port portion of the URL; defaults to 'localhost:8080'; common values are 'caltopo.com' for the web interface, and 'localhost:8080' (or different hostname or port as needed) for CalTopo Desktop
@@ -227,6 +228,7 @@ class CaltopoSession():
         self.caseSensitiveComparisons=caseSensitiveComparisons
         self.validatePoints=validatePoints
         self.accountData=None
+        self.verbose = verbose
         # call _setupSession even if this is a mapless session, to read the config file, setup fidddler proxy, get userdata/cookies, etc.
         if not self._setupSession():
             raise CTSException
@@ -235,7 +237,8 @@ class CaltopoSession():
             if not self.openMap(self.mapID):
                 raise CTSException
         else:
-            logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
+            if self.verbose:
+                logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
     def openMap(self,mapID: str='') -> bool:
         """Open a map for usage in the current session.
@@ -281,7 +284,8 @@ class CaltopoSession():
                         mode='cal'
                 else:
                     title=newMapTailParse[0]
-            logging.info('about to create a new map with title "'+title+'" and mode "'+mode+'"')
+            if self.verbose:
+                logging.info('about to create a new map with title "'+title+'" and mode "'+mode+'"')
             j={}
             j['properties']={
                 'mapConfig':json.dumps({'activeLayers':[['mbt',1]]}),
@@ -311,8 +315,9 @@ class CaltopoSession():
                     }
                 ]
             }
-            # logging.info('dap='+str(self.domainAndPort))
-            # logging.info('payload='+str(json.dumps(j,indent=3)))
+            # if self.verbose:
+                # logging.info('dap='+str(self.domainAndPort))
+                # logging.info('payload='+str(json.dumps(j,indent=3)))
             r=self._sendRequest('post','[NEW]',j,domainAndPort=self.domainAndPort)
             if r:
                 self.mapID=r.rstrip('/').split('/')[-1]
@@ -321,11 +326,13 @@ class CaltopoSession():
                 time.sleep(1) # to avoid a 401 on the subsequent get request
                 self.delMarker('11111111-1111-1111-1111-111111111111')
             else:
-                logging.info('New map request failed.  See the log for details.')
+                if self.verbose:
+                    logging.info('New map request failed.  See the log for details.')
                 return False
 
         
-        # logging.info("API version:"+str(self.apiVersion))
+        # if self.verbose:
+            # logging.info("API version:"+str(self.apiVersion))
         # sync needs to be done here instead of in the caller, so that
         #  edit functions can have access to the full json
         self.syncThreadStarted=False
@@ -333,9 +340,11 @@ class CaltopoSession():
 
         # regardless of whether sync is specified, we need to do the initial cache population
         #   here in the main thread, so that mapData is populated right away
-        logging.info('Initial cache population begins.')
+        if self.verbose:
+            logging.info('Initial cache population begins.')
         self._doSync()
-        logging.info('Initial cache population complete.')
+        if self.verbose:
+            logging.info('Initial cache population complete.')
 
         if self.sync:
             self._start()
@@ -437,13 +446,15 @@ class CaltopoSession():
         #  an exception each time.  So, if Fiddler proxies are requested, confirm here first.
         self.proxyDict=None
         if self.useFiddlerProxy:
-            logging.info('This session was requested to use the Fiddler proxy.  Verifying that the proxy host is running...')
+            if self.verbose:
+                logging.info('This session was requested to use the Fiddler proxy.  Verifying that the proxy host is running...')
             try:
                 r=requests.get('http://127.0.0.1:8888')
             except:
                 logging.warning('Fiddler proxy host does not appear to be running.  This session will not use Fiddler proxies.')
             else:
-                logging.info('  Fiddler ping response appears valid; setting the proxies: r='+str(r))
+                if self.verbose:
+                    logging.info('  Fiddler ping response appears valid; setting the proxies: r='+str(r))
                 self.proxyDict={
                     'http':'http://127.0.0.1:8888',
                     'https':'https://127.0.0.1:8888',
@@ -492,8 +503,10 @@ class CaltopoSession():
                 'zoom':zoom
             }
         }
-        # logging.info('dap='+str(self.domainAndPort))
-        # logging.info('payload='+str(json.dumps(j,indent=3)))
+        # if self.verbose:
+            # logging.info('dap='+str(self.domainAndPort))
+        # if self.verbose:
+            # logging.info('payload='+str(json.dumps(j,indent=3)))
         self._sendRequest('post','api/v0/userdata',j,domainAndPort=self.domainAndPort)
 
 # terminology:
@@ -526,7 +539,8 @@ class CaltopoSession():
         :return: value of .accountData
         :rtype: dict
         """        
-        logging.info('Getting account data:')
+        if self.verbose:
+            logging.info('Getting account data:')
         fromFileName=False # hardcoded for production; set to a filename for debug
         if fromFileName:
             self.accoundData={}
@@ -537,7 +551,8 @@ class CaltopoSession():
                     self.accountData=self.accountData['result']
         else:
             url='/api/v1/acct/'+self.accountId+'/since/0'
-            # logging.info('  sending GET request 2 to '+url)
+            # if self.verbose:
+                # logging.info('  sending GET request 2 to '+url)
             rj=self._sendRequest('get',url,j=None,returnJson='ALL')
             self.accountData=rj['result']
             # with open('acct_since_0.json','w') as outfile:
@@ -552,7 +567,8 @@ class CaltopoSession():
                     self.groupAccounts.append(account)
                 else:
                     self.personalAccounts.append(account)
-        # logging.info('The signed-in user is a member of these group accounts: '+str([x['properties']['title'] for x in self.groupAccounts]))
+                    # if self.verbose:
+            # logging.info('The signed-in user is a member of these group accounts: '+str([x['properties']['title'] for x in self.groupAccounts]))
         return self.accountData
 
     # after getAccountData, all of the required data is available in self.accountData;
@@ -625,7 +641,8 @@ class CaltopoSession():
             mapLists.append({'id':gid,'title':groupAccountTitle,'maps':maps})
         else: # personal maps; allow for the possibility of multiple personal accounts
             if len(self.personalAccounts)>1:
-                logging.info('The currently-signed-in user has more than one personal account; the return value will be a netsted list.')
+                if self.verbose:
+                    logging.info('The currently-signed-in user has more than one personal account; the return value will be a netsted list.')
             for personalAccount in self.personalAccounts:
                 pid=personalAccount['id']
                 maps=[f for f in self.accountData['features']
@@ -706,7 +723,8 @@ class CaltopoSession():
         theList=[]
         if includePersonal:
             personalRval=self.getMapList(includeBookmarks=includeBookmarks,refresh=False,titlesOnly=titlesOnly)
-            # logging.info('personalRval:'+json.dumps(personalRval,indent=3))
+            # if self.verbose:
+                # logging.info('personalRval:'+json.dumps(personalRval,indent=3))
             if type(personalRval[0])==dict: # not nested; a list of dicts
                 theList.append({'personalAccountTitle':self.personalAccounts[0]['properties']['title'],'mapList':personalRval})
             else: # nested; multiple personal accounts; a list of lists dicts
@@ -764,7 +782,8 @@ class CaltopoSession():
            - called as needed from ._refresh
 
         """        
-        # logging.info('sync marker: '+self.mapID+' begin')
+        # if self.verbose:
+            # logging.info('sync marker: '+self.mapID+' begin')
         if not self.mapID or self.apiVersion<0:
             logging.error('sync request invalid: this caltopo session is not associated with a map.')
             return False
@@ -782,7 +801,8 @@ class CaltopoSession():
         #     item in state->features, just replace the entire existing cached feature of
         #     the same id
 
-        # logging.info('Sending caltopo "since" request...')
+        # if self.verbose:
+            # logging.info('Sending caltopo "since" request...')
         rj=self._sendRequest('get','since/'+str(max(0,self.lastSuccessfulSyncTimestamp-500)),None,returnJson='ALL',timeout=self.syncTimeout)
         if rj and rj['status']=='ok':
             if self.syncDumpFile:
@@ -791,7 +811,8 @@ class CaltopoSession():
             # response timestamp is an integer number of milliseconds; equivalent to
             # int(time.time()*1000))
             self.lastSuccessfulSyncTimestamp=rj['result']['timestamp']
-            # logging.info('Successful caltopo sync: timestamp='+str(self.lastSuccessfulSyncTimestamp))
+            # if self.verbose:
+                # logging.info('Successful caltopo sync: timestamp='+str(self.lastSuccessfulSyncTimestamp))
             if self.syncCallback:
                 self.syncCallback()
             rjr=rj['result']
@@ -802,12 +823,15 @@ class CaltopoSession():
             if 'ids' in rjr.keys():
                 idsBefore=copy.deepcopy(self.mapData['ids'])
                 self.mapData['ids']=rjr['ids']
-                logging.info('  Updating "ids"')
+                if self.verbose:
+                    logging.info('  Updating "ids"')
             
             # 2 - update existing features as needed
             if len(rjrsf)>0:
-                logging.info('  processing '+str(len(rjrsf))+' feature(s):'+str([x['id'] for x in rjrsf]))
-                # logging.info(json.dumps(rj,indent=3))
+                if self.verbose:
+                    logging.info('  processing '+str(len(rjrsf))+' feature(s):'+str([x['id'] for x in rjrsf]))
+                # if self.verbose:
+                    # logging.info(json.dumps(rj,indent=3))
                 for f in rjrsf:
                     rjrfid=f['id']
                     prop=f['properties']
@@ -828,19 +852,24 @@ class CaltopoSession():
                             #  - if f->geometry exists, replace the entire geometry dict
                             if 'title' in prop.keys():
                                 if self.mapData['state']['features'][i]['properties']!=prop:
-                                    logging.info('  Updating properties for '+featureClass+':'+title)
-                                    # logging.info('    old:'+json.dumps(self.mapData['state']['features'][i]['properties']))
-                                    # logging.info('    new:'+json.dumps(prop))
+                                    if self.verbose:
+                                        logging.info('  Updating properties for '+featureClass+':'+title)
+                                    # if self.verbose:
+                                        # logging.info('    old:'+json.dumps(self.mapData['state']['features'][i]['properties']))
+                                    # if self.verbose:
+                                        # logging.info('    new:'+json.dumps(prop))
                                     self.mapData['state']['features'][i]['properties']=prop
                                     if self.propertyUpdateCallback:
                                         self.propertyUpdateCallback(f)
                                 else:
-                                    logging.info('  response contained properties for '+featureClass+':'+title+' but they matched the cache, so no cache update or callback is performed')
+                                    if self.verbose:
+                                        logging.info('  response contained properties for '+featureClass+':'+title+' but they matched the cache, so no cache update or callback is performed')
                             if title=='None':
                                 title=self.mapData['state']['features'][i]['properties']['title']
                             if 'geometry' in f.keys():
                                 if self.mapData['state']['features'][i]['geometry']!=f['geometry']:
-                                    logging.info('  Updating geometry for '+featureClass+':'+title)
+                                    if self.verbose:
+                                        logging.info('  Updating geometry for '+featureClass+':'+title)
                                     # if geometry.incremental exists and is true, append new coordinates to existing coordinates
                                     # otherwise, replace the entire geometry value
                                     fg=f['geometry']
@@ -863,16 +892,19 @@ class CaltopoSession():
                                     if self.geometryUpdateCallback:
                                         self.geometryUpdateCallback(f)
                                 else:
-                                    logging.info('  response contained geometry for '+featureClass+':'+title+' but it matched the cache, so no cache update or callback is performed')
+                                    if self.verbose:
+                                        logging.info('  response contained geometry for '+featureClass+':'+title+' but it matched the cache, so no cache update or callback is performed')
                             processed=True
                             break
                     # 2b - otherwise, create it - and add to ids so it doesn't get cleaned
                     if not processed:
-                        # logging.info('Adding to cache:'+featureClass+':'+title)
+                        # if self.verbose:
+                            # logging.info('Adding to cache:'+featureClass+':'+title)
                         self.mapData['state']['features'].append(f)
                         if f['id'] not in self.mapData['ids'][prop['class']]:
                             self.mapData['ids'][prop['class']].append(f['id'])
-                        # logging.info('mapData immediate:\n'+json.dumps(self.mapData,indent=3))
+                            # if self.verbose:
+                            # logging.info('mapData immediate:\n'+json.dumps(self.mapData,indent=3))
                         if self.newFeatureCallback:
                             self.newFeatureCallback(f)
 
@@ -899,32 +931,41 @@ class CaltopoSession():
                             if self.deletedFeatureCallback:
                                 self.deletedFeatureCallback(id,c)
                 if deletedAnythingFlag:
-                    logging.info('deleted items have been removed from cache:\n'+json.dumps(deletedDict,indent=3))
+                    if self.verbose:
+                        logging.info('deleted items have been removed from cache:\n'+json.dumps(deletedDict,indent=3))
             
 
             # l1=len(self.mapData['state']['features'])
-            # logging.info('before:'+str(l1)+':'+str(self.mapData['state']['features']))
+            # if self.verbose:
+                # logging.info('before:'+str(l1)+':'+str(self.mapData['state']['features']))
             # self.mapData['state']['features'][:]=(f for f in self.mapData['state']['features'] if f['id'] in self.mapIDs)
             # mapSFIDs=[f['id'] for f in self.mapData['state']['features']]
             # l2=len(self.mapData['state']['features'])
-            # logging.info('after:'+str(l1)+':'+str(self.mapData['state']['features']))
+            # if self.verbose:
+                # logging.info('after:'+str(l1)+':'+str(self.mapData['state']['features']))
             # if l2!=l1:
             #     deletedIds=list(set(mapSFIDsBefore)-set(mapSFIDs))
-            #     logging.info('cleaned up '+str(l1-l2)+' feature(s) from the cache:'+str(deletedIds))
+            # if self.verbose:
+                #     logging.info('cleaned up '+str(l1-l2)+' feature(s) from the cache:'+str(deletedIds))
             #     if self.deletedFeatureCallback:
             #         for did in deletedIds:
             #             self.deletedFeatureCallback(did)
-                # logging.info(beforeStr)
-                # logging.info('mapData after cleanup:'+json.dumps(self.mapData,indent=3))
+            # if self.verbose:
+                    # logging.info(beforeStr)
+                # if self.verbose:
+                    # logging.info('mapData after cleanup:'+json.dumps(self.mapData,indent=3))
 
-            # logging.info('mapData:\n'+json.dumps(self.mapData,indent=3))
-            # logging.info('\n'+self.mapID+':\n  mapIDs:'+str(self.mapIDs)+'\nmapSFIDs:'+str(mapSFIDs))
+                # if self.verbose:
+                # logging.info('mapData:\n'+json.dumps(self.mapData,indent=3))
+            # if self.verbose:
+                # logging.info('\n'+self.mapID+':\n  mapIDs:'+str(self.mapIDs)+'\nmapSFIDs:'+str(mapSFIDs))
 
             # bug: i is defined as an index into mapSFIDs but is used as an index into self.mapData['state']['features']:
             # # for i in range(len(mapSFIDs)):
             # #     if mapSFIDs[i] not in self.mapIDs:
             # #         prop=self.mapData['state']['features'][i]['properties']
-            # #         logging.info('  Deleting '+mapSFIDs[i]+':'+str(prop['class'])+':'+str(prop['title']))
+            # if self.verbose:
+                # #         logging.info('  Deleting '+mapSFIDs[i]+':'+str(prop['class'])+':'+str(prop['title']))
             # #         if self.deletedFeatureCallback:
             # #             self.deletedFeatureCallback(self.mapData['state']['features'][i])
             # #         del self.mapData['state']['features'][i]
@@ -941,27 +982,32 @@ class CaltopoSession():
             self.lastSuccessfulSyncTSLocal=int(time.time()*1000)
             if self.sync:
                 if not threading.main_thread().is_alive():
-                    logging.info('Main thread has ended; sync is stopping...')
+                    if self.verbose:
+                        logging.info('Main thread has ended; sync is stopping...')
                     self.sync=False
                 # if threading.main_thread().is_alive():
                 #     # this is where the blocking sleep happens, instead of spawning a new thread;
                 #     #  normally this function is being called in a separate thread anyway, so
                 #     #  the main thread can continue while this thread sleeps
-                #     logging.info('  sleeping for specified sync interval ('+str(self.syncInterval)+' seconds)...')
+                # if self.verbose:
+                    #     logging.info('  sleeping for specified sync interval ('+str(self.syncInterval)+' seconds)...')
                 #     time.sleep(self.syncInterval)
                 #     while self.syncPause: # wait until at least one second after sendRequest finishes
-                #         logging.info('  sync is paused - sleeping for one second')
+                # if self.verbose:
+                    #         logging.info('  sync is paused - sleeping for one second')
                 #         time.sleep(1)
                 #     self._doSync() # will this trigger the recursion limit eventually?  Rethink looping method!
                 # else:
-                #     logging.info('Main thread has ended; sync is stopping...')
+                # if self.verbose:
+                    #     logging.info('Main thread has ended; sync is stopping...')
 
         else:
             logging.error('Sync returned invalid or no response; sync aborted:'+str(rj))
             self.sync=False
             self.apiVersion=-1 # downstream tools may use apiVersion as indicator of link status
         self.syncing=False
-        # logging.info('sync marker: '+self.mapID+' end')
+        # if self.verbose:
+            # logging.info('sync marker: '+self.mapID+' end')
 
     # _refresh - update the cache (self.mapData) by calling _doSync once;
     #   only relevant if sync is off; if the latest refresh is within the sync interval value (even when sync is off),
@@ -979,23 +1025,27 @@ class CaltopoSession():
         msg='refresh requested for map '+self.mapID+': '
         if self.syncing:
             msg+='sync already in progress'
-            logging.info(msg)
+            if self.verbose:
+                logging.info(msg)
         else:
             d=int(time.time()*1000)-self.lastSuccessfulSyncTSLocal # integer ms since last completed sync
             msg+=str(d)+'ms since last completed sync; '
             if d>(self.syncInterval*1000):
                 msg+='longer than syncInterval: syncing now'
-                logging.info(msg)
+                if self.verbose:
+                    logging.info(msg)
                 self._doSync()
             else:
                 msg+='shorter than syncInterval; '
                 if forceImmediate:
                     msg+='forceImmediate specified: syncing now'
-                    logging.info(msg)
+                    if self.verbose:
+                        logging.info(msg)
                     self._doSync()
                 else:
                     msg+='forceImmediate not specified: not syncing now'
-                    # logging.info(msg)
+                    # if self.verbose:
+                        # logging.info(msg)
     
     def __del__(self):
         """Object destructor.  Also stops the sync thread if needed.
@@ -1003,7 +1053,8 @@ class CaltopoSession():
         suffix=''
         if self.mapID:
             suffix=' for map '+self.mapID
-        logging.info('CaltopoSession instance deleted'+suffix+'.')
+        if self.verbose:
+            logging.info('CaltopoSession instance deleted'+suffix+'.')
         if self.sync and self.lastSuccessfulSyncTimestamp>0:
             self._stop()
 
@@ -1017,10 +1068,12 @@ class CaltopoSession():
             return False
         self.sync=True
         if self.syncThreadStarted:
-            logging.info('Caltopo sync is already running for map '+self.mapID+'.')
+            if self.verbose:
+                logging.info('Caltopo sync is already running for map '+self.mapID+'.')
         else:
             threading.Thread(target=self._syncLoop).start()
-            logging.info('Caltopo syncing initiated for map '+self.mapID+'.')
+            if self.verbose:
+                logging.info('Caltopo syncing initiated for map '+self.mapID+'.')
             self.syncThreadStarted=True
 
     def _stop(self):
@@ -1031,7 +1084,8 @@ class CaltopoSession():
         if not self.mapID or self.apiVersion<0:
             logging.error('stop request invalid: this caltopo session is not associated with a map.')
             return False
-        logging.info('Caltopo sync terminating for map '+self.mapID+'.')
+        if self.verbose:
+            logging.info('Caltopo sync terminating for map '+self.mapID+'.')
         self.sync=False
 
     def _pause(self):
@@ -1043,7 +1097,8 @@ class CaltopoSession():
         if not self.mapID or self.apiVersion<0:
             logging.error('pause request invalid: this caltopo session is not associated with a map.')
             return False
-        logging.info('Pausing sync for map '+self.mapID+'...')
+        if self.verbose:
+            logging.info('Pausing sync for map '+self.mapID+'...')
         self.syncPauseManual=True
 
     def _resume(self):
@@ -1053,7 +1108,8 @@ class CaltopoSession():
         if not self.mapID or self.apiVersion<0:
             logging.error('resume request invalid: this caltopo session is not associated with a map.')
             return False
-        logging.info('Resuming sync for map '+self.mapID+'.')
+        if self.verbose:
+            logging.info('Resuming sync for map '+self.mapID+'.')
         self.syncPauseManual=False
     
     # _syncLoop - should only be called from self._start(), which calls _syncLoop in a new thread.
@@ -1068,26 +1124,31 @@ class CaltopoSession():
         avoid blocking of the main thread.  **Calling this method directly could cause sync problems.**
         """        
         if self.syncCompletedCount==0:
-            logging.info('This is the first sync attempt; pausing for the normal sync interval before starting sync.')
+            if self.verbose:
+                logging.info('This is the first sync attempt; pausing for the normal sync interval before starting sync.')
             time.sleep(self.syncInterval)
         while self.sync:
             if not self.syncPauseManual:
                 self.syncPauseMessageGiven=False
                 while self.syncPause:
                     if not threading.main_thread().is_alive():
-                        logging.info('Main thread has ended; sync is stopping...')
+                        if self.verbose:
+                            logging.info('Main thread has ended; sync is stopping...')
                         self.syncPause=False
                         self.sync=False
                     if not self.syncPauseMessageGiven:
-                        logging.info(self.mapID+': sync pause begins; sync will not happen until sync pause ends')
+                        if self.verbose:
+                            logging.info(self.mapID+': sync pause begins; sync will not happen until sync pause ends')
                         self.syncPauseMessageGiven=True
                     time.sleep(1)
                 if self.syncPauseMessageGiven:
-                    logging.info(self.mapID+': sync pause ends; resuming sync')
+                    if self.verbose:
+                        logging.info(self.mapID+': sync pause ends; resuming sync')
                     self.syncPauseMessageGiven=False
                 syncWaited=0
                 while self.syncing and syncWaited<20: # wait for any current callbacks within _doSync() to complete, with timeout of 20 sec
-                    logging.info(' [sync from _syncLoop is waiting for current sync processing to finish, up to '+str(20-syncWaited)+' more seconds...]')
+                    if self.verbose:
+                        logging.info(' [sync from _syncLoop is waiting for current sync processing to finish, up to '+str(20-syncWaited)+' more seconds...]')
                     time.sleep(1)
                     syncWaited+=1
                 try:
@@ -1114,10 +1175,12 @@ class CaltopoSession():
         :return: Signed token
         :rtype: str
         """             
-        # logging.info("pre-hashed data:"+data)                
+        # if self.verbose:
+            # logging.info("pre-hashed data:"+data)                
         token=hmac.new(base64.b64decode(self.key),data.encode(),'sha256').digest()
         token=base64.b64encode(token).decode()
-        # logging.info("hashed data:"+str(token))
+        # if self.verbose:
+            # logging.info("hashed data:"+str(token))
         return token
 
     def _validatePoints(self,geom: list,modify: bool=False):
@@ -1166,7 +1229,8 @@ class CaltopoSession():
         else:
             level=1
             LOLOP=[[geom]]
-        # logging.info('validatePoints called:level'+str(level)+':'+str(geom))
+            # if self.verbose:
+            # logging.info('validatePoints called:level'+str(level)+':'+str(geom))
         newLOLOP=[]
         rval=geom
 
@@ -1203,13 +1267,15 @@ class CaltopoSession():
                             if len(point)>2:
                                 newPoint+=point[2:]
                             newPoints.append(newPoint)
-                        # logging.info('NEWPOINTS:'+str(newPoints))
+                            # if self.verbose:
+                            # logging.info('NEWPOINTS:'+str(newPoints))
                         LOP=newPoints
                     else:
                         logging.warn('   but the modify switch is False, so no points will be modified; you may see unexpected map results')
             if modify:
                 newLOLOP.append(LOP)
-        # logging.info('newLOLOP:'+str(newLOLOP))
+                # if self.verbose:
+            # logging.info('newLOLOP:'+str(newLOLOP))
         if modify: # now unpack newLOLOP - always a List of Lists of Points
             if level==3: # level 3 needs no unpacking
                 rval=newLOLOP
@@ -1217,7 +1283,8 @@ class CaltopoSession():
                 rval=newLOLOP[0]
             elif level==1: # level 1: unpack two levels
                 rval=newLOLOP[0][0]
-            # logging.info('POINTS just before return from _validatePoints:'+str(rval))
+                # if self.verbose:
+                # logging.info('POINTS just before return from _validatePoints:'+str(rval))
         return rval
 
     def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str=''):
@@ -1248,7 +1315,8 @@ class CaltopoSession():
           - map ID of newly created map, if apiUrlEnd contains '[NEW]'
         """        
         # objgraph.show_growth()
-        # logging.info('RAM:'+str(process.memory_info().rss/1024**2)+'MB')
+        # if self.verbose:
+            # logging.info('RAM:'+str(process.memory_info().rss/1024**2)+'MB')
         # validate coordinates
         if self.validatePoints and j:
             jg=j.get('geometry')
@@ -1272,7 +1340,8 @@ class CaltopoSession():
             # if apiUrlEnd is all caps, capitalize;
             # otherwise, preserve the case;
             # finally, change Since to since which must still be lowercase in API v1
-            # logging.info('  apUrlEnd:'+apiUrlEnd)
+            # if self.verbose:
+                # logging.info('  apUrlEnd:'+apiUrlEnd)
             apiUrlEndLower=apiUrlEnd.lower()
             if apiUrlEndLower==apiUrlEnd and self.apiVersion>0:
             # if self.apiVersion>0:
@@ -1311,7 +1380,8 @@ class CaltopoSession():
         if newMap:
             url=prefix+domainAndPort+'/api/v1/acct/'+accountId+'/CollaborativeMap' # works for CTD 4221 and up
         # if '/since/' not in url:
-        #     logging.info("sending "+str(type)+" to "+url)
+        # if self.verbose:
+            #     logging.info("sending "+str(type)+" to "+url)
         params={}
         paramsPrint={}
         if type=="post":
@@ -1330,15 +1400,19 @@ class CaltopoSession():
                 paramsPrint['signature']='.....'
             else:
                 paramsPrint=params
-            # logging.info("SENDING POST to '"+url+"':")
-            # logging.info(json.dumps(paramsPrint,indent=3))
+                # if self.verbose:
+                # logging.info("SENDING POST to '"+url+"':")
+            # if self.verbose:
+                # logging.info(json.dumps(paramsPrint,indent=3))
             # don't print the entire PDF generation request - upstream code can print a PDF data summary
             if 'PDFLink' not in url:
-                logging.info(jsonForLog(paramsPrint))
+                if self.verbose:
+                    logging.info(jsonForLog(paramsPrint))
             # send the dict in the request body for POST requests, using the 'data' arg instead of 'params'
             r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
         elif type=="get": # no need for json in GET; sending null JSON causes downstream error
-            # logging.info("SENDING GET to '"+url+"':")
+            # if self.verbose:
+                # logging.info("SENDING GET to '"+url+"':")
             if internet:
                 expires=int(time.time()*1000)+120000 # 2 minutes from current time, in milliseconds
                 data="GET "+mid+apiUrlEnd+"\n"+str(expires)+"\n"  #last newline needed as placeholder for json
@@ -1356,10 +1430,14 @@ class CaltopoSession():
                 r=self.s.get(url,params=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
             else:
                 r=self.s.get(url,timeout=timeout,proxies=self.proxyDict)
-            logging.info("SENDING GET to '"+url+"'")
-            # logging.info(json.dumps(paramsPrint,indent=3))
-            # logging.info('Prepared request URL:')
-            # logging.info(r.request.url)
+            if self.verbose:
+                logging.info("SENDING GET to '"+url+"'")
+            # if self.verbose:
+                # logging.info(json.dumps(paramsPrint,indent=3))
+            # if self.verbose:
+                # logging.info('Prepared request URL:')
+            # if self.verbose:
+                # logging.info(r.request.url)
         elif type=="delete":
             if internet:
                 expires=int(time.time()*1000)+120000 # 2 minutes from current time, in milliseconds
@@ -1373,19 +1451,25 @@ class CaltopoSession():
                 paramsPrint['signature']='.....'
             else:
                 paramsPrint=params
-            logging.info("SENDING DELETE to '"+url+"'")
-            # logging.info(json.dumps(paramsPrint,indent=3))
-            # logging.info("Key:"+str(self.key))
+            if self.verbose:
+                logging.info("SENDING DELETE to '"+url+"'")
+            # if self.verbose:
+                # logging.info(json.dumps(paramsPrint,indent=3))
+            # if self.verbose:
+                # logging.info("Key:"+str(self.key))
             r=self.s.delete(url,params=params,timeout=timeout,proxies=self.proxyDict)   ## use params for query vs data for body data
-            # logging.info("URL:"+str(url))
-            # logging.info("Ris:"+str(r))
+            # if self.verbose:
+                # logging.info("URL:"+str(url))
+            # if self.verbose:
+                # logging.info("Ris:"+str(r))
         else:
             logging.error("sendRequest: Unrecognized request type:"+str(type))
             self.syncPause=False
             return False
 
         if r.status_code!=200:
-            logging.info("response code = "+str(r.status_code))
+            if self.verbose:
+                logging.info("response code = "+str(r.status_code))
 
         if newMap:
             # for CTD 4221 and newer, and internet, a new map request should return 200, and the response data
@@ -1405,7 +1489,8 @@ class CaltopoSession():
                     if rjr:
                         newUrl=rjr['id']
                     if newUrl:
-                        logging.info('New map URL:'+newUrl)
+                        if self.verbose:
+                            logging.info('New map URL:'+newUrl)
                         self.syncPause=False
                         return newUrl
                     else:
@@ -1420,31 +1505,38 @@ class CaltopoSession():
             # old redirect method worked with CTD 4214:
             # if url.endswith('/map'):
             #     if 300<=r.status_code<=399:
-            #         # logging.info("response headers:"+str(json.dumps(dict(r.headers),indent=3)))
+            # if self.verbose:
+                #         # logging.info("response headers:"+str(json.dumps(dict(r.headers),indent=3)))
             #         newUrl=r.headers.get('Location',None)
             #         if newUrl:
-            #             logging.info('New map URL:'+newUrl)
+            # if self.verbose:
+                #             logging.info('New map URL:'+newUrl)
             #             self.syncPause=False
             #             return newUrl
             #         else:
-            #             logging.info('No new map URL was returned in the response header.')
+            # if self.verbose:
+                #             logging.info('No new map URL was returned in the response header.')
             #             self.syncPause=False
             #             return False
             #     else:
-            #         logging.info('Unexpected response from new map request:'+str(r.status_code)+':'+r.text)
+            # if self.verbose:
+                #         logging.info('Unexpected response from new map request:'+str(r.status_code)+':'+r.text)
             #         return False
             # else:
             #     if r.status_code==200:
-            #         logging.info('200 response from new map request:'+r.text)
+            # if self.verbose:
+                #         logging.info('200 response from new map request:'+r.text)
             #         return False
             #     else:
-            #         logging.info('Unexpected response from new map request:'+str(r.status_code)+':'+r.text)
+            # if self.verbose:
+                #         logging.info('Unexpected response from new map request:'+str(r.status_code)+':'+r.text)
             #         return False
 
 
         else:
             if returnJson:
-                # logging.info('response:'+str(r))
+                # if self.verbose:
+                    # logging.info('response:'+str(r))
                 try:
                     rj=r.json()
                 except:
@@ -1472,8 +1564,10 @@ class CaltopoSession():
                         elif 'result' in rj and 'id' in rj['result']['state']['features'][0]:
                             id=rj['result']['state']['features'][0]['id']
                         else:
-                            logging.info("sendRequest: No valid ID was returned from the request:")
-                            logging.info(json.dumps(rj,indent=3))
+                            if self.verbose:
+                                logging.info("sendRequest: No valid ID was returned from the request:")
+                            if self.verbose:
+                                logging.info(json.dumps(rj,indent=3))
                         self.syncPause=False
                         return id
                     if returnJson=="ALL":
@@ -1595,7 +1689,8 @@ class CaltopoSession():
         j['type']='Feature'
         if existingId is not None:
             j['id']=existingId
-        # logging.info("sending json: "+json.dumps(j,indent=3))
+            # if self.verbose:
+            # logging.info("sending json: "+json.dumps(j,indent=3))
         if queue:
             self.queue.setdefault('Marker',[]).append(j)
             return 0
@@ -1670,7 +1765,8 @@ class CaltopoSession():
         j['geometry']=jg
         if existingId is not None:
             j['id']=existingId
-        # logging.info("sending json: "+json.dumps(j,indent=3))
+            # if self.verbose:
+            # logging.info("sending json: "+json.dumps(j,indent=3))
         if queue:
             self.queue.setdefault('Shape',[]).append(j)
             return 0
@@ -1749,7 +1845,8 @@ class CaltopoSession():
         j['geometry']=jg
         if existingId is not None:
             j['id']=existingId
-        # logging.info("sending json: "+json.dumps(j,indent=3))
+            # if self.verbose:
+            # logging.info("sending json: "+json.dumps(j,indent=3))
         if queue:
             self.queue.setdefault('Shape',[]).append(j)
             return 0
@@ -1811,7 +1908,8 @@ class CaltopoSession():
         # if existingId is not None:
         #     j['id']=existingId
         j['id']=existingId
-        # logging.info("sending json: "+json.dumps(j,indent=3))
+        # if self.verbose:
+            # logging.info("sending json: "+json.dumps(j,indent=3))
         if queue:
             self.queue.setdefault('OperationalPeriod',[]).append(j)
             return 0
@@ -1934,7 +2032,8 @@ class CaltopoSession():
         j['geometry']=jg
         if existingId is not None:
             j['id']=existingId
-        # logging.info("sending json: "+json.dumps(j,indent=3))
+            # if self.verbose:
+            # logging.info("sending json: "+json.dumps(j,indent=3))
         if queue:
             self.queue.setdefault('Assignment',[]).append(j)
             return 0
@@ -1959,7 +2058,8 @@ class CaltopoSession():
     #     j['geometry']=jg
     #     j['size']=size
     #     rj=self._sendRequest('post','api/v0/geodata/buffer',j,None,returnJson='ALL')
-    #     logging.info('generated buffer response:'+json.dumps(rj,indent=3))
+    # if self.verbose:
+        #     logging.info('generated buffer response:'+json.dumps(rj,indent=3))
     #     return rj
 
     def addAreaAssignment(self,
@@ -2069,7 +2169,8 @@ class CaltopoSession():
         j['geometry']=jg
         if existingId is not None:
             j['id']=existingId
-        # logging.info("sending json: "+json.dumps(j,indent=3))
+            # if self.verbose:
+            # logging.info("sending json: "+json.dumps(j,indent=3))
         if queue:
             self.queue.setdefault('Assignment',[]).append(j)
             return 0
@@ -2152,14 +2253,18 @@ class CaltopoSession():
             # j['id']=existingId   # get ID from first call - using Shape
         # else:
         existingId = ""
-        #logging.info("sending json: "+json.dumps(j,indent=3))
-        #logging.info("ID:"+str(existingId))
+        # if self.verbose:
+            #logging.info("sending json: "+json.dumps(j,indent=3))
+        # if self.verbose:
+            #logging.info("ID:"+str(existingId))
         # if 1 == 1:
         ##if startTrack == 1:
-        logging.info("At request first time track"+str(existingId)+":"+str(j))
+        if self.verbose:
+            logging.info("At request first time track"+str(existingId)+":"+str(j))
         return self._sendRequest("post","Shape",j,id=str(existingId),returnJson="ID",timeout=timeout)
         # else:
-        #     logging.info("At request adding points to track:"+str(existingId)+":"+str(since)+":"+str(j))
+        # if self.verbose:
+            #     logging.info("At request adding points to track:"+str(existingId)+":"+str(since)+":"+str(j))
         #     return self._sendRequest("post","since/"+str(since),j,id=str(existingId),returnJson="ID")
 
     def delMarker(self,markerOrId='',timeout=0):
@@ -2270,7 +2375,8 @@ class CaltopoSession():
         else:
             logging.error('invalid argument in call to delFeatures: '+str(featuresOrIdAndClassList))
             return False
-        logging.info('Deleting '+str(len(idAndClassList))+' features in one asynchronous non-blocking batch of requests:')
+        if self.verbose:
+            logging.info('Deleting '+str(len(idAndClassList))+' features in one asynchronous non-blocking batch of requests:')
         loop=asyncio.get_event_loop()
         future=asyncio.ensure_future(self._delAsync(idAndClassList,timeout=timeout))
         loop.run_until_complete(future)
@@ -2379,7 +2485,8 @@ class CaltopoSession():
             titleMatchCount=0
             rval=[]
             features=self.mapData['state']['features']
-            # logging.info('features:\n'+json.dumps(features,indent=3))
+            # if self.verbose:
+                # logging.info('features:\n'+json.dumps(features,indent=3))
             for feature in features:
                 prop=feature.get('properties',None)
                 if prop and isinstance(prop,dict):
@@ -2388,17 +2495,22 @@ class CaltopoSession():
                     logging.error('getFeatures: "properties" does not exist or is not a dict:'+str(feature))
                     return []
                 c=prop['class']
-                # logging.info('checking class='+c+'  id='+feature['id'])
+                # if self.verbose:
+                    # logging.info('checking class='+c+'  id='+feature['id'])
                 if feature['id']==id:
-                    # logging.info(' id match:'+id)
+                    # if self.verbose:
+                        # logging.info(' id match:'+id)
                     if featureClass:
-                        # logging.info('   featureClass specified:'+featureClass)
+                        # if self.verbose:
+                            # logging.info('   featureClass specified:'+featureClass)
                         if c.lower()==featureClass.lower():
                             rval.append(feature)
-                            # logging.info('     match')
+                            # if self.verbose:
+                                # logging.info('     match')
                             break
                         # else:
-                            # logging.info('     but class '+c+' did not match')
+                        # if self.verbose:
+                                # logging.info('     but class '+c+' did not match')
                     else:
                         rval.append(feature)
                         break
@@ -2425,8 +2537,10 @@ class CaltopoSession():
                         logging.error('getFeatures: no title key exists:'+str(feature))
             if len(rval)==0:
                 # question: do we want to try a refresh and try one more time?
-                logging.info('getFeatures: No features match the specified criteria.')
-                logging.info('  (was looking for featureClass='+str(featureClass)+'  title='+str(title)+'  id='+str(id)+')')
+                if self.verbose:
+                    logging.info('getFeatures: No features match the specified criteria.')
+                if self.verbose:
+                    logging.info('  (was looking for featureClass='+str(featureClass)+'  title='+str(title)+'  id='+str(id)+')')
                 return []
             if titleMatchCount>1:
                 if allowMultiTitleMatch:
@@ -2486,7 +2600,8 @@ class CaltopoSession():
                 if id:
                     msg+=' id='+str(id)
                 logging.warning(msg)
-                logging.info(str(r))
+                if self.verbose:
+                    logging.info(str(r))
                 return False
         else:
             logging.error('getFeature: return from getFeatures was not a list: '+str(r))
@@ -2552,7 +2667,8 @@ class CaltopoSession():
         :return: ID of the edited feature (should be the same as the 'id' argument), or False if there was a failure prior to the edit request
         """            
 
-        # logging.info('editFeature called:'+str(properties))
+        # if self.verbose:
+            # logging.info('editFeature called:'+str(properties))
         if not self.mapID or self.apiVersion<0:
             logging.error('editFeature request invalid: this caltopo session is not associated with a map.')
             return False
@@ -2593,17 +2709,21 @@ class CaltopoSession():
                 logging.warning(' more than one feature matched class='+str(className)+' title='+str(title)+' letter='+str(letter))
                 return False
             feature=features[0]     ## matched feature
-            logging.info(' feature found: '+str(feature))
+            if self.verbose:
+                logging.info(' feature found: '+str(feature))
 
         else:
-            logging.info(' id specified: '+str(id))
+            if self.verbose:
+                logging.info(' id specified: '+str(id))
             features=[f for f in self.mapData['state']['features'] if f['id']==id]
-            # logging.info(json.dumps(self.mapData,indent=3))
+            # if self.verbose:
+                # logging.info(json.dumps(self.mapData,indent=3))
             if len(features)==1:
                 feature=features[0]     ## matched feature
                 className=feature['properties']['class']
             else:
-                logging.info('  no match!')
+                if self.verbose:
+                    logging.info('  no match!')
                 return False
 
         # PART 2: merge the properties and/or geometry dictionaries, and send the request
@@ -2638,7 +2758,8 @@ class CaltopoSession():
         if geometry is not None:
             if isinstance(geometry,dict) and 'coordinates' in geometry.keys():
                 geometry['size']=len(geometry['coordinates'])
-            # logging.info('geometry specified (size was recalculated if needed):\n'+json.dumps(geometry))
+                # if self.verbose:
+                # logging.info('geometry specified (size was recalculated if needed):\n'+json.dumps(geometry))
             geomToWrite=feature['geometry']
             for key in geometry.keys():
                 geomToWrite[key]=geometry[key]
@@ -2695,18 +2816,23 @@ class CaltopoSession():
         :type points: list
         :return: The possibly-modified list of points; will be the same length as the input list, or shorter
         """        
-        # logging.info('_removeDuplicatePoints called')
+        # if self.verbose:
+            # logging.info('_removeDuplicatePoints called')
         # ls=LineString(points)
-        # logging.info('is_valid:'+str(ls.is_valid))
-        # logging.info('is_simple:'+str(ls.is_simple))
+        # if self.verbose:
+            # logging.info('is_valid:'+str(ls.is_valid))
+        # if self.verbose:
+            # logging.info('is_simple:'+str(ls.is_simple))
         out=[points[0]]
         for i in range(1,len(points)):
             dx=points[i][0]-points[i-1][0]
             dy=points[i][1]-points[i-1][1]
-            logging.info('   '+str(i)+' : dx='+str(dx)+' dy='+str(dy))
+            if self.verbose:
+                logging.info('   '+str(i)+' : dx='+str(dx)+' dy='+str(dy))
             if abs(dx)>0.0005 or abs(dy)>0.0005:
                 out.append(points[i])
-        logging.info('\n     '+str(len(points))+' points: '+str(points)+'\n --> '+str(len(out))+' points: '+str(out))
+        if self.verbose:
+            logging.info('\n     '+str(len(points))+' points: '+str(points)+'\n --> '+str(len(out))+' points: '+str(out))
         return out
 
     # _getUsedSuffixList - get a list of integers of all used suffixes for the
@@ -2722,7 +2848,8 @@ class CaltopoSession():
         """        
         # build list of all titles (or letters as appropriate) from the cache
         #  try 'letter' first; if not found, use 'title'; default to 'NO-TITLE'
-        # logging.info('getUsedSuffixList called: base='+str(base))
+        # if self.verbose:
+            # logging.info('getUsedSuffixList called: base='+str(base))
         if not self.mapID or self.apiVersion<0:
             logging.error('getUsedSuffixList request invalid: this caltopo session is not associated with a map.')
             return False
@@ -2736,11 +2863,13 @@ class CaltopoSession():
                     title=p.get('title')
             if title: # title could be None at this point
                 allTitles.append(title)
-        # logging.info('  allTitles='+str(allTitles))
+                # if self.verbose:
+            # logging.info('  allTitles='+str(allTitles))
         # extract the list of used suffixes
         suffixStrings=[x.split(':')[-1] for x in allTitles if x.startswith(base+':')]
         rval=[int(x) for x in suffixStrings if x.isnumeric()] # only positive integers, as integers
-        logging.info('getUsedSuffixList: base='+str(base)+'  rval='+str(rval))
+        if self.verbose:
+            logging.info('getUsedSuffixList: base='+str(base)+'  rval='+str(rval))
         return rval
 
     # _getNextAvailableSuffix - get the next available suffix given a list of used titles; limit at 100
@@ -2773,10 +2902,13 @@ class CaltopoSession():
         :return: The possibly-modified list of points; will be the same length as the input list, or shorter
         """        
 
-        # logging.info('_removeSpurs called')
+        # if self.verbose:
+            # logging.info('_removeSpurs called')
         # ls=LineString(points)
-        # logging.info('is_valid:'+str(ls.is_valid))
-        # logging.info('is_simple:'+str(ls.is_simple))
+        # if self.verbose:
+            # logging.info('is_valid:'+str(ls.is_valid))
+        # if self.verbose:
+            # logging.info('is_simple:'+str(ls.is_simple))
         if len(points)>3:
             out=points[0:2]
             for i in range(2,len(points)):
@@ -2784,14 +2916,18 @@ class CaltopoSession():
                     if points[i][0:2]!=points[i-2][0:2]:
                         out.append(points[i])
                     else:
-                        logging.info('spur removed at '+str(points[i-1]))
+                        if self.verbose:
+                            logging.info('spur removed at '+str(points[i-1]))
                         out.pop() # delete last vertex
-                    # logging.info('\n --> '+str(len(out))+' points: '+str(out))
+                        # if self.verbose:
+                        # logging.info('\n --> '+str(len(out))+' points: '+str(out))
         else:
-            # logging.info('\n      feature has less than three points; no spur removal attempted.')
+            # if self.verbose:
+                # logging.info('\n      feature has less than three points; no spur removal attempted.')
             out=points
         # if len(points)!=len(out):
-        #     logging.info('spur(s) were removed from the shape:\n    '+str(len(points))+' points: '+str(points)+'\n --> '+str(len(out))+' points: '+str(out))
+        # if self.verbose:
+            #     logging.info('spur(s) were removed from the shape:\n    '+str(len(points))+' points: '+str(points)+'\n --> '+str(len(out))+' points: '+str(out))
         return out
 
     # cut - this method should accomodate the following operations:
@@ -2847,7 +2983,8 @@ class CaltopoSession():
         else:
             logging.error('cut: unhandled target '+targetStr+' geometry type: '+targetType)
             return False
-        logging.info('targetGeom:'+str(targetGeom))
+        if self.verbose:
+            logging.info('targetGeom:'+str(targetGeom))
 
         if isinstance(cutter,str): # if string, find feature by name; if id, find feature by id
             cutterStr=cutter
@@ -2864,7 +3001,8 @@ class CaltopoSession():
             logging.warning('Cutter shape '+cutterStr+' not found; operation aborted.')
             return False
 
-        logging.info('cut: target='+targetStr+'  cutter='+cutterStr)
+        if self.verbose:
+            logging.info('cut: target='+targetStr+'  cutter='+cutterStr)
 
         cg=cutterShape['geometry']
         cutterType=cg['type']
@@ -2879,7 +3017,8 @@ class CaltopoSession():
         else:
             logging.error('cut: unhandled cutter geometry type: '+cutterType)
             return False
-        logging.info('cutterGeom:'+str(cutterGeom))
+        if self.verbose:
+            logging.info('cutterGeom:'+str(cutterGeom))
 
         if not cutterGeom.intersects(targetGeom):
             logging.warning(targetShape['properties']['title']+','+cutterShape['properties']['title']+': features do not intersect; no operation performed')
@@ -2891,7 +3030,8 @@ class CaltopoSession():
             result=split(targetGeom,cutterGeom)
         else:
             result=targetGeom-cutterGeom
-        logging.info('cut result:'+str(result))
+        if self.verbose:
+            logging.info('cut result:'+str(result))
 
         # preserve target properties when adding new features
         tp=targetShape['properties']
@@ -2913,7 +3053,8 @@ class CaltopoSession():
             base=':'.join(baseParse[:-1])
         usedSuffixList=self._getUsedSuffixList(base)
 
-        # logging.info('cut result class:'+str(result.__class__.__name__))
+        # if self.verbose:
+            # logging.info('cut result class:'+str(result.__class__.__name__))
 
         if isinstance(result,GeometryCollection): # polygons, linestrings, or both
             try:
@@ -3078,7 +3219,8 @@ class CaltopoSession():
         else:
             logging.warning('expand: target feature '+targetStr+' is not a polygon: '+targetType)
             return False
-        logging.info('targetGeom:'+str(targetGeom))
+        if self.verbose:
+            logging.info('targetGeom:'+str(targetGeom))
 
         if isinstance(p2,str): # if string, find feature by name; if id, find feature by id
             p2Str=p2
@@ -3095,7 +3237,8 @@ class CaltopoSession():
             logging.warning('expand: second polygon '+p2Str+' not found; operation aborted.')
             return False
 
-        logging.info('expand: target='+targetStr+'  p2='+p2Str)
+        if self.verbose:
+            logging.info('expand: target='+targetStr+'  p2='+p2Str)
         
         cg=p2Shape['geometry']
         cgc=cg['coordinates'][0]
@@ -3106,14 +3249,16 @@ class CaltopoSession():
         else:
             logging.warning('expand: p2 feature '+p2Str+' is not a polygon: '+p2Type)
             return False
-        logging.info('p2Geom:'+str(p2Geom))
+        if self.verbose:
+            logging.info('p2Geom:'+str(p2Geom))
 
         if not p2Geom.intersects(targetGeom):
             logging.warning(targetShape['properties']['title']+','+p2Shape['properties']['title']+': features do not intersect; no operation performed')
             return False
 
         result=targetGeom|p2Geom
-        logging.info('expand result:'+str(result))
+        if self.verbose:
+            logging.info('expand result:'+str(result))
 
         if not self.editFeature(id=targetShape['id'],geometry={'coordinates':[list(result.exterior.coords)]}):
             logging.warning('expand: target shape not found; operation aborted.')
@@ -3267,7 +3412,8 @@ class CaltopoSession():
                 return False
             og=objShape['geometry']
             objType=og['type']
-            # logging.info('geometry:'+json.dumps(og,indent=3))
+            # if self.verbose:
+                # logging.info('geometry:'+json.dumps(og,indent=3))
             if objType=='Polygon':
                 ogc=og['coordinates'][0]
                 ogc=self._removeSpurs(ogc)
@@ -3327,11 +3473,14 @@ class CaltopoSession():
         # make sure both are lists of lists, since points may initially be a list of tuples
         if isinstance(points[0],tuple):
             points=list(map(list,points))
-        # logging.info('fourify called:\npoints='+str(points)+'\norigPoints='+str(origPoints))
+            # if self.verbose:
+            # logging.info('fourify called:\npoints='+str(points)+'\norigPoints='+str(origPoints))
         if len(points[0])==4 and len(points[-1])==4: # it's already a four-element list
             return points
-        # logging.info('fourify: '+str(len(points))+' points: '+str(points[0:3])+' ... '+str(points[-3:]))
-        # logging.info('orig: '+str(len(origPoints))+' points: '+str(origPoints[0:3])+' ... '+str(origPoints[-3:]))
+            # if self.verbose:
+            # logging.info('fourify: '+str(len(points))+' points: '+str(points[0:3])+' ... '+str(points[-3:]))
+        # if self.verbose:
+            # logging.info('orig: '+str(len(origPoints))+' points: '+str(origPoints[0:3])+' ... '+str(origPoints[-3:]))
         for i in range(len(points)):
             found=False
             for j in range(len(origPoints)):
@@ -3349,7 +3498,8 @@ class CaltopoSession():
                     points[i]=points[i][0:2]+[0,origPoints[-1][3]]
                 else:
                     logging.error('Fourify - could not find a matching point, not at beginning or end of new line:')
-                    logging.info('not found: '+str(len(points))+' points:  points['+str(i)+']='+str(points[i]))
+                    if self.verbose:
+                        logging.info('not found: '+str(len(points))+' points:  points['+str(i)+']='+str(points[i]))
         return points
 
     # crop - remove portions of a line or polygon that are outside a boundary polygon;
@@ -3401,9 +3551,11 @@ class CaltopoSession():
         elif targetType=='LineString':
             tgc_orig=tg['coordinates']
             tgc=self._twoify(tgc_orig)
-            # logging.info('tgc before ('+str(len(tgc))+' points):'+str(tgc))
+            # if self.verbose:
+                # logging.info('tgc before ('+str(len(tgc))+' points):'+str(tgc))
             tgc=self._removeSpurs(tgc)
-            # logging.info('tgc after ('+str(len(tgc))+' points):'+str(tgc))
+            # if self.verbose:
+                # logging.info('tgc after ('+str(len(tgc))+' points):'+str(tgc))
             targetGeom=LineString(tgc)
         else:
             logging.warning('crop: target feature '+targetStr+' is not a polygon or line: '+targetType)
@@ -3424,7 +3576,8 @@ class CaltopoSession():
             logging.warning('crop: boundary shape '+boundaryStr+' not found; operation aborted.')
             return False
 
-        logging.info('crop: target='+targetStr+'  boundary='+boundaryStr)
+        if self.verbose:
+            logging.info('crop: target='+targetStr+'  boundary='+boundaryStr)
 
         cg=boundaryShape['geometry']
         boundaryType=cg['type']
@@ -3437,7 +3590,8 @@ class CaltopoSession():
         else:
             logging.warning('crop: boundary feature '+boundaryStr+' is not a polygon or line: '+boundaryType)
             return False
-        # logging.info('crop: boundaryGeom:'+str(boundaryGeom))
+            # if self.verbose:
+            # logging.info('crop: boundaryGeom:'+str(boundaryGeom))
         if drawSizedBoundary:
             tp=targetShape['properties']
             self.addPolygon(list(boundaryGeom.exterior.coords),
@@ -3458,10 +3612,14 @@ class CaltopoSession():
             result=self._intersection2(targetGeom,boundaryGeom)
         else:
             result=targetGeom&boundaryGeom # could be MultiPolygon or MultiLinestring or GeometryCollection
-        # logging.info('crop targetGeom:'+str(targetGeom))
-        # logging.info('crop boundaryGeom:'+str(boundaryGeom))
-        # logging.info('crop result class:'+str(result.__class__.__name__))
-        # logging.info('crop result:'+str(result))
+            # if self.verbose:
+            # logging.info('crop targetGeom:'+str(targetGeom))
+        # if self.verbose:
+            # logging.info('crop boundaryGeom:'+str(boundaryGeom))
+        # if self.verbose:
+            # logging.info('crop result class:'+str(result.__class__.__name__))
+        # if self.verbose:
+            # logging.info('crop result:'+str(result))
 
         # if specified, only return the coordinate list(s) instead of editing / adding map features
         if noDraw:
@@ -3558,9 +3716,11 @@ class CaltopoSession():
                 else:
                     logging.warning('crop: target feature class was neither Shape nor Assigment')
         elif isinstance(result,LineString):
-            # logging.info('adding shape to result list')
+            # if self.verbose:
+                # logging.info('adding shape to result list')
             four=self._fourify(list(result.coords),tgc_orig)
-            # logging.info('four:'+str(four))
+            # if self.verbose:
+                # logging.info('four:'+str(four))
             rids.append(self.editFeature(id=targetShape['id'],geometry={'coordinates':four}))
             if rids==[]:
                 logging.warning('crop: target shape not found; operation aborted.')
