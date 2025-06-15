@@ -1493,12 +1493,18 @@ class CaltopoSession():
 
     def addFolder(self,
             label="New Folder",
+            visible=True,
+            labelVisible=True,
             timeout=0,
             queue=False):
         """Add a folder to the current map.
 
         :param label: Name of the folder; defaults to "New Folder"
         :type label: str, optional
+        :param visible: If True, the folder will be initially checked and expanded in the left bar, and new objects added to the folder will be visible.
+        :type label: bool, optional
+        :param labelVisible: If True, labels will be visible for objects in this folder.
+        :type label: bool, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param queue: If True, the folder creation will be enqueued / deferred until a call to .flush; defaults to False
@@ -1511,7 +1517,8 @@ class CaltopoSession():
         j={}
         j['properties']={}
         j['properties']['title']=label
-        j['properties']['folder-visibility']='visible'
+        j['properties']['visible']=visible
+        j['properties']['labelVisible']=labelVisible
         if queue:
             self.queue.setdefault('folder',[]).append(j)
             return 0
