@@ -266,9 +266,6 @@ class CaltopoSession():
         # new map requested
         # 1. send a POST request to /map - payload (tested on CTD 4225; won't work with <4221) =
         if mapID.startswith('[NEW]'):
-            if self.domainAndPort.lower() in ['caltopo.com','sartopo.com']:
-                logging.error("New map creation only works with CalTopo Desktop in this version of caltopo_python.")
-                return False
             title='newMap'
             mode='cal'
             if len(mapID)>5:
@@ -284,29 +281,27 @@ class CaltopoSession():
             logging.info('about to create a new map with title "'+title+'" and mode "'+mode+'"')
             j={}
             j['properties']={
-                'mapConfig':json.dumps({'activeLayers':[['mbt',1]]}),
-                'cfgLocked':True,
                 'title':title,
-                'mode':mode # 'cal' for recreation, 'sar' for SAR
+                'mode':mode, # 'cal' for recreation, 'sar' for SAR
+                'mapConfig':{'activeLayers':[['mbt',1]]},
+                'sharing':'SECRET'
             }
+            # At least one feature must exist to set the 'updated' field of the map;
+            #  otherwise it always shows up at the bottom of the map list when sorted
+            #  chronologically.  Definitely best to have it show up adjacent to the
+            #  incident map.
             j['state']={
                 'type':'FeatureCollection',
                 'features':[
-                    # At least one feature must exist to set the 'updated' field of the map;
-                    #  otherwise it always shows up at the bottom of the map list when sorted
-                    #  chronologically.  Definitely best to have it show up adjacent to the
-                    #  incident map.
                     {
+                        'type':'Feature',
                         'geometry': {
-                            'coordinates': [-120,39,0,0],
-                            'type':'Point'
+                            'type':'Point',
+                            'coordinates': [-120,39]
                         },
                         'id':'11111111-1111-1111-1111-111111111111',
-                        'type':'Feature',
                         'properties':{
-                            'creator':self.accountId,
-                            'title':'NewMapDummyMarker',
-                            'class':'Marker'
+                            'title':'NewMapDummyMarker'
                         }
                     }
                 ]
@@ -319,7 +314,7 @@ class CaltopoSession():
                 self.s=requests.session()
                 self._sendUserdata() # to get session cookies for new session
                 time.sleep(1) # to avoid a 401 on the subsequent get request
-                self.delMarker('11111111-1111-1111-1111-111111111111')
+                self.delMarker('11111111-1111-1111-1111-111111111111') # delete the dummy marker
             else:
                 logging.info('New map request failed.  See the log for details.')
                 return False
@@ -1249,6 +1244,7 @@ class CaltopoSession():
         """        
         # objgraph.show_growth()
         # logging.info('RAM:'+str(process.memory_info().rss/1024**2)+'MB')
+        type=type.upper()
         # validate coordinates
         if self.validatePoints and j:
             jg=j.get('geometry')
@@ -1300,31 +1296,28 @@ class CaltopoSession():
             # else:
             #     logging.warning('A request is about to be sent to the internet, but accountIdInternet was not specified.  The request will use accountId, but will fail if that ID does not have valid permissions at the internet host.')
             prefix='https://'
-            if newMap:
-                logging.error("New map creation only works with CalTopo Desktop in this version of caltopo_python.")
-                return False
             if not self.key or not self.id:
                 logging.error("There was an attempt to send an internet request, but 'id' and/or 'key' was not specified for this session.  The request will not be sent.")
                 return False
-        url=prefix+domainAndPort+mid+apiUrlEnd
-        wrapInJsonKey=True
         if newMap:
-            url=prefix+domainAndPort+'/api/v1/acct/'+accountId+'/CollaborativeMap' # works for CTD 4221 and up
+            mid='/api/v1/acct/'+accountId+'/CollaborativeMap'
+            apiUrlEnd=''
+        url=prefix+domainAndPort+mid+apiUrlEnd
         # if '/since/' not in url:
         #     logging.info("sending "+str(type)+" to "+url)
         params={}
         paramsPrint={}
-        if type=="post":
-            if wrapInJsonKey:
-                params["json"]=json.dumps(j)
-            else:
-                params=j
+        if type=="POST":
+            payload_string = json.dumps(j) if j else ""
             if internet:
                 expires=int(time.time()*1000)+120000 # 2 minutes from current time, in milliseconds
                 data="POST "+mid+apiUrlEnd+"\n"+str(expires)+"\n"+json.dumps(j)
                 params["id"]=self.id
                 params["expires"]=expires
                 params["signature"]=self._getToken(data)
+                # params["signature"]=self.sign(type,url,expires,payload_string,self.key)
+            params["json"]=payload_string
+            if internet:
                 paramsPrint=copy.deepcopy(params)
                 paramsPrint['id']='.....'
                 paramsPrint['signature']='.....'
@@ -1337,7 +1330,7 @@ class CaltopoSession():
                 logging.info(jsonForLog(paramsPrint))
             # send the dict in the request body for POST requests, using the 'data' arg instead of 'params'
             r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
-        elif type=="get": # no need for json in GET; sending null JSON causes downstream error
+        elif type=="GET": # no need for json in GET; sending null JSON causes downstream error
             # logging.info("SENDING GET to '"+url+"':")
             if internet:
                 expires=int(time.time()*1000)+120000 # 2 minutes from current time, in milliseconds
@@ -1360,7 +1353,7 @@ class CaltopoSession():
             # logging.info(json.dumps(paramsPrint,indent=3))
             # logging.info('Prepared request URL:')
             # logging.info(r.request.url)
-        elif type=="delete":
+        elif type=="DELETE":
             if internet:
                 expires=int(time.time()*1000)+120000 # 2 minutes from current time, in milliseconds
                 data="DELETE "+mid+apiUrlEnd+"\n"+str(expires)+"\n"  #last newline needed as placeholder for json

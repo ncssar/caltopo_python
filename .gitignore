@@ -2,3 +2,10 @@ caltopo_python/caltopo_python.py
 caltopo_test.py
 caltopo_python/__pycache__/__init__.cpython-313.pyc
 caltopo_python/__pycache__/caltopo_python.cpython-313.pyc
+map.json
+cred.py
+newmap.py
+noworky.txt
+.gitignore
+works.txt
+__pycache__/cred.cpython-313.pyc
