@@ -794,16 +794,17 @@ class CaltopoSession():
             allAccountFolders=[x for x in allFolders if x['properties']['accountId']==account['id']]
             foldersToProcess=copy.deepcopy(allAccountFolders)
             logging.info(json.dumps(foldersToProcess,indent=3))
-            # TODO: determine when to stop iterating - maybe sorted equality check (in case of more than one orphan, regardless of rotation)
+            # DONE: determine when to stop iterating - maybe sorted equality check (in case of more than one orphan, regardless of rotation)
+            #  --> stop iterating when rotationsSinceFind exceeds length of foldersToProcess
             # TODO: recurse to any level (just does 2 levels now)
             # as long as the length of foldersToProcess keeps decreasing, or the list got rotated, iterate again;
             #  it's OK if a given folder isn't processed on a given pass; that just means
             #  its parent hasn't been processed yet; so keep it in the list, but rotate, so that it
             #  will be searched for on the next iteration; if there is a find, remove it from foldersToProcess
-            keepTrying=True
-            while foldersToProcess and keepTrying:
+            rotationsSinceFind=0
+            while foldersToProcess and rotationsSinceFind<=len(foldersToProcess):
                 ftp=foldersToProcess[0]
-                logging.info(str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
+                # logging.info(str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
                 parentId=ftp['properties']['folderId']
                 if parentId==None: # it's a root folder
                     logging.info(' root')
@@ -813,6 +814,7 @@ class CaltopoSession():
                         'subFolders':[]
                     })
                     foldersToProcess.remove(ftp)
+                    rotationsSinceFind=0
                     continue
                 for f in folders:
                     if f['id']==parentId:
@@ -823,6 +825,7 @@ class CaltopoSession():
                             'subFolders':[]
                         })
                         foldersToProcess.remove(ftp)
+                        rotationsSinceFind=0
                         continue
                     for sf in f['subFolders']:
                         if sf['id']==parentId:
@@ -833,11 +836,12 @@ class CaltopoSession():
                                 'subFolders':[]
                             })
                             foldersToProcess.remove(ftp)
+                            rotationsSinceFind=0
                             continue
                 # not found on this iteration: rotate to end of list
                 foldersToProcess=foldersToProcess[1:]+foldersToProcess[:1]
-                
-            logging.info('orphan folders:'+json.dumps(foldersToProcess))
+                rotationsSinceFind+=1
+            # logging.info('orphan folders:'+json.dumps(foldersToProcess))
             accountDict['folders']=folders
             aaf.append(accountDict)
         # logging.info(json.dumps(aaf,indent=3))
