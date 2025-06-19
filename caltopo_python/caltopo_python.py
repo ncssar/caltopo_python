@@ -153,7 +153,7 @@ class CaltopoSession():
 
         :param domainAndPort: Domain-and-port portion of the URL; defaults to 'localhost:8080'; common values are 'caltopo.com' for the web interface, and 'localhost:8080' (or different hostname or port as needed) for CalTopo Desktop
         :type domainAndPort: str, optional
-        :param mapID: 3-to-7-character map ID, or [NEW] followed by new map specification (see .openMap documentation); omit this argument during initialization to create a 'mapless' session; defaults to None
+        :param mapID: 3-to-7-character map ID, or [NEW] optionally followed by new map specification (see .openMap documentation); omit this argument during initialization to create a 'mapless' session; defaults to None
         :type mapID: str, optional
         :param configpath: Configuration file path (full file name); defaults to None
         :type configpath: str, optional
@@ -241,15 +241,16 @@ class CaltopoSession():
         """Open a map for usage in the current session.
         This is automatically called during session initialization (by _setupSession) if mapID was specified when the session was created, but can be called later from your code if the session was initially 'mapless'.
         
-        If mapID starts with '[NEW]', a new map will be created and opened for use in the current session.  You can follow the [NEW] keyword by the new map's mode and title in the format *[sar:]<title>*
+        If mapID starts with '[NEW]', a new map will be created and opened for use in the current session.  You can follow the [NEW] keyword by the new map's mode and path (team account, folder / sub-folders, and title) in the format *[sar:]<path>*
 
-        - [NEW] - creates a new map with the default title 'newMap'
-        - [NEW]myOtherMap - creates a new map with the title 'myOtherMap'
-        - [NEW]sar:mySARMap - creates a new SAR-mode map with the title 'mySARMap'
+        - [NEW] - creates a new map with the default title 'newMap' in the root folder of the current account
+        - [NEW]myOtherMap - creates a new map with the title 'myOtherMap' in the root folder of the current account
+        - [NEW]sar:mySARMap - creates a new SAR-mode map with the title 'mySARMap' in the root folder of the current account
+        - [NEW]sar:Team Account/mySARMap - creates a new SAR-mode map with the title 'mySARMap' in the root folder of Team Account
+        - [NEW]sar:Some Folder/Some Subfolder/mySARMap - as above, in the specified folder of the current account
+        - [NEW]sar:Team Account/Some Folder/Some Subfolder/mySARMap - as above, in the specified team account and folder
         
         The new map's ID will be stored in the session's .mapID varaiable.
-
-        NOTE: New map creation only works with CalTopo Desktop in this version of the module.  It does not currently work for caltopo.com.
 
         :param mapID: 3-to-7-character Map ID, or '[NEW]' with specification described above; defaults to ''
         :type mapID: str, optional
@@ -271,13 +272,22 @@ class CaltopoSession():
             if len(mapID)>5:
                 newMapTailParse=mapID[5:].split(':')
                 if len(newMapTailParse)>1 and newMapTailParse[1]!='':
-                    title=newMapTailParse[1]
+                    path=newMapTailParse[1]
                     mode=newMapTailParse[0].lower()
                     if mode!='sar':
                         logging.warning('new map specification '+str(mapID)+' did not parse correctly; using mode "cal" for recreation mode')
                         mode='cal'
                 else:
-                    title=newMapTailParse[0]
+                    path=newMapTailParse[0]
+                pathParse=path.split('/')
+                title=pathParse[-1]
+                if len(pathParse)>1:
+                    if pathParse[0] in self.getGroupAccountTitles():
+                        # first token is an account
+                        newMapAccountId=[x['id'] for x in self.groupAccounts if x['properties']['title']==pathParse[0]][0]
+                        pathParse=pathParse[1:]
+                    for folderName in pathParse:
+                        folderId=[x['id'] for x in self.accoundData['features'] if x['properties']['class']=='userFolder' and x['properties']['title']==folderName][0]
             logging.info('about to create a new map with title "'+title+'" and mode "'+mode+'"')
             j={}
             j['properties']={
@@ -740,6 +750,122 @@ class CaltopoSession():
         else:
             return titles[0]
     
+    def getAccountsAndFolders(self,refresh=False) -> list:
+        """Get a list of all of the group accounts for which the current account is a member, and their folders (and subfolders).
+
+        :param refresh: If True, a refresh will be performed before getting the folder data; defaults to False
+        :type refresh: bool, optional
+        :return: List representing the account's folder structure
+        :rtype: list
+        """
+        # return list format:
+        #  [
+        #    {
+        #      'accountTitle':accountTitle,
+        #      'accountId':accountId,
+        #      'folders':[
+        #         {
+        #            'title':folderTitle,
+        #            'id':folderId,
+        #            'subFolders':[
+        #               {
+        #                  'title':folderTitle,
+        #                  'id':folderId,
+        #                  'subFolders:':[
+        #                      ...
+        #               },...
+        #             ]
+        #          },...
+        #       ]
+        #    },...
+        #  ]
+        #  the first account entry represents the user's own data, and will have accountTitle 'Your Data'
+        if refresh or not self.accountData:
+            self.getAccountData()
+        allFolders=[x for x in self.accountData['features'] if x['properties']['class']=='UserFolder']
+        aaf=[]
+        for account in self.personalAccounts+self.groupAccounts:
+            accountDict={}
+            accountDict['accountTitle']=account['properties']['title']
+            accountDict['accountId']=account['id']
+            folders=[]
+            # this might be 'expensive' because it iterates through all folders once per account,
+            #  but that's probably OK - speed is not needed, and no additional http requests are made
+            allAccountFolders=[x for x in allFolders if x['properties']['accountId']==account['id']]
+            foldersToProcess=copy.deepcopy(allAccountFolders)
+            logging.info(json.dumps(foldersToProcess,indent=3))
+            # TODO: determine when to stop iterating - maybe sorted equality check (in case of more than one orphan, regardless of rotation)
+            # TODO: recurse to any level (just does 2 levels now)
+            # as long as the length of foldersToProcess keeps decreasing, or the list got rotated, iterate again;
+            #  it's OK if a given folder isn't processed on a given pass; that just means
+            #  its parent hasn't been processed yet; so keep it in the list, but rotate, so that it
+            #  will be searched for on the next iteration; if there is a find, remove it from foldersToProcess
+            keepTrying=True
+            while foldersToProcess and keepTrying:
+                ftp=foldersToProcess[0]
+                logging.info(str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
+                parentId=ftp['properties']['folderId']
+                if parentId==None: # it's a root folder
+                    logging.info(' root')
+                    folders.append({
+                        'title':ftp['properties']['title'],
+                        'id':ftp['id'],
+                        'subFolders':[]
+                    })
+                    foldersToProcess.remove(ftp)
+                    continue
+                for f in folders:
+                    if f['id']==parentId:
+                        logging.info(' subfolder')
+                        f['subFolders'].append({
+                            'title':ftp['properties']['title'],
+                            'id':ftp['id'],
+                            'subFolders':[]
+                        })
+                        foldersToProcess.remove(ftp)
+                        continue
+                    for sf in f['subFolders']:
+                        if sf['id']==parentId:
+                            logging.info(' subfolder2')
+                            sf['subFolders'].append({
+                                'title':ftp['properties']['title'],
+                                'id':ftp['id'],
+                                'subFolders':[]
+                            })
+                            foldersToProcess.remove(ftp)
+                            continue
+                # not found on this iteration: rotate to end of list
+                foldersToProcess=foldersToProcess[1:]+foldersToProcess[:1]
+                
+            logging.info('orphan folders:'+json.dumps(foldersToProcess))
+            accountDict['folders']=folders
+            aaf.append(accountDict)
+        # logging.info(json.dumps(aaf,indent=3))
+        # return aaf
+
+            # for folder in allAccountFolders:
+            #     folderDict={}
+            #     folderDict['title']=folder['properties']['title']
+            #     folderDict['id']=folder['id']
+            #     # folderDict['folderId']=folder['properties']['folderId']
+            #     # properties.folderId is the ID of any parent folder; if null, this is a root folder.
+            #     #  so, 
+            #     folderDict['subFolders']=[]
+            #     for f in [x for x in allAccountFolders if x['properties']['folderId']==folder['id']]:
+            #         folderDict['subFolders'].append({
+            #             'title':f['properties']['title'],
+            #             'id':f['id']
+            #         })
+            #     folders.append(folderDict)
+            # accountDict['folders']=folders
+            # aaf.append(accountDict)
+        # allFolders=[x for x in self.accountData['features'] if x['properties']['class']=='UserFolder']
+        # ownFolders=[x for x in allFolders if x['properties']['accountId']==self.accountId]
+        # ownRootFolders=[x for x in ownFolders if x['properties']['folderId']==None]
+        # aafDict[rootFolder['id']]=rootFolder['properties']['title']
+        logging.info('accounts and folders:'+json.dumps(aaf,indent=3))
+        return aaf
+
     def getGroupAccountTitles(self,refresh=False) -> list:
         """Get the titles of all of the user's group accounts.
 
