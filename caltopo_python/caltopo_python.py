@@ -784,16 +784,30 @@ class CaltopoSession():
             self.getAccountData()
         allFolders=[x for x in self.accountData['features'] if x['properties']['class']=='UserFolder']
         aaf=[]
+        
+        def checkForOwner(folderInQuestion,foldersToCheck):
+            for folder in foldersToCheck:
+                if folder['id']==folderInQuestion['properties']['folderId']:
+                    folder['subFolders'].append({
+                        'title':folderInQuestion['properties']['title'],
+                        'id':folderInQuestion['id'],
+                        'subFolders':[]                        
+                    })
+                    return True # match at this level
+                if folder['subFolders']:
+                    checkForOwner(folderInQuestion,folder['subFolders']) # recursively walk each subfolder
+            return False # no match after walking all folders
+        
         for account in self.personalAccounts+self.groupAccounts:
             accountDict={}
             accountDict['accountTitle']=account['properties']['title']
             accountDict['accountId']=account['id']
-            folders=[]
+            rootFolders=[]
             # this might be 'expensive' because it iterates through all folders once per account,
             #  but that's probably OK - speed is not needed, and no additional http requests are made
             allAccountFolders=[x for x in allFolders if x['properties']['accountId']==account['id']]
             foldersToProcess=copy.deepcopy(allAccountFolders)
-            logging.info(json.dumps(foldersToProcess,indent=3))
+            # logging.info(json.dumps(foldersToProcess,indent=3))
             # DONE: determine when to stop iterating - maybe sorted equality check (in case of more than one orphan, regardless of rotation)
             #  --> stop iterating when rotationsSinceFind exceeds length of foldersToProcess
             # TODO: recurse to any level (just does 2 levels now)
@@ -807,8 +821,7 @@ class CaltopoSession():
                 # logging.info(str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
                 parentId=ftp['properties']['folderId']
                 if parentId==None: # it's a root folder
-                    logging.info(' root')
-                    folders.append({
+                    rootFolders.append({
                         'title':ftp['properties']['title'],
                         'id':ftp['id'],
                         'subFolders':[]
@@ -816,33 +829,48 @@ class CaltopoSession():
                     foldersToProcess.remove(ftp)
                     rotationsSinceFind=0
                     continue
-                for f in folders:
-                    if f['id']==parentId:
-                        logging.info(' subfolder')
-                        f['subFolders'].append({
-                            'title':ftp['properties']['title'],
-                            'id':ftp['id'],
-                            'subFolders':[]
-                        })
-                        foldersToProcess.remove(ftp)
-                        rotationsSinceFind=0
-                        continue
-                    for sf in f['subFolders']:
-                        if sf['id']==parentId:
-                            logging.info(' subfolder2')
-                            sf['subFolders'].append({
-                                'title':ftp['properties']['title'],
-                                'id':ftp['id'],
-                                'subFolders':[]
-                            })
-                            foldersToProcess.remove(ftp)
-                            rotationsSinceFind=0
-                            continue
+                found=checkForOwner(ftp,rootFolders)
+                if found:
+                    foldersToProcess.remove(ftp)
+                    rotationsSinceFind=0
+                    continue
+                else:
+                    foldersToProcess=foldersToProcess[1:]+foldersToProcess[:1]
+                    rotationsSinceFind+=1
+
+                # for rf in rootFolders:
+                #     folderToCheck=rf
+                #     while folderToCheck['subFolders']:
+
+
+
+
+                    # if rf['id']==parentId:
+                    #     logging.info(' subfolder')
+                    #     rf['subFolders'].append({
+                    #         'title':ftp['properties']['title'],
+                    #         'id':ftp['id'],
+                    #         'subFolders':[]
+                    #     })
+                    #     foldersToProcess.remove(ftp)
+                    #     rotationsSinceFind=0
+                    #     continue
+                    # for sf in rf['subFolders']:
+                    #     if sf['id']==parentId:
+                    #         logging.info(' subfolder2')
+                    #         sf['subFolders'].append({
+                    #             'title':ftp['properties']['title'],
+                    #             'id':ftp['id'],
+                    #             'subFolders':[]
+                    #         })
+                    #         foldersToProcess.remove(ftp)
+                    #         rotationsSinceFind=0
+                    #         continue
                 # not found on this iteration: rotate to end of list
-                foldersToProcess=foldersToProcess[1:]+foldersToProcess[:1]
-                rotationsSinceFind+=1
+                # foldersToProcess=foldersToProcess[1:]+foldersToProcess[:1]
+                # rotationsSinceFind+=1
             # logging.info('orphan folders:'+json.dumps(foldersToProcess))
-            accountDict['folders']=folders
+            accountDict['folders']=rootFolders
             aaf.append(accountDict)
         # logging.info(json.dumps(aaf,indent=3))
         # return aaf
