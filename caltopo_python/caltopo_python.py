@@ -533,10 +533,11 @@ class CaltopoSession():
         """        
         logging.info('Getting account data:')
         fromFileName=False # hardcoded for production; set to a filename for debug
+        # fromFileName='accountData.txt'
         if fromFileName:
             self.accoundData={}
             with open(fromFileName) as j:
-                print('reading account data from file "'+fromFileName+'"')
+                logging.warning('reading account data from file "'+fromFileName+'"')
                 self.accountData=json.load(j)
                 if 'result' in self.accountData.keys():
                     self.accountData=self.accountData['result']
@@ -758,49 +759,36 @@ class CaltopoSession():
         :return: List representing the account's folder structure
         :rtype: list
         """
-        # return list format:
-        #  [
-        #    {
-        #      'accountTitle':accountTitle,
-        #      'accountId':accountId,
-        #      'folders':[
-        #         {
-        #            'title':folderTitle,
-        #            'id':folderId,
-        #            'subFolders':[
-        #               {
-        #                  'title':folderTitle,
-        #                  'id':folderId,
-        #                  'subFolders:':[
-        #                      ...
-        #               },...
-        #             ]
-        #          },...
-        #       ]
-        #    },...
-        #  ]
-        #  the first account entry represents the user's own data, and will have accountTitle 'Your Data'
+
         if refresh or not self.accountData:
             self.getAccountData()
         allFolders=[x for x in self.accountData['features'] if x['properties']['class']=='UserFolder']
         aaf=[]
         
-        def checkForOwner(folderInQuestion,foldersToCheck):
+        # internal recursive function
+        def checkForOwner(folderInQuestion,foldersToCheck,prefix='',level=0):
+            # if level==0:
+                # logging.info(prefix+'checkForOwner: folderInQuestion='+str(folderInQuestion['id'])+':'+folderInQuestion['properties']['title'].rstrip()+': folderId='+str(folderInQuestion['properties']['folderId']))
             for folder in foldersToCheck:
+                # logging.info(prefix+'  '*level+'trying '+str(folder['id'])+':'+folder['title'].rstrip())
                 if folder['id']==folderInQuestion['properties']['folderId']:
                     folder['subFolders'].append({
-                        'title':folderInQuestion['properties']['title'],
+                        'title':folderInQuestion['properties']['title'].rstrip(),
                         'id':folderInQuestion['id'],
                         'subFolders':[]                        
                     })
-                    return True # match at this level
+                    # logging.info(prefix+'  '*level+'  match!')
+                    return folder # match at this level; return the parent
                 if folder['subFolders']:
-                    checkForOwner(folderInQuestion,folder['subFolders']) # recursively walk each subfolder
-            return False # no match after walking all folders
+                    r=checkForOwner(folderInQuestion,folder['subFolders'],prefix,level+1) # recursively walk each subfolder
+                    if r:
+                        return r # recursive return all the way up, when a match is found
+            # logging.info(prefix+' '*level+'  no match at this level...')
+            return False # no match after walking all folders at this level (could be recursive return)
         
         for account in self.personalAccounts+self.groupAccounts:
             accountDict={}
-            accountDict['accountTitle']=account['properties']['title']
+            accountDict['accountTitle']=account['properties']['title'].rstrip()
             accountDict['accountId']=account['id']
             rootFolders=[]
             # this might be 'expensive' because it iterates through all folders once per account,
@@ -816,86 +804,36 @@ class CaltopoSession():
             #  its parent hasn't been processed yet; so keep it in the list, but rotate, so that it
             #  will be searched for on the next iteration; if there is a find, remove it from foldersToProcess
             rotationsSinceFind=0
+            # logging.info('account: '+accountDict['accountTitle'])
             while foldersToProcess and rotationsSinceFind<=len(foldersToProcess):
                 ftp=foldersToProcess[0]
-                # logging.info(str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
+                # logging.info('  '+str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
                 parentId=ftp['properties']['folderId']
                 if parentId==None: # it's a root folder
                     rootFolders.append({
-                        'title':ftp['properties']['title'],
+                        'title':ftp['properties']['title'].rstrip(),
                         'id':ftp['id'],
                         'subFolders':[]
                     })
                     foldersToProcess.remove(ftp)
                     rotationsSinceFind=0
+                    # logging.info('    match (root folder)')
                     continue
-                found=checkForOwner(ftp,rootFolders)
+                found=checkForOwner(ftp,rootFolders,'    ')
                 if found:
                     foldersToProcess.remove(ftp)
                     rotationsSinceFind=0
+                    # logging.info('    match (subfolder of "'+found['title']+'")')
                     continue
                 else:
+                    # logging.info('    not a child of any already-processed folder... rotating...')
                     foldersToProcess=foldersToProcess[1:]+foldersToProcess[:1]
                     rotationsSinceFind+=1
 
-                # for rf in rootFolders:
-                #     folderToCheck=rf
-                #     while folderToCheck['subFolders']:
-
-
-
-
-                    # if rf['id']==parentId:
-                    #     logging.info(' subfolder')
-                    #     rf['subFolders'].append({
-                    #         'title':ftp['properties']['title'],
-                    #         'id':ftp['id'],
-                    #         'subFolders':[]
-                    #     })
-                    #     foldersToProcess.remove(ftp)
-                    #     rotationsSinceFind=0
-                    #     continue
-                    # for sf in rf['subFolders']:
-                    #     if sf['id']==parentId:
-                    #         logging.info(' subfolder2')
-                    #         sf['subFolders'].append({
-                    #             'title':ftp['properties']['title'],
-                    #             'id':ftp['id'],
-                    #             'subFolders':[]
-                    #         })
-                    #         foldersToProcess.remove(ftp)
-                    #         rotationsSinceFind=0
-                    #         continue
-                # not found on this iteration: rotate to end of list
-                # foldersToProcess=foldersToProcess[1:]+foldersToProcess[:1]
-                # rotationsSinceFind+=1
-            # logging.info('orphan folders:'+json.dumps(foldersToProcess))
+            if foldersToProcess: # there are orphans
+                logging.warning('    While processing folders for account "'+accountDict['accountTitle']+'": no matches in the past '+str(rotationsSinceFind)+' rotations; giving up; orphan folders:'+json.dumps([x['properties']['title'] for x in foldersToProcess]))
             accountDict['folders']=rootFolders
             aaf.append(accountDict)
-        # logging.info(json.dumps(aaf,indent=3))
-        # return aaf
-
-            # for folder in allAccountFolders:
-            #     folderDict={}
-            #     folderDict['title']=folder['properties']['title']
-            #     folderDict['id']=folder['id']
-            #     # folderDict['folderId']=folder['properties']['folderId']
-            #     # properties.folderId is the ID of any parent folder; if null, this is a root folder.
-            #     #  so, 
-            #     folderDict['subFolders']=[]
-            #     for f in [x for x in allAccountFolders if x['properties']['folderId']==folder['id']]:
-            #         folderDict['subFolders'].append({
-            #             'title':f['properties']['title'],
-            #             'id':f['id']
-            #         })
-            #     folders.append(folderDict)
-            # accountDict['folders']=folders
-            # aaf.append(accountDict)
-        # allFolders=[x for x in self.accountData['features'] if x['properties']['class']=='UserFolder']
-        # ownFolders=[x for x in allFolders if x['properties']['accountId']==self.accountId]
-        # ownRootFolders=[x for x in ownFolders if x['properties']['folderId']==None]
-        # aafDict[rootFolder['id']]=rootFolder['properties']['title']
-        logging.info('accounts and folders:'+json.dumps(aaf,indent=3))
         return aaf
 
     def getGroupAccountTitles(self,refresh=False) -> list:
