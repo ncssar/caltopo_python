@@ -241,14 +241,21 @@ class CaltopoSession():
         """Open a map for usage in the current session.
         This is automatically called during session initialization (by _setupSession) if mapID was specified when the session was created, but can be called later from your code if the session was initially 'mapless'.
         
-        If mapID starts with '[NEW]', a new map will be created and opened for use in the current session.  You can follow the [NEW] keyword by the new map's mode and path (team account, folder / sub-folders, and title) in the format *[sar:]<path>*
+        If mapID starts with '[NEW]', a new map will be created and opened for use in the current session.
+        
+        You can follow the [NEW] keyword by the new map's team account name and path (folder / sub-folders and title) in the format *[sar:][<teamAccountName>.]<path>*
 
+        - if specified, follow the map mode ('sar') by a colon (:)
+        - if specified, follow the team account name by a period (.)
+        - in path, nested folder levels are separated by a forward slash (/)
+        - the map name is the last element of the path, i.e. might be preceded by folder name/s and slash/es
+        
         - [NEW] - creates a new map with the default title 'newMap' in the root folder of the current account
         - [NEW]myOtherMap - creates a new map with the title 'myOtherMap' in the root folder of the current account
         - [NEW]sar:mySARMap - creates a new SAR-mode map with the title 'mySARMap' in the root folder of the current account
-        - [NEW]sar:Team Account/mySARMap - creates a new SAR-mode map with the title 'mySARMap' in the root folder of Team Account
+        - [NEW]sar:Team Account.mySARMap - creates a new SAR-mode map with the title 'mySARMap' in the root folder of Team Account
         - [NEW]sar:Some Folder/Some Subfolder/mySARMap - as above, in the specified folder of the current account
-        - [NEW]sar:Team Account/Some Folder/Some Subfolder/mySARMap - as above, in the specified team account and folder
+        - [NEW]sar:Team Account.Some Folder/Some Subfolder/mySARMap - as above, in the specified team account and folder
         
         The new map's ID will be stored in the session's .mapID varaiable.
 
@@ -268,26 +275,45 @@ class CaltopoSession():
         # 1. send a POST request to /map - payload (tested on CTD 4225; won't work with <4221) =
         if mapID.startswith('[NEW]'):
             title='newMap'
+            newMapAccountId=None # create in the user's own account by default
+            newMapFolderId=None # create in account root by default
             mode='cal'
-            if len(mapID)>5:
-                newMapTailParse=mapID[5:].split(':')
-                if len(newMapTailParse)>1 and newMapTailParse[1]!='':
-                    path=newMapTailParse[1]
-                    mode=newMapTailParse[0].lower()
+            aaf=self.getAccountsAndFolders()
+            if len(mapID)>5: # stuff is specified after [NEW]
+                newMapTail=mapID[5:]
+                newMapTailColonParse=newMapTail.split(':')
+                if len(newMapTailColonParse)>1 and newMapTailColonParse[1]!='':
+                    [mode,accountAndPath]=newMapTailColonParse
+                    mode=mode.lower()
                     if mode!='sar':
                         logging.warning('new map specification '+str(mapID)+' did not parse correctly; using mode "cal" for recreation mode')
                         mode='cal'
                 else:
-                    path=newMapTailParse[0]
+                    accountAndPath=newMapTailColonParse[0]
+                accountAndPathParse=accountAndPath.split('.')
+                if len(accountAndPathParse)>1 and accountAndPathParse[1]!='':
+                    [account,path]=accountAndPathParse
+                    if account in self.getGroupAccountTitles():
+                        newMapAccountId=[x['id'] for x in self.groupAccounts if x['properties']['title']==account][0]
+                    else:
+                        logging.warning('new map specification '+str(mapID)+' calls for account "'+str(account)+'" which does not exist in the current user\'s account list.  Will create map in the root of the user\'s own account.')
+                        newMapAccountId=aaf[0]['id']
+                else:
+                    path=accountAndPathParse[0]
                 pathParse=path.split('/')
                 title=pathParse[-1]
                 if len(pathParse)>1:
-                    if pathParse[0] in self.getGroupAccountTitles():
-                        # first token is an account
-                        newMapAccountId=[x['id'] for x in self.groupAccounts if x['properties']['title']==pathParse[0]][0]
-                        pathParse=pathParse[1:]
-                    for folderName in pathParse:
-                        folderId=[x['id'] for x in self.accoundData['features'] if x['properties']['class']=='userFolder' and x['properties']['title']==folderName][0]
+                    aafAccount=[x for x in aaf if x['id']==newMapAccountId][0]
+                    rootFolderTitle=pathParse[0]
+                    # rootFolder=
+                    # if len(pathParse)>2:
+                    #     for subFolderLevel in pathParse[1:-1]:
+
+
+                else:
+                    title=pathParse[0]
+
+                        # folderId=[x['id'] for x in self.accountData['features'] if x['properties']['class']=='userFolder' and x['properties']['title']==folderName][0]
             logging.info('about to create a new map with title "'+title+'" and mode "'+mode+'"')
             j={}
             j['properties']={
@@ -764,7 +790,7 @@ class CaltopoSession():
             self.getAccountData()
         allFolders=[x for x in self.accountData['features'] if x['properties']['class']=='UserFolder']
         aaf=[]
-        
+
         # internal recursive function
         def checkForOwner(folderInQuestion,foldersToCheck,prefix='',level=0):
             # if level==0:
@@ -772,9 +798,11 @@ class CaltopoSession():
             for folder in foldersToCheck:
                 # logging.info(prefix+'  '*level+'trying '+str(folder['id'])+':'+folder['title'].rstrip())
                 if folder['id']==folderInQuestion['properties']['folderId']:
+                    title=folderInQuestion['properties']['title'].rstrip()
                     folder['subFolders'].append({
-                        'title':folderInQuestion['properties']['title'].rstrip(),
+                        'title':title,
                         'id':folderInQuestion['id'],
+                        'path':folder['path']+'/'+title,
                         'subFolders':[]                        
                     })
                     # logging.info(prefix+'  '*level+'  match!')
@@ -791,6 +819,7 @@ class CaltopoSession():
             accountDict['accountTitle']=account['properties']['title'].rstrip()
             accountDict['accountId']=account['id']
             rootFolders=[]
+            pathsAndIds=[]
             # this might be 'expensive' because it iterates through all folders once per account,
             #  but that's probably OK - speed is not needed, and no additional http requests are made
             allAccountFolders=[x for x in allFolders if x['properties']['accountId']==account['id']]
@@ -807,22 +836,27 @@ class CaltopoSession():
             # logging.info('account: '+accountDict['accountTitle'])
             while foldersToProcess and rotationsSinceFind<=len(foldersToProcess):
                 ftp=foldersToProcess[0]
-                # logging.info('  '+str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
+                title=ftp['properties']['title'].rstrip()
                 parentId=ftp['properties']['folderId']
+                id=ftp['id']
+                # logging.info('  '+str(len(foldersToProcess))+' more; processing folder:'+ftp['id']+':'+ftp['properties']['title'])
                 if parentId==None: # it's a root folder
                     rootFolders.append({
-                        'title':ftp['properties']['title'].rstrip(),
-                        'id':ftp['id'],
+                        'title':title,
+                        'id':id,
+                        'path':title,
                         'subFolders':[]
                     })
                     foldersToProcess.remove(ftp)
                     rotationsSinceFind=0
+                    pathsAndIds.append([title,id])
                     # logging.info('    match (root folder)')
                     continue
                 found=checkForOwner(ftp,rootFolders,'    ')
                 if found:
                     foldersToProcess.remove(ftp)
                     rotationsSinceFind=0
+                    pathsAndIds.append([found['path']+'/'+title,id])
                     # logging.info('    match (subfolder of "'+found['title']+'")')
                     continue
                 else:
@@ -833,6 +867,7 @@ class CaltopoSession():
             if foldersToProcess: # there are orphans
                 logging.warning('    While processing folders for account "'+accountDict['accountTitle']+'": no matches in the past '+str(rotationsSinceFind)+' rotations; giving up; orphan folders:'+json.dumps([x['properties']['title'] for x in foldersToProcess]))
             accountDict['folders']=rootFolders
+            accountDict['pathsAndIds']=pathsAndIds
             aaf.append(accountDict)
         return aaf
 
