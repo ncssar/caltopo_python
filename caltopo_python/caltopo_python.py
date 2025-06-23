@@ -237,30 +237,26 @@ class CaltopoSession():
         else:
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
-    def openMap(self,mapID: str='') -> bool:
+    def openMap(self,mapID: str='', newTitle: str='newMap', newTeamAccount: str='', newPath: str='', newMode: str='cal', newSharing: str='SECRET') -> bool:
         """Open a map for usage in the current session.
         This is automatically called during session initialization (by _setupSession) if mapID was specified when the session was created, but can be called later from your code if the session was initially 'mapless'.
         
-        If mapID starts with '[NEW]', a new map will be created and opened for use in the current session.
-        
-        You can follow the [NEW] keyword by the new map's team account name and path (folder / sub-folders and title) in the format *[sar:][<teamAccountName>.]<path>*
-
-        - if specified, follow the map mode ('sar') by a colon (:)
-        - if specified, follow the team account name by a period (.)
-        - in path, nested folder levels are separated by a forward slash (/)
-        - the map name is the last element of the path, i.e. might be preceded by folder name/s and slash/es
-        
-        - [NEW] - creates a new map with the default title 'newMap' in the root folder of the current account
-        - [NEW]myOtherMap - creates a new map with the title 'myOtherMap' in the root folder of the current account
-        - [NEW]sar:mySARMap - creates a new SAR-mode map with the title 'mySARMap' in the root folder of the current account
-        - [NEW]sar:Team Account.mySARMap - creates a new SAR-mode map with the title 'mySARMap' in the root folder of Team Account
-        - [NEW]sar:Some Folder/Some Subfolder/mySARMap - as above, in the specified folder of the current account
-        - [NEW]sar:Team Account.Some Folder/Some Subfolder/mySARMap - as above, in the specified team account and folder
+        If mapID is '[NEW]', a new map will be created and opened for use in the current session.  The remaining arguments are only relevant if mapID is '[NEW]'.
         
         The new map's ID will be stored in the session's .mapID varaiable.
 
-        :param mapID: 3-to-7-character Map ID, or '[NEW]' with specification described above; defaults to ''
+        :param mapID: 3-to-7-character Map ID, or '[NEW]' as above; defaults to ''
         :type mapID: str, optional
+        :param newTitle: title of newly created map; defaults to newMap
+        :type newTitle: str, optional
+        :param newTeamAccount: name of an existing team account that the user has access to; defaults to '' in which case the map will be created in the user's own account
+        :type newTeamAccount: str, optional
+        :param newPath: folder path of newly created map; this is a case-sensitive slash-delimited folder path, and must exactly match an existing folder; defaults to '' in which case the map will be created in the root of the account
+        :type newPath: str, optional
+        :param newMode: map mode of the newly created map; defaults to 'cal' for recreation mode; the only other allowed value is 'sar'
+        :type newMode: str, optional
+        :param newSharing: sharing mode of the the newly created map; defaults to 'SECRET'; other allowed values are 'PRIVATE', 'URL', or 'PUBLIC'; see CalTopo documentaiton for details
+        :type newSharing: str, optional
         :return: True if map was opened successfully; False otherwise.
         :rtype: bool
         """
@@ -272,56 +268,48 @@ class CaltopoSession():
             raise CTSException
         self.mapID=mapID
         # new map requested
-        # 1. send a POST request to /map - payload (tested on CTD 4225; won't work with <4221) =
         if mapID.startswith('[NEW]'):
-            title='newMap'
-            newMapAccountId=None # create in the user's own account by default
-            newMapFolderId=None # create in account root by default
-            mode='cal'
             aaf=self.getAccountsAndFolders()
-            if len(mapID)>5: # stuff is specified after [NEW]
-                newMapTail=mapID[5:]
-                newMapTailColonParse=newMapTail.split(':')
-                if len(newMapTailColonParse)>1 and newMapTailColonParse[1]!='':
-                    [mode,accountAndPath]=newMapTailColonParse
-                    mode=mode.lower()
-                    if mode!='sar':
-                        logging.warning('new map specification '+str(mapID)+' did not parse correctly; using mode "cal" for recreation mode')
-                        mode='cal'
+            newMapAccount=aaf[0] # user's account by default
+            if newTeamAccount:
+                if newTeamAccount in self.getGroupAccountTitles():
+                    newMapAccount=[x for x in aaf if x['accountTitle']==newTeamAccount][0]
                 else:
-                    accountAndPath=newMapTailColonParse[0]
-                accountAndPathParse=accountAndPath.split('.')
-                if len(accountAndPathParse)>1 and accountAndPathParse[1]!='':
-                    [account,path]=accountAndPathParse
-                    if account in self.getGroupAccountTitles():
-                        newMapAccountId=[x['id'] for x in self.groupAccounts if x['properties']['title']==account][0]
-                    else:
-                        logging.warning('new map specification '+str(mapID)+' calls for account "'+str(account)+'" which does not exist in the current user\'s account list.  Will create map in the root of the user\'s own account.')
-                        newMapAccountId=aaf[0]['id']
-                else:
-                    path=accountAndPathParse[0]
-                pathParse=path.split('/')
-                title=pathParse[-1]
-                if len(pathParse)>1:
-                    aafAccount=[x for x in aaf if x['id']==newMapAccountId][0]
-                    rootFolderTitle=pathParse[0]
-                    # rootFolder=
-                    # if len(pathParse)>2:
-                    #     for subFolderLevel in pathParse[1:-1]:
-
-
-                else:
-                    title=pathParse[0]
-
-                        # folderId=[x['id'] for x in self.accountData['features'] if x['properties']['class']=='userFolder' and x['properties']['title']==folderName][0]
-            logging.info('about to create a new map with title "'+title+'" and mode "'+mode+'"')
+                    logging.warning('new map team account '+str(newTeamAccount)+' does not exist, or is not accessible by the current user; the new map will be created in the current user\'s account.')
+                    newTeamAccount=''
+                    newPath=''
+            validPaths=[x[0] for x in newMapAccount['pathsAndIds']]
+            if newPath and newPath not in validPaths:
+                logging.warning('new map path '+str(newPath)+' was not found in the list of valid folder paths of the specified account; the new map will be created in the root of the specified account.')
+                logging.warning('  valid paths:')
+                for p in validPaths:
+                    logging.warning('    '+str(p))
+                newPath=''
+            if newMode not in ['cal','sar']:
+                logging.warning('new map mode '+str(newMode)+' is not in the valid list of map modes ("cal" or "sar"); using mode "cal" for recreation mode.')
+                newMode='cal'
+            if newSharing not in ['PRIVATE','SECRET','URL','PUBLIC']:
+                logging.warning('new map sharing mode '+str(newSharing)+' is not in the valid list of sharing modes (PRIVATE, SECRET, URL, or PUBLIC).  Using "SECRET" for the new map.')
+                newSharing='SECRET'
+            logLine='creating a new map with title "'+newTitle+'", map mode "'+newMode+'", and sharing mode "'+newSharing+'"'
+            if newPath:
+                logLine+=' in folder "'+newPath+'"'
+            else:
+                logLine+=' in the root'
+            if newTeamAccount:
+                logLine+=' of team account "'+newTeamAccount+'"...'
+            else:
+                logLine+=' of the user\'s account...'
+            logging.info(logLine)
             j={}
             j['properties']={
-                'title':title,
-                'mode':mode, # 'cal' for recreation, 'sar' for SAR
+                'title':newTitle,
+                'mode':newMode, # 'cal' for recreation, 'sar' for SAR
                 'mapConfig':{'activeLayers':[['mbt',1]]},
-                'sharing':'SECRET'
+                'sharing':newSharing
             }
+            if newPath:
+                j['properties']['folderId']=[x[1] for x in newMapAccount['pathsAndIds'] if x[0]==newPath][0]
             # At least one feature must exist to set the 'updated' field of the map;
             #  otherwise it always shows up at the bottom of the map list when sorted
             #  chronologically.  Definitely best to have it show up adjacent to the
@@ -344,7 +332,7 @@ class CaltopoSession():
             }
             # logging.info('dap='+str(self.domainAndPort))
             # logging.info('payload='+str(json.dumps(j,indent=3)))
-            r=self._sendRequest('post','[NEW]',j,domainAndPort=self.domainAndPort)
+            r=self._sendRequest('post','[NEW]',j,domainAndPort=self.domainAndPort,accountId=newMapAccount['accountId'])
             if r:
                 self.mapID=r.rstrip('/').split('/')[-1]
                 self.s=requests.session()
@@ -1346,7 +1334,7 @@ class CaltopoSession():
             # logging.info('POINTS just before return from _validatePoints:'+str(rval))
         return rval
 
-    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str=''):
+    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str='',accountId: str=''):
         """Send HTTP request to the server.
 
         :param type: HTTP request action verb; currently, the only acceptable values are 'GET', 'POST', or 'DELETE'
@@ -1367,6 +1355,8 @@ class CaltopoSession():
         :type timeout: int, optional
         :param domainAndPort: Domain and port to send the request to; if not specified here, uses the value of .domainAndPort; defaults to ''
         :type domainAndPort: str, optional
+        :param accountId: account ID if the request should be made in regards to a different team account that the user has access to, such as new map creation in a team account; defaults to ''
+        :type accountId: str, optional
         :return: various, depending on request details: \n
           - False for any error or failure
           - Entire response json structure (dict) if returnJson is 'ALL'
@@ -1419,7 +1409,7 @@ class CaltopoSession():
             return False
         prefix='http://'
         # set a flag: is this an internet request?
-        accountId=self.accountId
+        accountId=accountId or self.accountId
         internet=domainAndPort.lower() in ['sartopo.com','caltopo.com']
         if internet:
             if self.accountIdInternet:
@@ -1457,8 +1447,8 @@ class CaltopoSession():
             # logging.info("SENDING POST to '"+url+"':")
             # logging.info(json.dumps(paramsPrint,indent=3))
             # don't print the entire PDF generation request - upstream code can print a PDF data summary
-            if 'PDFLink' not in url:
-                logging.info(jsonForLog(paramsPrint))
+            # if 'PDFLink' not in url:
+            #     logging.info(jsonForLog(paramsPrint))
             # send the dict in the request body for POST requests, using the 'data' arg instead of 'params'
             r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
         elif type=="GET": # no need for json in GET; sending null JSON causes downstream error
@@ -1497,7 +1487,7 @@ class CaltopoSession():
                 paramsPrint['signature']='.....'
             else:
                 paramsPrint=params
-            logging.info("SENDING DELETE to '"+url+"'")
+            # logging.info("SENDING DELETE to '"+url+"'")
             # logging.info(json.dumps(paramsPrint,indent=3))
             # logging.info("Key:"+str(self.key))
             r=self.s.delete(url,params=params,timeout=timeout,proxies=self.proxyDict)   ## use params for query vs data for body data
