@@ -92,6 +92,14 @@
 #  NOTE : is this block-and-queue necessary?  Since the http requests
 #  and responses should be able to synchronize themselves, maybe it's not
 #  needed here?
+#
+#  NOTE : this means there are two different types of queues involved:
+#   1 - dataQueue - populated by the add... functions with argument queue=True;
+#      items in this queue are actual json structures (dicts), but they
+#      aren't saved to the map until .flush() is called
+#   2 - requestQueue - as described in the threading comments above; the actual
+#      http request is held in this queue until the requestThread worker determines
+#      that it's time to send (using requestEvent, holdRequests, etc.)
 # 
 
 import hmac
@@ -108,6 +116,7 @@ import copy
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import functools
+import queue
 
 # import objgraph
 # import psutil
@@ -202,7 +211,8 @@ class CaltopoSession():
         #  signed requests for caltopo.com
         self.configpath=configpath
         self.account=account
-        self.queue={}
+        self.dataQueue={}
+        self.requestQueue=queue.Queue()
         self.mapData={'ids':{},'state':{'features':[]}}
         self.id=id
         self.key=key
@@ -227,6 +237,10 @@ class CaltopoSession():
         self.caseSensitiveComparisons=caseSensitiveComparisons
         self.validatePoints=validatePoints
         self.accountData=None
+        self.holdRequests=False
+        self.requestEvent=threading.Event()
+        self.requestThread=threading.Thread(target=self.requestWorker,args=(self.requestEvent,),daemon=True)
+        self.requestThread.start()
         # call _setupSession even if this is a mapless session, to read the config file, setup fidddler proxy, get userdata/cookies, etc.
         if not self._setupSession():
             raise CTSException
@@ -236,6 +250,27 @@ class CaltopoSession():
                 raise CTSException
         else:
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
+
+    def requestWorker(self,e):
+        while not self.holdRequests:
+            logging.info('requestWorker: waiting for event...')
+            e.wait()
+            logging.info('  requestWorker: event received, processing requestQueue...')
+            e.clear()
+            qr=self.requestQueue.get()
+            logging.info('  queued request:'+json.dumps(qr,indent=3))
+            if qr['method']=='POST':
+                logging.info('    processing POST...')
+                r=self.s.post(
+                    qr.get('url'),
+                    data=qr.get('data'),
+                    timeout=qr.get('timeout'),
+                    proxies=qr.get('proxies'),
+                    allow_redirects=qr.get('allow_redirects')
+                )
+                rv=self.handleResponse(r)
+                logging.info('rv:'+json.dumps(rv,indent=3))
+            logging.info('  requestWorker: request processing complete...')
 
     def openMap(self,mapID: str='', newTitle: str='newMap', newTeamAccount: str='', newPath: str='', newMode: str='cal', newSharing: str='SECRET') -> bool:
         """Open a map for usage in the current session.
@@ -1450,7 +1485,17 @@ class CaltopoSession():
             # if 'PDFLink' not in url:
             #     logging.info(jsonForLog(paramsPrint))
             # send the dict in the request body for POST requests, using the 'data' arg instead of 'params'
-            r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
+            # r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
+            requestQueueEntry={
+                'method':'POST',
+                'url':url,
+                'data':params,
+                'timeout':timeout,
+                'proxies':self.proxyDict,
+                'allow_redirects':False
+            }
+            self.requestQueue.put(requestQueueEntry)
+
         elif type=="GET": # no need for json in GET; sending null JSON causes downstream error
             # logging.info("SENDING GET to '"+url+"':")
             if internet:
@@ -1497,7 +1542,11 @@ class CaltopoSession():
             logging.error("sendRequest: Unrecognized request type:"+str(type))
             self.syncPause=False
             return False
+        if type!='POST':
+            return self.handleResponse(r,newMap,returnJson)
 
+    def handleResponse(self,r,newMap=False,returnJson=''):
+        logging.info(' inside handleResponse...')
         if r.status_code!=200:
             logging.info("response code = "+str(r.status_code))
 
@@ -1610,7 +1659,7 @@ class CaltopoSession():
             visible=True,
             labelVisible=True,
             timeout=0,
-            queue=False):
+            dataQueue=False):
         """Add a folder to the current map.
 
         :param label: Name of the folder; defaults to "New Folder"
@@ -1621,9 +1670,9 @@ class CaltopoSession():
         :type label: bool, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param queue: If True, the folder creation will be enqueued / deferred until a call to .flush; defaults to False
-        :type queue: bool, optional
-        :return: ID of the created folder, or 0 if queued; False if there was a failure
+        :param dataQueue: If True, the folder creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created folder, or 0 if dataQueued; False if there was a failure
         """                      
         if not self.mapID or self.apiVersion<0:
             logging.error('addFolder request invalid: this caltopo session is not associated with a map.')
@@ -1633,8 +1682,8 @@ class CaltopoSession():
         j['properties']['title']=label
         j['properties']['visible']=visible
         j['properties']['labelVisible']=labelVisible
-        if queue:
-            self.queue.setdefault('folder',[]).append(j)
+        if dataQueue:
+            self.dataQueue.setdefault('folder',[]).append(j)
             return 0
         else:
             # return self._sendRequest("post","folder",j,returnJson="ID")
@@ -1662,7 +1711,7 @@ class CaltopoSession():
             update=0,
             size=1,
             timeout=0,
-            queue=False):
+            dataQueue=False):
         """Add a marker to the current map.
 
         :param lat: Latitude of the marker, in decimal degrees; positive values indicate the northern hemisphere
@@ -1688,9 +1737,9 @@ class CaltopoSession():
         :type size: int, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param queue: If True, the marker creation will be enqueued / deferred until a call to .flush; defaults to False
-        :type queue: bool, optional
-        :return: ID of the created marker, or 0 if queued; False if there was a failure
+        :param dataQueue: If True, the marker creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created marker, or 0 if dataQueued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addMarker request invalid: this caltopo session is not associated with a map.')
@@ -1717,13 +1766,14 @@ class CaltopoSession():
         if existingId is not None:
             j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
-        if queue:
-            self.queue.setdefault('Marker',[]).append(j)
+        if dataQueue:
+            self.dataQueue.setdefault('Marker',[]).append(j)
             return 0
         else:
             # return self._sendRequest('post','marker',j,id=existingId,returnJson='ID')
             # add to .mapData immediately
             rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout)
+            self.requestEvent.set()
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
@@ -1744,7 +1794,7 @@ class CaltopoSession():
             folderId=None,
             existingId=None,
             timeout=0,
-            queue=False):
+            dataQueue=False):
         """Add a line to the current map.\n
         (See .addLineAssignment to add an assignment feature instead.)
 
@@ -1767,9 +1817,9 @@ class CaltopoSession():
         :type existingId: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param queue: If True, the line creation will be enqueued / deferred until a call to .flush; defaults to False
-        :type queue: bool, optional
-        :return: ID of the created line, or 0 if queued; False if there was a failure
+        :param dataQueue: If True, the line creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created line, or 0 if dataQueued; False if there was a failure
         """           
         if not self.mapID or self.apiVersion<0:
             logging.error('addLine request invalid: this caltopo session is not associated with a map.')
@@ -1792,8 +1842,8 @@ class CaltopoSession():
         if existingId is not None:
             j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
-        if queue:
-            self.queue.setdefault('Shape',[]).append(j)
+        if dataQueue:
+            self.dataQueue.setdefault('Shape',[]).append(j)
             return 0
         else:
             # return self._sendRequest("post","Shape",j,id=existingId,returnJson="ID",timeout=timeout)
@@ -1820,7 +1870,7 @@ class CaltopoSession():
             fill='#FF0000',
             existingId=None,
             timeout=0,
-            queue=False):
+            dataQueue=False):
         """Add a polygon to the current map.\n
         (See .addAreaAssignment to add an assignment feature instead.)
 
@@ -1845,9 +1895,9 @@ class CaltopoSession():
         :param existingId: ID of an existing polygon to edit using this method; defaults to None
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param queue: If True, the polygon creation will be enqueued / deferred until a call to .flush; defaults to False
-        :type queue: bool, optional
-        :return: ID of the created polygon, or 0 if queued; False if there was a failure
+        :param dataQueue: If True, the polygon creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created polygon, or 0 if dataQueued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addPolygon request invalid: this caltopo session is not associated with a map.')
@@ -1871,8 +1921,8 @@ class CaltopoSession():
         if existingId is not None:
             j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
-        if queue:
-            self.queue.setdefault('Shape',[]).append(j)
+        if dataQueue:
+            self.dataQueue.setdefault('Shape',[]).append(j)
             return 0
         else:
             # return self._sendRequest('post','Shape',j,id=existingId,returnJson='ID')
@@ -1895,7 +1945,7 @@ class CaltopoSession():
             fillOpacity=0.1,
             existingId=None,
             timeout=None,
-            queue=False):
+            dataQueue=False):
         """Add an Operational Period to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
@@ -1913,9 +1963,9 @@ class CaltopoSession():
         :type existingId: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param queue: If True, the operational period creation will be enqueued / deferred until a call to .flush; defaults to False
-        :type queue: bool, optional
-        :return: ID of the created operational period, or 0 if queued; False if there was a failure
+        :param dataQueue: If True, the operational period creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created operational period, or 0 if dataQueued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addOperationalPeriod request invalid: this caltopo session is not associated with a map.')
@@ -1933,8 +1983,8 @@ class CaltopoSession():
         #     j['id']=existingId
         j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
-        if queue:
-            self.queue.setdefault('OperationalPeriod',[]).append(j)
+        if dataQueue:
+            self.dataQueue.setdefault('OperationalPeriod',[]).append(j)
             return 0
         else:
             # return self.sendRequest('post','marker',j,id=existingId,returnJson='ID')
@@ -1971,7 +2021,7 @@ class CaltopoSession():
             status='DRAFT',
             existingId=None,
             timeout=0,
-            queue=False):
+            dataQueue=False):
         """Add a Line Assignment to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
@@ -2017,9 +2067,9 @@ class CaltopoSession():
         :type existingId: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param queue: If True, the line assignment creation will be enqueued / deferred until a call to .flush; defaults to False
-        :type queue: bool, optional
-        :return: ID of the created line assignment, or 0 if queued; False if there was a failure
+        :param dataQueue: If True, the line assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created line assignment, or 0 if dataQueued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addLineAssignment request invalid: this caltopo session is not associated with a map.')
@@ -2056,8 +2106,8 @@ class CaltopoSession():
         if existingId is not None:
             j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
-        if queue:
-            self.queue.setdefault('Assignment',[]).append(j)
+        if dataQueue:
+            self.dataQueue.setdefault('Assignment',[]).append(j)
             return 0
         else:
             return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout)
@@ -2105,7 +2155,7 @@ class CaltopoSession():
             status='DRAFT',
             existingId=None,
             timeout=0,
-            queue=False):
+            dataQueue=False):
         """Add an Area Assignment to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
@@ -2152,9 +2202,9 @@ class CaltopoSession():
         :type existingId: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param queue: If True, the area assignment creation will be enqueued / deferred until a call to .flush; defaults to False
-        :type queue: bool, optional
-        :return: ID of the created area assignment, or 0 if queued; False if there was a failure
+        :param dataQueue: If True, the area assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created area assignment, or 0 if dataQueued; False if there was a failure
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addAreaAssignment request invalid: this caltopo session is not associated with a map.')
@@ -2191,21 +2241,21 @@ class CaltopoSession():
         if existingId is not None:
             j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
-        if queue:
-            self.queue.setdefault('Assignment',[]).append(j)
+        if dataQueue:
+            self.dataQueue.setdefault('Assignment',[]).append(j)
             return 0
         else:
             return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout)
 
     def flush(self,timeout=20):
-        """Saves any queued (deferred) request data to the hosted map.\n
-        Any of the feature creation methods can be called with queue=True to queue (defer) the creation until this method is called.
+        """Saves any dataQueued (deferred) request data to the hosted map.\n
+        Any of the feature creation methods can be called with dataQueue=True to dataQueue (defer) the creation until this method is called.
 
         :param timeout: Maximum allowable duration for the save request, in seconds; defaults to 20
         :type timeout: int, optional
         """        
-        self._sendRequest('post','api/v0/map/[MAPID]/save',self.queue,timeout=timeout)
-        self.queue={}
+        self._sendRequest('post','api/v0/map/[MAPID]/save',self.dataQueue,timeout=timeout)
+        self.dataQueue={}
 
     # def center(self,lat,lon,z):
     #     .
