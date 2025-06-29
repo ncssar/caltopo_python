@@ -239,7 +239,7 @@ class CaltopoSession():
         self.accountData=None
         self.holdRequests=False
         self.requestEvent=threading.Event()
-        self.requestThread=threading.Thread(target=self.requestWorker,args=(self.requestEvent,),daemon=True)
+        self.requestThread=threading.Thread(target=self.requestWorker,args=(self.requestEvent,))
         self.requestThread.start()
         # call _setupSession even if this is a mapless session, to read the config file, setup fidddler proxy, get userdata/cookies, etc.
         if not self._setupSession():
@@ -252,7 +252,7 @@ class CaltopoSession():
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
     def requestWorker(self,e):
-        while not self.holdRequests:
+        while threading.main_thread().is_alive() and not self.holdRequests:
             logging.info('requestWorker: waiting for event...')
             e.wait()
             logging.info('  requestWorker: event received, processing requestQueue...')
