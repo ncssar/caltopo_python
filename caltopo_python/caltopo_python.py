@@ -262,29 +262,36 @@ class CaltopoSession():
                 qr=self.requestQueue.get()
                 logging.info('  queued request:'+json.dumps(qr,indent=3))
                 keepTrying=True
+                r=None
                 while keepTrying:
                     if qr['method']=='POST':
                         logging.info('    processing POST...')
-                        r=self.s.post(
-                            qr.get('url'),
-                            data=qr.get('data'),
-                            timeout=qr.get('timeout'),
-                            proxies=qr.get('proxies'),
-                            allow_redirects=qr.get('allow_redirects')
-                        )
+                        try:
+                            r=self.s.post(
+                                qr.get('url'),
+                                data=qr.get('data'),
+                                timeout=qr.get('timeout'),
+                                proxies=qr.get('proxies'),
+                                allow_redirects=qr.get('allow_redirects')
+                            )
+                        except:
+                            pass
                     elif qr['menthod']=='GET':
                         logging.info('    processing GET...')
-                        r=self.s.get(
-                            qr.get('url'),
-                            params=qr.get('params'),
-                            timeout=qr.get('timeout'),
-                            proxies=qr.get('proxies'),
-                            allow_redirects=qr.get('allow_redirects')
-                        )
+                        try:
+                            r=self.s.get(
+                                qr.get('url'),
+                                params=qr.get('params'),
+                                timeout=qr.get('timeout'),
+                                proxies=qr.get('proxies'),
+                                allow_redirects=qr.get('allow_redirects')
+                            )
+                        except:
+                            pass
                     else:
                         logging.info('    unknown queued request: '+json.dumps(qr,indent=3))
                         continue
-                    if r.status_code==200:
+                    if r and r.status_code==200:
                         keepTrying=False
                         self.requestQueue.task_done()
                         logging.info('    200 response received; removing this request from the queue')
