@@ -257,20 +257,43 @@ class CaltopoSession():
             e.wait()
             logging.info('  requestWorker: event received, processing requestQueue...')
             e.clear()
-            qr=self.requestQueue.get()
-            logging.info('  queued request:'+json.dumps(qr,indent=3))
-            if qr['method']=='POST':
-                logging.info('    processing POST...')
-                r=self.s.post(
-                    qr.get('url'),
-                    data=qr.get('data'),
-                    timeout=qr.get('timeout'),
-                    proxies=qr.get('proxies'),
-                    allow_redirects=qr.get('allow_redirects')
-                )
-                rv=self.handleResponse(r)
-                logging.info('rv:'+json.dumps(rv,indent=3))
-            logging.info('  requestWorker: request processing complete...')
+            while not self.requestQueue.empty():
+                logging.info('  queue size at start of iteration:'+str(self.requestQueue.qsize()))
+                qr=self.requestQueue.get()
+                logging.info('  queued request:'+json.dumps(qr,indent=3))
+                keepTrying=True
+                while keepTrying:
+                    if qr['method']=='POST':
+                        logging.info('    processing POST...')
+                        r=self.s.post(
+                            qr.get('url'),
+                            data=qr.get('data'),
+                            timeout=qr.get('timeout'),
+                            proxies=qr.get('proxies'),
+                            allow_redirects=qr.get('allow_redirects')
+                        )
+                    elif qr['menthod']=='GET':
+                        logging.info('    processing GET...')
+                        r=self.s.get(
+                            qr.get('url'),
+                            params=qr.get('params'),
+                            timeout=qr.get('timeout'),
+                            proxies=qr.get('proxies'),
+                            allow_redirects=qr.get('allow_redirects')
+                        )
+                    else:
+                        logging.info('    unknown queued request: '+json.dumps(qr,indent=3))
+                        continue
+                    if r.status_code==200:
+                        keepTrying=False
+                        self.requestQueue.task_done()
+                        logging.info('    200 response received; removing this request from the queue')
+                        rv=self._handleResponse(r)
+                    else:
+                        logging.info('    response not valid; trying again in 5 seconds...')
+                        time.sleep(5)
+                logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
+            logging.info('  requestWorker: request queue processing complete...')
 
     def openMap(self,mapID: str='', newTitle: str='newMap', newTeamAccount: str='', newPath: str='', newMode: str='cal', newSharing: str='SECRET') -> bool:
         """Open a map for usage in the current session.
@@ -932,7 +955,7 @@ class CaltopoSession():
         #     the same id
 
         # logging.info('Sending caltopo "since" request...')
-        rj=self._sendRequest('get','since/'+str(max(0,self.lastSuccessfulSyncTimestamp-500)),None,returnJson='ALL',timeout=self.syncTimeout)
+        rj=self._sendRequest('get','since/'+str(max(0,self.lastSuccessfulSyncTimestamp-500)),None,returnJson='ALL',timeout=self.syncTimeout,skipQueue=True)
         if rj and rj['status']=='ok':
             if self.syncDumpFile:
                 with open(insertBeforeExt(self.syncDumpFile,'.since'+str(max(0,self.lastSuccessfulSyncTimestamp-500))),"w") as f:
@@ -1369,7 +1392,7 @@ class CaltopoSession():
             # logging.info('POINTS just before return from _validatePoints:'+str(rval))
         return rval
 
-    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str='',accountId: str=''):
+    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str='',accountId: str='',skipQueue: bool=False):
         """Send HTTP request to the server.
 
         :param type: HTTP request action verb; currently, the only acceptable values are 'GET', 'POST', or 'DELETE'
@@ -1485,17 +1508,19 @@ class CaltopoSession():
             # if 'PDFLink' not in url:
             #     logging.info(jsonForLog(paramsPrint))
             # send the dict in the request body for POST requests, using the 'data' arg instead of 'params'
-            # r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
-            requestQueueEntry={
-                'method':'POST',
-                'url':url,
-                'data':params,
-                'timeout':timeout,
-                'proxies':self.proxyDict,
-                'allow_redirects':False
-            }
-            self.requestQueue.put(requestQueueEntry)
-
+            if skipQueue:
+                r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
+            else:
+                requestQueueEntry={
+                    'method':'POST',
+                    'url':url,
+                    'data':params,
+                    'timeout':timeout,
+                    'proxies':self.proxyDict,
+                    'allow_redirects':False
+                }
+                self.requestQueue.put(requestQueueEntry)
+                self.requestEvent.set()
         elif type=="GET": # no need for json in GET; sending null JSON causes downstream error
             # logging.info("SENDING GET to '"+url+"':")
             if internet:
@@ -1512,7 +1537,19 @@ class CaltopoSession():
                 #   which is needed by signed GET requests such as api/v1/acct/....../since/0
                 #   and for all requests to maps with 'secret' permission; so, might as well just
                 #   sign all GET requests to the internet, rather than try to determine permission
-                r=self.s.get(url,params=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
+                if skipQueue:
+                    r=self.s.get(url,params=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
+                else:
+                    requestQueueEntry={
+                        'method':'GET',
+                        'url':url,
+                        'params':params,
+                        'timeout':timeout,
+                        'proxies':self.proxyDict,
+                        'allow_redirects':False
+                    }
+                    self.requestQueue.put(requestQueueEntry)
+                    self.requestEvent.set()
             else:
                 r=self.s.get(url,timeout=timeout,proxies=self.proxyDict)
             logging.info("SENDING GET to '"+url+"'")
@@ -1535,17 +1572,29 @@ class CaltopoSession():
             # logging.info("SENDING DELETE to '"+url+"'")
             # logging.info(json.dumps(paramsPrint,indent=3))
             # logging.info("Key:"+str(self.key))
-            r=self.s.delete(url,params=params,timeout=timeout,proxies=self.proxyDict)   ## use params for query vs data for body data
+            if skipQueue:
+                r=self.s.delete(url,params=params,timeout=timeout,proxies=self.proxyDict)   ## use params for query vs data for body data
+            else:
+                requestQueueEntry={
+                    'method':'DELETE',
+                    'url':url,
+                    'params':params,
+                    'timeout':timeout,
+                    'proxies':self.proxyDict,
+                    'allow_redirects':False
+                }
+                self.requestQueue.put(requestQueueEntry)
+                self.requestEvent.set()
             # logging.info("URL:"+str(url))
             # logging.info("Ris:"+str(r))
         else:
             logging.error("sendRequest: Unrecognized request type:"+str(type))
             self.syncPause=False
             return False
-        if type!='POST':
-            return self.handleResponse(r,newMap,returnJson)
+        if skipQueue:
+            return self._handleResponse(r,newMap,returnJson)
 
-    def handleResponse(self,r,newMap=False,returnJson=''):
+    def _handleResponse(self,r,newMap=False,returnJson=''):
         logging.info(' inside handleResponse...')
         if r.status_code!=200:
             logging.info("response code = "+str(r.status_code))
