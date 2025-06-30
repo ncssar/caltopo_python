@@ -295,9 +295,11 @@ class CaltopoSession():
                         keepTrying=False
                         self.requestQueue.task_done()
                         logging.info('    200 response received; removing this request from the queue')
+                        self.holdRequests=False
                         rv=self._handleResponse(r)
                     else:
                         logging.info('    response not valid; trying again in 5 seconds...')
+                        self.holdRequests=True
                         time.sleep(5)
                 logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
             logging.info('  requestWorker: request queue processing complete...')
@@ -964,6 +966,7 @@ class CaltopoSession():
         # logging.info('Sending caltopo "since" request...')
         rj=self._sendRequest('get','since/'+str(max(0,self.lastSuccessfulSyncTimestamp-500)),None,returnJson='ALL',timeout=self.syncTimeout,skipQueue=True)
         if rj and rj['status']=='ok':
+            self.holdRequests=False
             if self.syncDumpFile:
                 with open(insertBeforeExt(self.syncDumpFile,'.since'+str(max(0,self.lastSuccessfulSyncTimestamp-500))),"w") as f:
                     f.write(json.dumps(rj,indent=3))
@@ -1136,9 +1139,11 @@ class CaltopoSession():
                 #     logging.info('Main thread has ended; sync is stopping...')
 
         else:
-            logging.error('Sync returned invalid or no response; sync aborted:'+str(rj))
-            self.sync=False
-            self.apiVersion=-1 # downstream tools may use apiVersion as indicator of link status
+            # logging.error('Sync returned invalid or no response; sync aborted:'+str(rj))
+            # self.sync=False
+            # self.apiVersion=-1 # downstream tools may use apiVersion as indicator of link status
+            logging.error('Sync attempt failed; setting holdRequests')
+            self.holdRequests=True
         self.syncing=False
         # logging.info('sync marker: '+self.mapID+' end')
 
@@ -1273,12 +1278,14 @@ class CaltopoSession():
                     self._doSync()
                     self.syncCompletedCount+=1
                 except Exception as e:
-                    logging.exception('Exception during sync of map '+self.mapID+'; stopping sync:') # logging.exception logs details and traceback
+                    # logging.exception('Exception during sync of map '+self.mapID+'; stopping sync:') # logging.exception logs details and traceback
                     # remove sync blockers, to let the thread shut down cleanly, avoiding a zombie loop when sync restart is attempted
                     self.syncPause=False
                     self.syncing=False
                     self.syncThreadStarted=False
-                    self.sync=False
+                    # self.sync=False
+                    logging.error('Sync attempt failed; setting holdRequests')
+                    self.holdRequests=True
             if self.sync: # don't bother with the sleep if sync is no longer True
                 time.sleep(self.syncInterval)
 
@@ -1829,7 +1836,6 @@ class CaltopoSession():
             # return self._sendRequest('post','marker',j,id=existingId,returnJson='ID')
             # add to .mapData immediately
             rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout)
-            self.requestEvent.set()
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
