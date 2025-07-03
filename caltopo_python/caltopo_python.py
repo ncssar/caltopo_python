@@ -154,6 +154,7 @@ class CaltopoSession():
             geometryUpdateCallback=None,
             newFeatureCallback=None,
             deletedFeatureCallback=None,
+            requestQueueChangedCallback=None,
             syncCallback=None,
             useFiddlerProxy=False,
             caseSensitiveComparisons=False,  # case-insensitive comparisons by default, see _caseMatch()
@@ -225,6 +226,7 @@ class CaltopoSession():
         self.geometryUpdateCallback=geometryUpdateCallback
         self.newFeatureCallback=newFeatureCallback
         self.deletedFeatureCallback=deletedFeatureCallback
+        self.requestQueueChangedCallback=requestQueueChangedCallback
         self.syncCallback=syncCallback
         self.syncInterval=syncInterval
         self.syncCompletedCount=0
@@ -239,7 +241,7 @@ class CaltopoSession():
         self.accountData=None
         self.holdRequests=False
         self.requestEvent=threading.Event()
-        self.requestThread=threading.Thread(target=self.requestWorker,args=(self.requestEvent,))
+        self.requestThread=threading.Thread(target=self.requestWorker,args=(self.requestEvent,),daemon=True)
         self.requestThread.start()
         # call _setupSession even if this is a mapless session, to read the config file, setup fidddler proxy, get userdata/cookies, etc.
         if not self._setupSession():
@@ -252,7 +254,28 @@ class CaltopoSession():
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
     def requestWorker(self,e):
-        while threading.main_thread().is_alive() and not self.holdRequests:
+        # daemon or non-daemon?
+        #  - if this method is run in a daemon thread, it could abort in the middle of execution,
+        #     meaning that some requests might never get sent, if the downstream application ends
+        #     while disconnected or very soon after reconnection; maybe this is fine
+        #  - if non-daemon, the downstream application will stay alive until this method finishes;
+        #     unless this method provides 'early exit' clauses, it would continue to run until
+        #     connection is re-established and all queued requests are processed
+        #  - should we let the downstream app choose to run daemon or non-daemon?  If so, can
+        #     the code variations be done inside one method, or is it best to write two different
+        #     methods?  Non-daemon adds some code complexity for 'early exit' clauses etc.
+        #  - either way, it's probably best to notify the user if there are unprocessed requests
+        #     in the queue when downstream app exit is requested; maybe the user could choose at
+        #     that time whether they want to wait for reconnection and request processing, or
+        #     exit immediately
+
+        # timing requirements:
+        # - run this function in a non-daemon thread, i.e. wait for this function to complete
+        # - wait for an Event (e) as long as the main thread is alive and holdRequests is False
+        # - when the Event is set, start processing the entire request queue
+        # while threading.main_thread().is_alive() and not self.holdRequests:
+        while not self.holdRequests:
+            # the loop will return to this point after all queue entries have been processed
             logging.info('requestWorker: waiting for event...')
             e.wait()
             logging.info('  requestWorker: event received, processing requestQueue...')
@@ -260,7 +283,7 @@ class CaltopoSession():
             while not self.requestQueue.empty():
                 logging.info('  queue size at start of iteration:'+str(self.requestQueue.qsize()))
                 qr=self.requestQueue.get()
-                logging.info('  queued request:'+json.dumps(qr,indent=3))
+                # logging.info('  queued request:'+json.dumps(qr,indent=3))
                 keepTrying=True
                 r=None
                 while keepTrying:
@@ -294,6 +317,8 @@ class CaltopoSession():
                     if r and r.status_code==200:
                         keepTrying=False
                         self.requestQueue.task_done()
+                        if self.requestQueueChangedCallback:
+                            self.requestQueueChangedCallback(self.requestQueue)
                         logging.info('    200 response received; removing this request from the queue')
                         self.holdRequests=False
                         rv=self._handleResponse(r)
@@ -302,6 +327,8 @@ class CaltopoSession():
                         self.holdRequests=True
                         time.sleep(5)
                 logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
+            if self.requestQueueChangedCallback:
+                self.requestQueueChangedCallback(self.requestQueue)
             logging.info('  requestWorker: request queue processing complete...')
 
     def openMap(self,mapID: str='', newTitle: str='newMap', newTeamAccount: str='', newPath: str='', newMode: str='cal', newSharing: str='SECRET') -> bool:
@@ -409,7 +436,8 @@ class CaltopoSession():
             else:
                 logging.info('New map request failed.  See the log for details.')
                 return False
-
+        else:
+            logging.info('Opening map '+str(mapID)+'...')
         
         # logging.info("API version:"+str(self.apiVersion))
         # sync needs to be done here instead of in the caller, so that
@@ -944,7 +972,8 @@ class CaltopoSession():
            - called once from .openMap, when the map is first opened \n
            - called as needed from ._refresh
 
-        """        
+        """
+        logging.info('inside doSync')
         # logging.info('sync marker: '+self.mapID+' begin')
         if not self.mapID or self.apiVersion<0:
             logging.error('sync request invalid: this caltopo session is not associated with a map.')
@@ -1284,7 +1313,7 @@ class CaltopoSession():
                     self.syncing=False
                     self.syncThreadStarted=False
                     # self.sync=False
-                    logging.error('Sync attempt failed; setting holdRequests')
+                    logging.error('Sync attempt failed (exception during call to _doSync); setting holdRequests')
                     self.holdRequests=True
             if self.sync: # don't bother with the sleep if sync is no longer True
                 time.sleep(self.syncInterval)
@@ -1534,6 +1563,8 @@ class CaltopoSession():
                     'allow_redirects':False
                 }
                 self.requestQueue.put(requestQueueEntry)
+                if self.requestQueueChangedCallback:
+                    self.requestQueueChangedCallback(self.requestQueue)
                 self.requestEvent.set()
         elif type=="GET": # no need for json in GET; sending null JSON causes downstream error
             # logging.info("SENDING GET to '"+url+"':")
@@ -1563,6 +1594,8 @@ class CaltopoSession():
                         'allow_redirects':False
                     }
                     self.requestQueue.put(requestQueueEntry)
+                    if self.requestQueueChangedCallback:
+                        self.requestQueueChangedCallback(self.requestQueue)
                     self.requestEvent.set()
             else:
                 r=self.s.get(url,timeout=timeout,proxies=self.proxyDict)
@@ -1598,6 +1631,8 @@ class CaltopoSession():
                     'allow_redirects':False
                 }
                 self.requestQueue.put(requestQueueEntry)
+                if self.requestQueueChangedCallback:
+                    self.requestQueueChangedCallback(self.requestQueue)
                 self.requestEvent.set()
             # logging.info("URL:"+str(url))
             # logging.info("Ris:"+str(r))
