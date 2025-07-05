@@ -155,6 +155,9 @@ class CaltopoSession():
             newFeatureCallback=None,
             deletedFeatureCallback=None,
             requestQueueChangedCallback=None,
+            failedRequestCallback=None,
+            disconnectedCallback=None,
+            reconnectedCallback=None,
             syncCallback=None,
             useFiddlerProxy=False,
             caseSensitiveComparisons=False,  # case-insensitive comparisons by default, see _caseMatch()
@@ -227,6 +230,9 @@ class CaltopoSession():
         self.newFeatureCallback=newFeatureCallback
         self.deletedFeatureCallback=deletedFeatureCallback
         self.requestQueueChangedCallback=requestQueueChangedCallback
+        self.failedRequestCallback=failedRequestCallback
+        self.disconnectedCallback=disconnectedCallback
+        self.reconnectedCallback=reconnectedCallback
         self.syncCallback=syncCallback
         self.syncInterval=syncInterval
         self.syncCompletedCount=0
@@ -240,6 +246,7 @@ class CaltopoSession():
         self.validatePoints=validatePoints
         self.accountData=None
         self.holdRequests=False
+        self.disconnectedFlag=False # used to make sure disconnectCallback is only fired once, until reconnected
         self.requestEvent=threading.Event()
         self.requestThread=threading.Thread(target=self._requestWorker,args=(self.requestEvent,),daemon=True)
         self.requestThread.start()
@@ -337,16 +344,28 @@ class CaltopoSession():
                         continue
                     if r and r.status_code==200:
                         keepTrying=False
+                        if self.disconnectedFlag:
+                            logging.info('reconnected (successful response from queued request)')
+                            self.disconnectedFlag=False
+                            if self.reconnectedCallback:
+                                self.reconnectedCallback()
+                        logging.info('    200 response received; removing this request from the queue')
                         self.requestQueue.task_done()
                         if self.requestQueueChangedCallback:
                             self.requestQueueChangedCallback(self.requestQueue)
-                        logging.info('    200 response received; removing this request from the queue')
                         self.holdRequests=False
                         rv=self._handleResponse(r)
                         self.syncPause=False # leave it set until after _handleResponse to avoid cache race conditions
                     else:
                         self.syncPause=False # resume sync immediately if response wasn't valid
                         logging.info('    response not valid; trying again in 5 seconds...')
+                        if self.failedRequestCallback:
+                            self.failedRequestCallback(qr,r)
+                        if not self.disconnectedFlag:
+                            logging.info('disconnected (no response or bad response from queued request)')
+                            self.disconnectedFlag=True
+                            if self.disconnectedCallback:
+                                self.disconnectedCallback()
                         self.holdRequests=True
                         time.sleep(5)
                 logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
@@ -1018,6 +1037,11 @@ class CaltopoSession():
         # logging.info('Sending caltopo "since" request...')
         rj=self._sendRequest('get','since/'+str(max(0,self.lastSuccessfulSyncTimestamp-500)),None,returnJson='ALL',timeout=self.syncTimeout,skipQueue=True)
         if rj and rj['status']=='ok':
+            if self.disconnectedFlag:
+                self.disconnectedFlag=False
+                logging.info('reconnected (successful sync)')
+                if self.reconnectedCallback:
+                    self.reconnectedCallback()
             self.holdRequests=False
             if self.syncDumpFile:
                 with open(insertBeforeExt(self.syncDumpFile,'.since'+str(max(0,self.lastSuccessfulSyncTimestamp-500))),"w") as f:
@@ -1196,6 +1220,11 @@ class CaltopoSession():
             # self.apiVersion=-1 # downstream tools may use apiVersion as indicator of link status
             logging.error('Sync attempt failed; setting holdRequests')
             self.holdRequests=True
+            if not self.disconnectedFlag:
+                self.disconnectedFlag=True
+                logging.info('disconnected (no valid response from sync)')
+                if self.disconnectedCallback:
+                    self.disconnectedCallback()
         self.syncing=False
         # logging.info('sync marker: '+self.mapID+' end')
 
@@ -1337,6 +1366,11 @@ class CaltopoSession():
                     self.syncThreadStarted=False
                     # self.sync=False
                     logging.error('Sync attempt failed (exception during call to _doSync); setting holdRequests')
+                    if not self.disconnectedFlag:
+                        self.disconnectedFlag=True
+                        logging.info('disconnected (no valid response from sync)')
+                        if self.disconnectedCallback:
+                            self.disconnectedCallback()
                     self.holdRequests=True
             if self.sync: # don't bother with the sleep if sync is no longer True
                 time.sleep(self.syncInterval)
