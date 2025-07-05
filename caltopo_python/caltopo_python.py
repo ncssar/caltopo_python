@@ -290,6 +290,7 @@ class CaltopoSession():
                     if qr['method']=='POST':
                         logging.info('    processing POST...')
                         try:
+                            self.syncPause=True # set pause here to avoid leaving it set
                             r=self.s.post(
                                 qr.get('url'),
                                 data=qr.get('data'),
@@ -298,10 +299,11 @@ class CaltopoSession():
                                 allow_redirects=qr.get('allow_redirects')
                             )
                         except:
-                            pass
+                            self.syncPause=False # don't leave it set, in case of exception
                     elif qr['menthod']=='GET':
                         logging.info('    processing GET...')
                         try:
+                            self.syncPause=True # set pause here to avoid leaving it set
                             r=self.s.get(
                                 qr.get('url'),
                                 params=qr.get('params'),
@@ -310,7 +312,7 @@ class CaltopoSession():
                                 allow_redirects=qr.get('allow_redirects')
                             )
                         except:
-                            pass
+                            self.syncPause=False # don't leave it set, in case of exception
                     else:
                         logging.info('    unknown queued request: '+json.dumps(qr,indent=3))
                         continue
@@ -322,7 +324,9 @@ class CaltopoSession():
                         logging.info('    200 response received; removing this request from the queue')
                         self.holdRequests=False
                         rv=self._handleResponse(r)
+                        self.syncPause=False # leave it set until after _handleResponse to avoid cache race conditions
                     else:
+                        self.syncPause=False # resume sync immediately if response wasn't valid
                         logging.info('    response not valid; trying again in 5 seconds...')
                         self.holdRequests=True
                         time.sleep(5)
@@ -1232,7 +1236,7 @@ class CaltopoSession():
         if self.syncThreadStarted:
             logging.info('Caltopo sync is already running for map '+self.mapID+'.')
         else:
-            threading.Thread(target=self._syncLoop).start()
+            threading.Thread(target=self._syncLoop,daemon=True).start() # must be daemon, so that failed sync doesn't prevent program end
             logging.info('Caltopo syncing initiated for map '+self.mapID+'.')
             self.syncThreadStarted=True
 
@@ -1474,7 +1478,7 @@ class CaltopoSession():
                 coords=jg.get('coordinates') # may be a triple-nested list to accommodate multipart geometries
                 if coords:
                     j['geometry']['coordinates']=self._validatePoints(coords,modify=self.validatePoints=='modify')
-        self.syncPause=True
+        # self.syncPause=True
         timeout=timeout or self.syncTimeout
         newMap='[NEW]' in apiUrlEnd  # specific mapID that indicates a new map should be created
         if self.apiVersion<0:
@@ -1552,6 +1556,7 @@ class CaltopoSession():
             #     logging.info(jsonForLog(paramsPrint))
             # send the dict in the request body for POST requests, using the 'data' arg instead of 'params'
             if skipQueue:
+                self.syncPause=True
                 r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
             else:
                 requestQueueEntry={
@@ -1583,6 +1588,7 @@ class CaltopoSession():
                 #   and for all requests to maps with 'secret' permission; so, might as well just
                 #   sign all GET requests to the internet, rather than try to determine permission
                 if skipQueue:
+                    self.syncPause=True
                     r=self.s.get(url,params=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
                 else:
                     requestQueueEntry={
@@ -1620,6 +1626,7 @@ class CaltopoSession():
             # logging.info(json.dumps(paramsPrint,indent=3))
             # logging.info("Key:"+str(self.key))
             if skipQueue:
+                self.syncPause=True
                 r=self.s.delete(url,params=params,timeout=timeout,proxies=self.proxyDict)   ## use params for query vs data for body data
             else:
                 requestQueueEntry={
@@ -1638,10 +1645,12 @@ class CaltopoSession():
             # logging.info("Ris:"+str(r))
         else:
             logging.error("sendRequest: Unrecognized request type:"+str(type))
-            self.syncPause=False
+            # self.syncPause=False
             return False
         if skipQueue:
-            return self._handleResponse(r,newMap,returnJson)
+            rval=self._handleResponse(r,newMap,returnJson)
+            self.syncPause=False
+            return rval
 
     def _handleResponse(self,r,newMap=False,returnJson=''):
         logging.info(' inside handleResponse...')
@@ -1658,7 +1667,7 @@ class CaltopoSession():
                     rj=r.json()
                 except:
                     logging.error('New map request failed: response had do decodable json:'+str(r.status_code)+':'+r.text)
-                    self.syncPause=False
+                    # self.syncPause=False
                     return False
                 else:
                     rjr=rj.get('result')
@@ -1667,15 +1676,15 @@ class CaltopoSession():
                         newUrl=rjr['id']
                     if newUrl:
                         logging.info('New map URL:'+newUrl)
-                        self.syncPause=False
+                        # self.syncPause=False
                         return newUrl
                     else:
                         logging.error('No new map URL was returned in the response json:'+str(r.status_code)+':'+json.dumps(rj))
-                        self.syncPause=False
+                        # self.syncPause=False
                         return False
             else:
                 logging.error('New map request failed:'+str(r.status_code)+':'+r.text)
-                self.syncPause=False
+                # self.syncPause=False
                 return False
 
             # old redirect method worked with CTD 4214:
@@ -1710,7 +1719,7 @@ class CaltopoSession():
                     rj=r.json()
                 except:
                     logging.error("sendRequest: response had no decodable json:"+str(r))
-                    self.syncPause=False
+                    # self.syncPause=False
                     return False
                 else:
                     if 'status' in rj and rj['status'].lower()!='ok':
@@ -1719,7 +1728,7 @@ class CaltopoSession():
                             msg+='; maybe the user does not have necessary permissions on this map'
                         msg+=':  '+str(rj)
                         logging.warning(msg)
-                        self.syncPause=False
+                        # self.syncPause=False
                         return False
                     if returnJson=="ID":
                         id=None
@@ -1728,14 +1737,14 @@ class CaltopoSession():
                         elif 'id' in rj:
                             id=rj['id']
                         elif not rj['result']['state']['features']:  # response if no new info
-                            self.syncPause=False
+                            # self.syncPause=False
                             return 0
                         elif 'result' in rj and 'id' in rj['result']['state']['features'][0]:
                             id=rj['result']['state']['features'][0]['id']
                         else:
                             logging.info("sendRequest: No valid ID was returned from the request:")
                             logging.info(json.dumps(rj,indent=3))
-                        self.syncPause=False
+                        # self.syncPause=False
                         return id
                     if returnJson=="ALL":
                         # since CTD 4221 returns 'title' as an empty string for all assignments,
@@ -1748,9 +1757,9 @@ class CaltopoSession():
                             alist=[f for f in rj['result']['state']['features'] if 'properties' in f.keys() and 'class' in f['properties'].keys() and f['properties']['class'].lower()=='assignment']
                             for a in alist:
                                 a['properties']['title']=str(a['properties'].get('letter',''))+' '+str(a['properties'].get('number',''))
-                        self.syncPause=False
+                        # self.syncPause=False
                         return rj
-        self.syncPause=False
+        # self.syncPause=False
 
     def addFolder(self,
             label="New Folder",
