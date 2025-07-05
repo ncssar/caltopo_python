@@ -241,7 +241,7 @@ class CaltopoSession():
         self.accountData=None
         self.holdRequests=False
         self.requestEvent=threading.Event()
-        self.requestThread=threading.Thread(target=self.requestWorker,args=(self.requestEvent,),daemon=True)
+        self.requestThread=threading.Thread(target=self._requestWorker,args=(self.requestEvent,),daemon=True)
         self.requestThread.start()
         # call _setupSession even if this is a mapless session, to read the config file, setup fidddler proxy, get userdata/cookies, etc.
         if not self._setupSession():
@@ -253,7 +253,7 @@ class CaltopoSession():
         else:
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
-    def requestWorker(self,e):
+    def _requestWorker(self,e):
         # daemon or non-daemon?
         #  - if this method is run in a daemon thread, it could abort in the middle of execution,
         #     meaning that some requests might never get sent, if the downstream application ends
@@ -290,6 +290,8 @@ class CaltopoSession():
                     if qr['method']=='POST':
                         logging.info('    processing POST...')
                         try:
+                            while self.syncing: # wait until any current sync is finished
+                                pass
                             self.syncPause=True # set pause here to avoid leaving it set
                             r=self.s.post(
                                 qr.get('url'),
@@ -303,8 +305,25 @@ class CaltopoSession():
                     elif qr['menthod']=='GET':
                         logging.info('    processing GET...')
                         try:
+                            while self.syncing: # wait until any current sync is finished
+                                pass
                             self.syncPause=True # set pause here to avoid leaving it set
                             r=self.s.get(
+                                qr.get('url'),
+                                params=qr.get('params'),
+                                timeout=qr.get('timeout'),
+                                proxies=qr.get('proxies'),
+                                allow_redirects=qr.get('allow_redirects')
+                            )
+                        except:
+                            self.syncPause=False # don't leave it set, in case of exception
+                    elif qr['menthod']=='DELETE':
+                        logging.info('    processing DELETE...')
+                        try:
+                            while self.syncing: # wait until any current sync is finished
+                                pass
+                            self.syncPause=True # set pause here to avoid leaving it set
+                            r=self.s.delete(
                                 qr.get('url'),
                                 params=qr.get('params'),
                                 timeout=qr.get('timeout'),
