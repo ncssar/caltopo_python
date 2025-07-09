@@ -260,124 +260,6 @@ class CaltopoSession():
         else:
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
-    def _requestWorker(self,e):
-        # daemon or non-daemon?
-        #  - if this method is run in a daemon thread, it could abort in the middle of execution,
-        #     meaning that some requests might never get sent, if the downstream application ends
-        #     while disconnected or very soon after reconnection; maybe this is fine
-        #  - if non-daemon, the downstream application will stay alive until this method finishes;
-        #     unless this method provides 'early exit' clauses, it would continue to run until
-        #     connection is re-established and all queued requests are processed
-        #  - should we let the downstream app choose to run daemon or non-daemon?  If so, can
-        #     the code variations be done inside one method, or is it best to write two different
-        #     methods?  Non-daemon adds some code complexity for 'early exit' clauses etc.
-        #  - either way, it's probably best to notify the user if there are unprocessed requests
-        #     in the queue when downstream app exit is requested; maybe the user could choose at
-        #     that time whether they want to wait for reconnection and request processing, or
-        #     exit immediately
-
-        # timing requirements:
-        # - run this function in a daemon thread, i.e. let this die in the middle of the loop
-        # - wait for an Event (e) as long as the main thread is alive and holdRequests is False
-        # - when the Event is set, start processing the entire request queue
-        # while threading.main_thread().is_alive() and not self.holdRequests:
-        # while not self.holdRequests:
-        # use a while clause to make sure the wait restarts after the queue is empty;
-        #  disconnetedFlag should be irrelevant at this point
-        while True:
-            logging.info('requestWorker: waiting for event...')
-            e.wait()
-            logging.info('  requestWorker: event received, processing requestQueue...')
-            e.clear()
-            while not self.requestQueue.empty():
-                logging.info('  queue size at start of iteration:'+str(self.requestQueue.qsize()))
-                qr=self.requestQueue.get()
-                # logging.info('  queued request:'+json.dumps(qr,indent=3))
-                keepTrying=True
-                r=None
-                while keepTrying:
-                    if qr['method']=='POST':
-                        logging.info('    processing POST...')
-                        try:
-                            while self.syncing: # wait until any current sync is finished
-                                pass
-                            self.syncPause=True # set pause here to avoid leaving it set
-                            r=self.s.post(
-                                qr.get('url'),
-                                data=qr.get('data'),
-                                timeout=qr.get('timeout'),
-                                proxies=qr.get('proxies'),
-                                allow_redirects=qr.get('allow_redirects')
-                            )
-                        except:
-                            self.syncPause=False # don't leave it set, in case of exception
-                    elif qr['menthod']=='GET':
-                        logging.info('    processing GET...')
-                        try:
-                            while self.syncing: # wait until any current sync is finished
-                                pass
-                            self.syncPause=True # set pause here to avoid leaving it set
-                            r=self.s.get(
-                                qr.get('url'),
-                                params=qr.get('params'),
-                                timeout=qr.get('timeout'),
-                                proxies=qr.get('proxies'),
-                                allow_redirects=qr.get('allow_redirects')
-                            )
-                        except:
-                            self.syncPause=False # don't leave it set, in case of exception
-                    elif qr['menthod']=='DELETE':
-                        logging.info('    processing DELETE...')
-                        try:
-                            while self.syncing: # wait until any current sync is finished
-                                pass
-                            self.syncPause=True # set pause here to avoid leaving it set
-                            r=self.s.delete(
-                                qr.get('url'),
-                                params=qr.get('params'),
-                                timeout=qr.get('timeout'),
-                                proxies=qr.get('proxies'),
-                                allow_redirects=qr.get('allow_redirects')
-                            )
-                        except:
-                            self.syncPause=False # don't leave it set, in case of exception
-                    else:
-                        logging.info('    unknown queued request removed from queue: '+json.dumps(qr,indent=3))
-                        self.requestQueue.task_done()
-                        if self.requestQueueChangedCallback:
-                            self.requestQueueChangedCallback(self.requestQueue)
-                        continue
-                    if r and r.status_code==200:
-                        keepTrying=False
-                        if self.disconnectedFlag:
-                            logging.info('reconnected (successful response from queued request)')
-                            self.disconnectedFlag=False
-                            if self.reconnectedCallback:
-                                self.reconnectedCallback()
-                        logging.info('    200 response received; removing this request from the queue')
-                        self.requestQueue.task_done()
-                        if self.requestQueueChangedCallback:
-                            self.requestQueueChangedCallback(self.requestQueue)
-                        # self.holdRequests=False
-                        rv=self._handleResponse(r)
-                        self.syncPause=False # leave it set until after _handleResponse to avoid cache race conditions
-                    else:
-                        self.syncPause=False # resume sync immediately if response wasn't valid
-                        logging.info('    response not valid; trying again in 5 seconds...')
-                        if self.failedRequestCallback:
-                            self.failedRequestCallback(qr,r)
-                        if not self.disconnectedFlag:
-                            logging.info('disconnected (no response or bad response from queued request)')
-                            self.disconnectedFlag=True
-                            if self.disconnectedCallback:
-                                self.disconnectedCallback()
-                        # self.holdRequests=True
-                        time.sleep(5)
-                logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
-            if self.requestQueueChangedCallback:
-                self.requestQueueChangedCallback(self.requestQueue)
-            logging.info('  requestWorker: request queue processing complete...')
-
     def openMap(self,mapID: str='', newTitle: str='newMap', newTeamAccount: str='', newPath: str='', newMode: str='cal', newSharing: str='SECRET') -> bool:
         """Open a map for usage in the current session.
         This is automatically called during session initialization (by _setupSession) if mapID was specified when the session was created, but can be called later from your code if the session was initially 'mapless'.
@@ -1711,6 +1593,124 @@ class CaltopoSession():
             rval=self._handleResponse(r,newMap,returnJson)
             self.syncPause=False
             return rval
+
+    def _requestWorker(self,e):
+        # daemon or non-daemon?
+        #  - if this method is run in a daemon thread, it could abort in the middle of execution,
+        #     meaning that some requests might never get sent, if the downstream application ends
+        #     while disconnected or very soon after reconnection; maybe this is fine
+        #  - if non-daemon, the downstream application will stay alive until this method finishes;
+        #     unless this method provides 'early exit' clauses, it would continue to run until
+        #     connection is re-established and all queued requests are processed
+        #  - should we let the downstream app choose to run daemon or non-daemon?  If so, can
+        #     the code variations be done inside one method, or is it best to write two different
+        #     methods?  Non-daemon adds some code complexity for 'early exit' clauses etc.
+        #  - either way, it's probably best to notify the user if there are unprocessed requests
+        #     in the queue when downstream app exit is requested; maybe the user could choose at
+        #     that time whether they want to wait for reconnection and request processing, or
+        #     exit immediately
+
+        # timing requirements:
+        # - run this function in a daemon thread, i.e. let this die in the middle of the loop
+        # - wait for an Event (e) as long as the main thread is alive and holdRequests is False
+        # - when the Event is set, start processing the entire request queue
+        # while threading.main_thread().is_alive() and not self.holdRequests:
+        # while not self.holdRequests:
+        # use a while clause to make sure the wait restarts after the queue is empty;
+        #  disconnetedFlag should be irrelevant at this point
+        while True:
+            logging.info('requestWorker: waiting for event...')
+            e.wait()
+            logging.info('  requestWorker: event received, processing requestQueue...')
+            e.clear()
+            while not self.requestQueue.empty():
+                logging.info('  queue size at start of iteration:'+str(self.requestQueue.qsize()))
+                qr=self.requestQueue.get()
+                # logging.info('  queued request:'+json.dumps(qr,indent=3))
+                keepTrying=True
+                r=None
+                while keepTrying:
+                    if qr['method']=='POST':
+                        logging.info('    processing POST...')
+                        try:
+                            while self.syncing: # wait until any current sync is finished
+                                pass
+                            self.syncPause=True # set pause here to avoid leaving it set
+                            r=self.s.post(
+                                qr.get('url'),
+                                data=qr.get('data'),
+                                timeout=qr.get('timeout'),
+                                proxies=qr.get('proxies'),
+                                allow_redirects=qr.get('allow_redirects')
+                            )
+                        except:
+                            self.syncPause=False # don't leave it set, in case of exception
+                    elif qr['menthod']=='GET':
+                        logging.info('    processing GET...')
+                        try:
+                            while self.syncing: # wait until any current sync is finished
+                                pass
+                            self.syncPause=True # set pause here to avoid leaving it set
+                            r=self.s.get(
+                                qr.get('url'),
+                                params=qr.get('params'),
+                                timeout=qr.get('timeout'),
+                                proxies=qr.get('proxies'),
+                                allow_redirects=qr.get('allow_redirects')
+                            )
+                        except:
+                            self.syncPause=False # don't leave it set, in case of exception
+                    elif qr['menthod']=='DELETE':
+                        logging.info('    processing DELETE...')
+                        try:
+                            while self.syncing: # wait until any current sync is finished
+                                pass
+                            self.syncPause=True # set pause here to avoid leaving it set
+                            r=self.s.delete(
+                                qr.get('url'),
+                                params=qr.get('params'),
+                                timeout=qr.get('timeout'),
+                                proxies=qr.get('proxies'),
+                                allow_redirects=qr.get('allow_redirects')
+                            )
+                        except:
+                            self.syncPause=False # don't leave it set, in case of exception
+                    else:
+                        logging.info('    unknown queued request removed from queue: '+json.dumps(qr,indent=3))
+                        self.requestQueue.task_done()
+                        if self.requestQueueChangedCallback:
+                            self.requestQueueChangedCallback(self.requestQueue)
+                        continue
+                    if r and r.status_code==200:
+                        keepTrying=False
+                        if self.disconnectedFlag:
+                            logging.info('reconnected (successful response from queued request)')
+                            self.disconnectedFlag=False
+                            if self.reconnectedCallback:
+                                self.reconnectedCallback()
+                        logging.info('    200 response received; removing this request from the queue')
+                        self.requestQueue.task_done()
+                        if self.requestQueueChangedCallback:
+                            self.requestQueueChangedCallback(self.requestQueue)
+                        # self.holdRequests=False
+                        rv=self._handleResponse(r)
+                        self.syncPause=False # leave it set until after _handleResponse to avoid cache race conditions
+                    else:
+                        self.syncPause=False # resume sync immediately if response wasn't valid
+                        logging.info('    response not valid; trying again in 5 seconds...')
+                        if self.failedRequestCallback:
+                            self.failedRequestCallback(qr,r)
+                        if not self.disconnectedFlag:
+                            logging.info('disconnected (no response or bad response from queued request)')
+                            self.disconnectedFlag=True
+                            if self.disconnectedCallback:
+                                self.disconnectedCallback()
+                        # self.holdRequests=True
+                        time.sleep(5)
+                logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
+            if self.requestQueueChangedCallback:
+                self.requestQueueChangedCallback(self.requestQueue)
+            logging.info('  requestWorker: request queue processing complete...')
 
     def _handleResponse(self,r,newMap=False,returnJson=''):
         logging.info(' inside handleResponse...')
