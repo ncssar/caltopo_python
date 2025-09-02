@@ -116,6 +116,7 @@ import copy
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import functools
+from typing import Callable
 import queue
 
 # import objgraph
@@ -1381,7 +1382,7 @@ class CaltopoSession():
             # logging.info('POINTS just before return from _validatePoints:'+str(rval))
         return rval
 
-    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str='',accountId: str='',skipQueue: bool=False):
+    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str='',accountId: str='',skipQueue: bool=False,callback:Callable=None,callbackArgs: list=[],callbackKwArgs: dict={}):
         """Send HTTP request to the server.
 
         :param type: HTTP request action verb; currently, the only acceptable values are 'GET', 'POST', or 'DELETE'
@@ -1507,7 +1508,10 @@ class CaltopoSession():
                     'data':params,
                     'timeout':timeout,
                     'proxies':self.proxyDict,
-                    'allow_redirects':False
+                    'allow_redirects':False,
+                    'callback':callback,
+                    'callbackArgs':callbackArgs,
+                    'callbackKwArgs':callbackKwArgs
                 }
                 self.requestQueue.put(requestQueueEntry)
                 if self.requestQueueChangedCallback:
@@ -1645,7 +1649,7 @@ class CaltopoSession():
                             )
                         except:
                             self.syncPause=False # don't leave it set, in case of exception
-                    elif qr['menthod']=='GET':
+                    elif qr['method']=='GET':
                         logging.info('    processing GET...')
                         try:
                             while self.syncing: # wait until any current sync is finished
@@ -1660,7 +1664,7 @@ class CaltopoSession():
                             )
                         except:
                             self.syncPause=False # don't leave it set, in case of exception
-                    elif qr['menthod']=='DELETE':
+                    elif qr['method']=='DELETE':
                         logging.info('    processing DELETE...')
                         try:
                             while self.syncing: # wait until any current sync is finished
@@ -1686,6 +1690,7 @@ class CaltopoSession():
                         if self.disconnectedFlag:
                             logging.info('reconnected (successful response from queued request)')
                             self.disconnectedFlag=False
+                            self._refresh(forceImmediate=True)
                             if self.reconnectedCallback:
                                 self.reconnectedCallback()
                         logging.info('    200 response received; removing this request from the queue')
@@ -1693,7 +1698,7 @@ class CaltopoSession():
                         if self.requestQueueChangedCallback:
                             self.requestQueueChangedCallback(self.requestQueue)
                         # self.holdRequests=False
-                        rv=self._handleResponse(r)
+                        rv=self._handleResponse(r,callback=qr['callback'],callbackArgs=qr['callbackArgs'],callbackKwArgs=qr['callbackKwArgs'])
                         self.syncPause=False # leave it set until after _handleResponse to avoid cache race conditions
                     else:
                         self.syncPause=False # resume sync immediately if response wasn't valid
@@ -1712,11 +1717,38 @@ class CaltopoSession():
                 self.requestQueueChangedCallback(self.requestQueue)
             logging.info('  requestWorker: request queue processing complete...')
 
-    def _handleResponse(self,r,newMap=False,returnJson=''):
-        logging.info(' inside handleResponse...')
+    def _handleResponse(self,r,newMap=False,returnJson='',callback=None,callbackArgs=[],callbackKwArgs={}):
+        # Before the existence of requestQueue, this was part of _sendResponse, so all response handling
+        #  was guaranteed to be performed before another request could be sent.  With requestThread, that
+        #  guarantee no longer exists.  So, any code that was run by the calling method (e.g. addMarker)
+        #  to operate on the response, must be done here instead.
+        # urlEnd=r.url.split('/')[-1] # the url of the original request, used to determine what code to run at the end
+        # logging.info(' inside handleResponse... urlEnd='+urlEnd)
+        # logging.info('  full response:'+json.dumps(r.json(),indent=3))
         if r.status_code!=200:
             logging.info("response code = "+str(r.status_code))
 
+        # process any placeholders in callbackArgs/KwArgs, such as 'response.id' which should be replaced with the id from the response
+        logging.info('response json:')
+        logging.info(json.dumps(r.json(),indent=3))
+        logging.info('initial callback args:'+str(callbackArgs))
+        logging.info('initial callback kwargs:'+str(callbackKwArgs))
+        processedCallbackArgs=[]
+        # processedCallbackKwArgs={}
+        for cba in callbackArgs:
+            if cba.startswith('response.'):
+                token=cba.replace('response.','')
+                cba=r.json()['result'][token]
+            processedCallbackArgs.append(cba)
+        for key in callbackKwArgs.keys():
+            if callbackKwArgs[key].startswith('response.'):
+                token=callbackKwArgs[key].replace('response.','')
+                callbackKwArgs[key]=r.json()['result'][token]
+        callbackArgs=processedCallbackArgs
+        # callbackKwargs=processedCallbackKwArgs
+        logging.info('processed callback args:'+str(callbackArgs))
+        logging.info('processed callback kwargs:'+str(callbackKwArgs))
+    
         if newMap:
             # for CTD 4221 and newer, and internet, a new map request should return 200, and the response data
             #  should contain the new map ID in response['result']['id']
@@ -1820,6 +1852,11 @@ class CaltopoSession():
                         # self.syncPause=False
                         return rj
         # self.syncPause=False
+        if callback:
+            # if no arguments are specified, call the callback with the entire response json
+            if not callbackArgs and not callbackKwArgs:
+                callbackArgs=rj
+            callback(*callbackArgs,**callbackKwArgs)
 
     def addFolder(self,
             label="New Folder",
@@ -1878,7 +1915,10 @@ class CaltopoSession():
             update=0,
             size=1,
             timeout=0,
-            dataQueue=False):
+            dataQueue=False,
+            callback=None,
+            callbackArgs=[],
+            callbackKwArgs={}):
         """Add a marker to the current map.
 
         :param lat: Latitude of the marker, in decimal degrees; positive values indicate the northern hemisphere
@@ -1939,7 +1979,7 @@ class CaltopoSession():
         else:
             # return self._sendRequest('post','marker',j,id=existingId,returnJson='ID')
             # add to .mapData immediately
-            rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout)
+            rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs,callbackKwArgs=callbackKwArgs)
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
@@ -2889,6 +2929,7 @@ class CaltopoSession():
         :return: ID of the edited feature (should be the same as the 'id' argument), or False if there was a failure prior to the edit request
         """            
 
+        logging.info('editFeature called: id='+str(id))
         # logging.info('editFeature called:'+str(properties))
         if not self.mapID or self.apiVersion<0:
             logging.error('editFeature request invalid: this caltopo session is not associated with a map.')
