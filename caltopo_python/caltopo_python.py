@@ -1698,7 +1698,8 @@ class CaltopoSession():
                         if self.requestQueueChangedCallback:
                             self.requestQueueChangedCallback(self.requestQueue)
                         # self.holdRequests=False
-                        rv=self._handleResponse(r,callback=qr['callback'],callbackArgs=qr['callbackArgs'],callbackKwArgs=qr['callbackKwArgs'])
+                        # rv=self._handleResponse(r,callback=qr['callback'],callbackArgs=qr['callbackArgs'],callbackKwArgs=qr['callbackKwArgs'])
+                        rv=self._handleResponse(r,callback=qr['callback'],callbackArgs=qr['callbackArgs'])
                         self.syncPause=False # leave it set until after _handleResponse to avoid cache race conditions
                     else:
                         self.syncPause=False # resume sync immediately if response wasn't valid
@@ -1717,7 +1718,7 @@ class CaltopoSession():
                 self.requestQueueChangedCallback(self.requestQueue)
             logging.info('  requestWorker: request queue processing complete...')
 
-    def _handleResponse(self,r,newMap=False,returnJson='',callback=None,callbackArgs=[],callbackKwArgs={}):
+    def _handleResponse(self,r,newMap=False,returnJson='',callback=None,callbackArgs=[]):
         # Before the existence of requestQueue, this was part of _sendResponse, so all response handling
         #  was guaranteed to be performed before another request could be sent.  With requestThread, that
         #  guarantee no longer exists.  So, any code that was run by the calling method (e.g. addMarker)
@@ -1732,14 +1733,21 @@ class CaltopoSession():
         logging.info('response json:')
         logging.info(json.dumps(r.json(),indent=3))
         logging.info('initial callback args:'+str(callbackArgs))
-        logging.info('initial callback kwargs:'+str(callbackKwArgs))
+        # logging.info('initial callback kwargs:'+str(callbackKwArgs))
         processedCallbackArgs=[]
+        callbackKwArgs={}
         # processedCallbackKwArgs={}
         for cba in callbackArgs:
-            if cba.startswith('response.'):
-                token=cba.replace('response.','')
-                cba=r.json()['result'][token]
-            processedCallbackArgs.append(cba)
+            if isinstance(cba,dict):
+                if callbackKwArgs:
+                    logging.error('callbackArgs parsing violation: callbackArgs has more than one dictionary')
+                    return
+                callbackKwArgs=cba
+            else:
+                if cba.startswith('response.'):
+                    token=cba.replace('response.','')
+                    cba=r.json()['result'][token]
+                processedCallbackArgs.append(cba)
         for key in callbackKwArgs.keys():
             if callbackKwArgs[key].startswith('response.'):
                 token=callbackKwArgs[key].replace('response.','')
