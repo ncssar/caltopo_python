@@ -1382,7 +1382,7 @@ class CaltopoSession():
             # logging.info('POINTS just before return from _validatePoints:'+str(rval))
         return rval
 
-    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str='',accountId: str='',skipQueue: bool=False,callback:Callable=None,callbackArgs: list=[],callbackKwArgs: dict={}):
+    def _sendRequest(self,type: str,apiUrlEnd: str,j: dict,id: str='',returnJson: str='',timeout: int=0,domainAndPort: str='',accountId: str='',skipQueue: bool=False,callback:Callable=None,callbackArgs: list=[]):
         """Send HTTP request to the server.
 
         :param type: HTTP request action verb; currently, the only acceptable values are 'GET', 'POST', or 'DELETE'
@@ -1510,8 +1510,7 @@ class CaltopoSession():
                     'proxies':self.proxyDict,
                     'allow_redirects':False,
                     'callback':callback,
-                    'callbackArgs':callbackArgs,
-                    'callbackKwArgs':callbackKwArgs
+                    'callbackArgs':callbackArgs
                 }
                 self.requestQueue.put(requestQueueEntry)
                 if self.requestQueueChangedCallback:
@@ -1925,8 +1924,7 @@ class CaltopoSession():
             timeout=0,
             dataQueue=False,
             callback=None,
-            callbackArgs=[],
-            callbackKwArgs={}):
+            callbackArgs=[]):
         """Add a marker to the current map.
 
         :param lat: Latitude of the marker, in decimal degrees; positive values indicate the northern hemisphere
@@ -1987,7 +1985,7 @@ class CaltopoSession():
         else:
             # return self._sendRequest('post','marker',j,id=existingId,returnJson='ID')
             # add to .mapData immediately
-            rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs,callbackKwArgs=callbackKwArgs)
+            rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
