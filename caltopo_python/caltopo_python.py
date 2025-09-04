@@ -261,7 +261,15 @@ class CaltopoSession():
         else:
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
 
-    def openMap(self,mapID: str='', newTitle: str='newMap', newTeamAccount: str='', newPath: str='', newMode: str='cal', newSharing: str='SECRET') -> bool:
+    def openMap(self,
+            mapID: str='',
+            newTitle: str='newMap',
+            newTeamAccount: str='',
+            newPath: str='',
+            newMode: str='cal',
+            newSharing: str='SECRET',
+            callback=None,
+            callbackArgs=[]) -> bool:
         """Open a map for usage in the current session.
         This is automatically called during session initialization (by _setupSession) if mapID was specified when the session was created, but can be called later from your code if the session was initially 'mapless'.
         
@@ -356,7 +364,7 @@ class CaltopoSession():
             }
             # logging.info('dap='+str(self.domainAndPort))
             # logging.info('payload='+str(json.dumps(j,indent=3)))
-            r=self._sendRequest('post','[NEW]',j,domainAndPort=self.domainAndPort,accountId=newMapAccount['accountId'])
+            r=self._sendRequest('post','[NEW]',j,domainAndPort=self.domainAndPort,accountId=newMapAccount['accountId'],callback=callback,callbackArgs=callbackArgs)
             if r:
                 self.mapID=r.rstrip('/').split('/')[-1]
                 self.s=requests.session()
@@ -564,7 +572,9 @@ class CaltopoSession():
     #  - maps (not bookmarks) are in the 'features' list, with type:Feature and properties.class:CollaborativeMap
     #  - bookmarks (not maps) are in the 'rels' list, with properties.class:UserAccountMapRel
 
-    def getAccountData(self) -> dict:
+    def getAccountData(self,
+            callback=None,
+            callbackArgs=[]) -> dict:
         """Get all account data for the session account.  Populates .accountData, .groupAccounts, and .personalAccounts.
 
         :return: value of .accountData
@@ -583,7 +593,7 @@ class CaltopoSession():
         else:
             url='/api/v1/acct/'+self.accountId+'/since/0'
             # logging.info('  sending GET request 2 to '+url)
-            rj=self._sendRequest('get',url,j=None,returnJson='ALL')
+            rj=self._sendRequest('get',url,j=None,returnJson='ALL',callback=callback,callbackArgs=callbackArgs)
             self.accountData=rj['result']
             # with open('acct_since_0.json','w') as outfile:
             #     outfile.write(json.dumps(rj,indent=3))
@@ -627,7 +637,13 @@ class CaltopoSession():
     #       "updated": 1714522622568,
     #       "type": "bookmark"
     #   },...]
-    def getMapList(self,groupAccountTitle: str='',includeBookmarks=True,refresh=False,titlesOnly=False) -> list:
+    def getMapList(self,
+            groupAccountTitle: str='',
+            includeBookmarks=True,
+            refresh=False,
+            titlesOnly=False,
+            callback=None,
+            callbackArgs=[]) -> list:
         """Get a list of all maps in the user's personal account, or in the specified group account.
 
         :param groupAccountTitle: Title of the group account to get the map list from; defaults to '', in which case only the personal map list is returned
@@ -728,7 +744,13 @@ class CaltopoSession():
             rval=rval[0]
         return rval
 
-    def getAllMapLists(self,includePersonal=False,includeBookmarks=True,refresh=False,titlesOnly=False) -> list:
+    def getAllMapLists(self,
+            includePersonal=False,
+            includeBookmarks=True,
+            refresh=False,
+            titlesOnly=False,
+            callback=None,
+            callbackArgs=[]) -> list:
         """Get a structured list of maps from all group accounts of which the current user is a member.  Optionally include the user's personal account(s).
 
         :param includePersonal: If True, the user's personal account(s) will be included in the return value; defaults to False
@@ -764,7 +786,11 @@ class CaltopoSession():
             theList.append({'groupAccountTitle':gat,'mapList':mapList})
         return theList
 
-    def getMapTitle(self,mapID='',refresh=False) -> str:
+    def getMapTitle(self,
+            mapID='',
+            refresh=False,
+            callback=None,
+            callbackArgs=[]) -> str:
         """Get the title of a map specified by mapID.
 
         :param mapID: 5-character map ID; defaults to ''
@@ -790,7 +816,10 @@ class CaltopoSession():
         else:
             return titles[0]
     
-    def getAccountsAndFolders(self,refresh=False) -> list:
+    def getAccountsAndFolders(self,
+            refresh=False,
+            callback=None,
+            callbackArgs=[]) -> list:
         """Get a list of all of the group accounts for which the current account is a member, and their folders (and subfolders).
 
         :param refresh: If True, a refresh will be performed before getting the folder data; defaults to False
@@ -884,7 +913,10 @@ class CaltopoSession():
             aaf.append(accountDict)
         return aaf
 
-    def getGroupAccountTitles(self,refresh=False) -> list:
+    def getGroupAccountTitles(self,
+            refresh=False,
+            callback=None,
+            callbackArgs=[]) -> list:
         """Get the titles of all of the user's group accounts.
 
         :param refresh: If True, a refresh will be performed before getting the account titles; defaults to False
@@ -1870,7 +1902,9 @@ class CaltopoSession():
             visible=True,
             labelVisible=True,
             timeout=0,
-            dataQueue=False):
+            dataQueue=False,
+            callback=None,
+            callbackArgs=[]):
         """Add a folder to the current map.
 
         :param label: Name of the folder; defaults to "New Folder"
@@ -1899,7 +1933,7 @@ class CaltopoSession():
         else:
             # return self._sendRequest("post","folder",j,returnJson="ID")
             # add to .mapData immediately
-            rj=self._sendRequest('post','folder',j,returnJson='ALL',timeout=timeout)
+            rj=self._sendRequest('post','folder',j,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
@@ -2006,7 +2040,9 @@ class CaltopoSession():
             folderId=None,
             existingId=None,
             timeout=0,
-            dataQueue=False):
+            dataQueue=False,
+            callback=None,
+            callbackArgs=[]):
         """Add a line to the current map.\n
         (See .addLineAssignment to add an assignment feature instead.)
 
@@ -2060,7 +2096,7 @@ class CaltopoSession():
         else:
             # return self._sendRequest("post","Shape",j,id=existingId,returnJson="ID",timeout=timeout)
             # add to .mapData immediately
-            rj=self._sendRequest('post','Shape',j,id=existingId,returnJson='ALL',timeout=timeout)
+            rj=self._sendRequest('post','Shape',j,id=existingId,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
@@ -2082,7 +2118,9 @@ class CaltopoSession():
             fill='#FF0000',
             existingId=None,
             timeout=0,
-            dataQueue=False):
+            dataQueue=False,
+            callback=None,
+            callbackArgs=[]):
         """Add a polygon to the current map.\n
         (See .addAreaAssignment to add an assignment feature instead.)
 
@@ -2139,7 +2177,7 @@ class CaltopoSession():
         else:
             # return self._sendRequest('post','Shape',j,id=existingId,returnJson='ID')
             # add to .mapData immediately
-            rj=self._sendRequest('post','Shape',j,id=existingId,returnJson='ALL',timeout=timeout)
+            rj=self._sendRequest('post','Shape',j,id=existingId,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
@@ -2157,7 +2195,9 @@ class CaltopoSession():
             fillOpacity=0.1,
             existingId=None,
             timeout=None,
-            dataQueue=False):
+            dataQueue=False,
+            callback=None,
+            callbackArgs=[]):
         """Add an Operational Period to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
@@ -2201,7 +2241,7 @@ class CaltopoSession():
         else:
             # return self.sendRequest('post','marker',j,id=existingId,returnJson='ID')
             # add to .mapData immediately
-            rj=self._sendRequest('post','OperationalPeriod',j,id=existingId,returnJson='ALL',timeout=timeout)
+            rj=self._sendRequest('post','OperationalPeriod',j,id=existingId,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
             if rj:
                 rjr=rj['result']
                 id=rjr['id']
@@ -2233,7 +2273,9 @@ class CaltopoSession():
             status='DRAFT',
             existingId=None,
             timeout=0,
-            dataQueue=False):
+            dataQueue=False,
+            callback=None,
+            callbackArgs=[]):
         """Add a Line Assignment to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
@@ -2322,7 +2364,7 @@ class CaltopoSession():
             self.dataQueue.setdefault('Assignment',[]).append(j)
             return 0
         else:
-            return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout)
+            return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
 
     # buffers: in the web interface, adding a buffer results in two requests:
     #   1. api/v0/geodata/buffer - payload = drawn centerline, response = polygon points
@@ -2367,7 +2409,9 @@ class CaltopoSession():
             status='DRAFT',
             existingId=None,
             timeout=0,
-            dataQueue=False):
+            dataQueue=False,
+            callback=None,
+            callbackArgs=[]):
         """Add an Area Assignment to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
@@ -2457,7 +2501,7 @@ class CaltopoSession():
             self.dataQueue.setdefault('Assignment',[]).append(j)
             return 0
         else:
-            return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout)
+            return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
 
     def flush(self,timeout=20):
         """Saves any dataQueued (deferred) request data to the hosted map.\n
@@ -2481,7 +2525,9 @@ class CaltopoSession():
             # since=0,
             folderId=None,
             existingId='',
-            timeout=0):
+            timeout=0,
+            callback=None,
+            callbackArgs=[]):
         """Add an AppTrack to the current map.\n
         Normally, AppTracks are only added from the CalTopo app.
 
@@ -2540,12 +2586,16 @@ class CaltopoSession():
         # if 1 == 1:
         ##if startTrack == 1:
         logging.info("At request first time track"+str(existingId)+":"+str(j))
-        return self._sendRequest("post","Shape",j,id=str(existingId),returnJson="ID",timeout=timeout)
+        return self._sendRequest("post","Shape",j,id=str(existingId),returnJson="ID",timeout=timeout,callback=callback,callbackArgs=callbackArgs)
         # else:
         #     logging.info("At request adding points to track:"+str(existingId)+":"+str(since)+":"+str(j))
         #     return self._sendRequest("post","since/"+str(since),j,id=str(existingId),returnJson="ID")
 
-    def delMarker(self,markerOrId='',timeout=0):
+    def delMarker(self,
+            markerOrId='',
+            timeout=0,
+            callback=None,
+            callbackArgs=[]):
         """Delete a marker on the current map.\n
         The marker to delete can be specified by ID, or by passing the entire marker data object.\n
         This convenience function calls .delFeature.
@@ -2558,10 +2608,14 @@ class CaltopoSession():
         if not self.mapID or self.apiVersion<0:
             logging.error('delFeature request invalid: this caltopo session is not associated with a map.')
             return False
-        self.delFeature(markerOrId,fClass="marker",timeout=timeout)
+        self.delFeature(markerOrId,fClass="marker",timeout=timeout,callback=callback,callbackArgs=callbackArgs)
 
     # delMarkers - calls asynchronous non-blocking delFeatures
-    def delMarkers(self,markersOrIds=[],timeout=0):
+    def delMarkers(self,
+            markersOrIds=[],
+            timeout=0,
+            callback=None,
+            callbackArgs=[]):
         """Delete one or more markers on the current map, in a non-blocking asynchronous batch of delete requests.\n
         The markers to delete can be specified by ID, or by passing the entire marker data objects; all markers to delete should be specified in the same manner.\n
         This convenience function calls .delFeatures.
@@ -2585,9 +2639,14 @@ class CaltopoSession():
         else:
             logging.error('invalid argument in call to delMarkers: '+str(markersOrIds))
             return False
-        self.delFeatures(featuresOrIdAndClassList=[{'id':id,'class':'Marker'} for id in ids],timeout=timeout)
+        self.delFeatures(featuresOrIdAndClassList=[{'id':id,'class':'Marker'} for id in ids],timeout=timeout,callback=callback,callbackArgs=callbackArgs)
 
-    def delFeature(self,featureOrId='',fClass='',timeout=0):
+    def delFeature(self,
+            featureOrId='',
+            fClass='',
+            timeout=0,
+            callback=None,
+            callbackArgs=[]):
         """Delete the specified feature from the current map.
         The feature to delete can be specified by ID, or by passing the entire marker data object.
 
@@ -2621,12 +2680,16 @@ class CaltopoSession():
         else:
             logging.error('invalid argument in call to delFeature: '+str(featureOrId))
             return False
-        return self._sendRequest("delete",fClass,None,id=str(id),returnJson="ALL",timeout=timeout)
+        return self._sendRequest("delete",fClass,None,id=str(id),returnJson="ALL",timeout=timeout,callback=callback,callbackArgs=callbackArgs)
 
     # delFeatures - asynchronously send a batch of non-blocking delFeature requests
     #  featuresOrIdAndClassList - a list of dicts - entire features, or, two items per dict: 'id' and 'class'
     #  see discussion at https://github.com/ncssar/sartopo_python/issues/34
-    def delFeatures(self,featuresOrIdAndClassList=[],timeout=0):
+    def delFeatures(self,
+            featuresOrIdAndClassList=[],
+            timeout=0,
+            callback=None,
+            callbackArgs=[]):
         """Delete one or more features on the current map, in a non-blocking asynchronous batch of delete requests.\n
 
         :param featuresOrIdAndClassList: List of dicts specifying the features to delete; each dict is either a complete feature data object, or this simplified dict; defaults to [] \n
@@ -2701,7 +2764,9 @@ class CaltopoSession():
             allowMultiTitleMatch=False,
             # since=0,
             timeout=0,
-            forceRefresh=False):
+            forceRefresh=False,
+            callback=None,
+            callbackArgs=[]):
         """Get the complete feature data structure/s for one or more features from the local cache, after a refresh if needed. \n
         The features to get data for can be specified / filtered in various methods:\n
             - all features of a given class
@@ -2831,7 +2896,9 @@ class CaltopoSession():
             allowMultiTitleMatch=False,
             # since=0,
             timeout=0,
-            forceRefresh=False):
+            forceRefresh=False,
+            callback=None,
+            callbackArgs=[]):
         """Get the complete feature data structure for one feature from the local cache, after a refresh if needed.\n
         This convenience function calls .getFeatures, but will only have a valid return if exactly one feature is a match.\n
         All arguments are the same as for .getFeatures; see that method's documentation.
@@ -2906,7 +2973,9 @@ class CaltopoSession():
             letter=None,
             properties=None,
             geometry=None,
-            timeout=0):
+            timeout=0,
+            callback=None,
+            callbackArgs=[]):
         """Edit properties and/or geometry of a specified feature.\n
         The feature to edit can be specified in various methods:\n
             - exact ID
@@ -3033,11 +3102,16 @@ class CaltopoSession():
         if geomToWrite is not None:
             j['geometry']=geomToWrite
 
-        return self._sendRequest('post',className,j,id=feature['id'],returnJson='ID',timeout=timeout)
+        return self._sendRequest('post',className,j,id=feature['id'],returnJson='ID',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
 
     # moveMarker - convenience function - calls editFeature
     #   specify either id or title
-    def moveMarker(self,newCoords,id=None,title=None):
+    def moveMarker(self,
+            newCoords,
+            id=None,
+            title=None,
+            callback=None,
+            callbackArgs=[]):
         """Move an existing marker.\n
         The marker to move can be specified either with ID or by title.\n
         This convenience function calls .editFeature.
@@ -3050,11 +3124,16 @@ class CaltopoSession():
         :type title: str, optional
         :return: ID of the edited feature (should be the same as the 'id' argument, if specified), or False if there was a failure prior to the edit request
         """        
-        self.editFeature(id=id,title=title,className='Marker',geometry={'coordinates':[newCoords[0],newCoords[1],0,0]})
+        self.editFeature(id=id,title=title,className='Marker',geometry={'coordinates':[newCoords[0],newCoords[1],0,0]},callback=callback,callbackArgs=callbackArgs)
 
     # editMarkerDescription - convenienec functon - calls editFeature
     #   specify either id or title
-    def editMarkerDescription(self,newDescription,id=None,title=None):
+    def editMarkerDescription(self,
+            newDescription,
+            id=None,
+            title=None,
+            callback=None,
+            callbackArgs=[]):
         """Edit the description of an existing marker.\n
         The marker to edit can be specified either with ID or by title.\n
         This convenience function calls .editFeature.
@@ -3067,7 +3146,7 @@ class CaltopoSession():
         :type title: str, optional
         :return: ID of the edited feature (should be the same as the 'id' argument, if specified), or False if there was a failure prior to the edit request
         """          
-        self.editFeature(id=id,title=title,className='Marker',properties={'description':newDescription})
+        self.editFeature(id=id,title=title,className='Marker',properties={'description':newDescription},callback=callback,callbackArgs=callbackArgs)
 
     # _removeDuplicatePoints - walk a list of points - if a given point is
     #   very close to the previous point, delete it (<0.00001 degrees)
@@ -3186,7 +3265,13 @@ class CaltopoSession():
     #   - slice a line, using a line
     #  the arguments (target, cutter) can be name (string), id (string), or feature (json)
 
-    def cut(self,target,cutter,deleteCutter=True,useResultNameSuffix=True):
+    def cut(self,
+            target,
+            cutter,
+            deleteCutter=True,
+            useResultNameSuffix=True,
+            callback=None,
+            callbackArgs=[]):
         """Cut a 'target' geometry using a 'cutter' geometry:
             - remove a notch from a polygon target, using a polygon cutter
             - slice a polygon target, using a polygon cutter or a line cutter
@@ -3425,7 +3510,12 @@ class CaltopoSession():
 
     # expand - expand target polygon to include the area of p2 polygon
 
-    def expand(self,target,p2,deleteP2=True):
+    def expand(self,
+            target,
+            p2,
+            deleteP2=True,
+            callback=None,
+            callbackArgs=[]):
         """Expand a 'target' polygon to include the area of the 'p2' polygon.\n
         This is basically a boolean 'OR' operation, using Shapely's '|' method.
 
@@ -3617,7 +3707,12 @@ class CaltopoSession():
     # getBounds - return the bounding box (minx,miny,maxx,maxy), oversized by 'pad',
     #               that bounds the listed objects
 
-    def getBounds(self,objectList: list,padDeg=0.0001,padPct=None):
+    def getBounds(self,
+            objectList: list,
+            padDeg=0.0001,
+            padPct=None,
+            callback=None,
+            callbackArgs=[]):
         """Get the bounding box of a list of features, optionally oversized by padDeg or padPct.\n
         Shapely.bounds is used to compute the extent of each feature.
 
@@ -3739,7 +3834,16 @@ class CaltopoSession():
     # crop - remove portions of a line or polygon that are outside a boundary polygon;
     #          grow the specified boundary polygon by the specified distance before cropping
 
-    def crop(self,target,boundary,beyond=0.0001,deleteBoundary=False,useResultNameSuffix=False,drawSizedBoundary=False,noDraw=False):
+    def crop(self,
+            target,
+            boundary,
+            beyond=0.0001,
+            deleteBoundary=False,
+            useResultNameSuffix=False,
+            drawSizedBoundary=False,
+            noDraw=False,
+            callback=None,
+            callbackArgs=[]):
         """Remove portions of a line or polygon that are outside a boundary polygon.
         Optionally grow the boundary polygon by the specified distance before cropping.
 
