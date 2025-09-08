@@ -1441,10 +1441,12 @@ class CaltopoSession():
         :param accountId: account ID if the request should be made in regards to a different team account that the user has access to, such as new map creation in a team account; defaults to ''
         :type accountId: str, optional
         :return: various, depending on request details: \n
-          - False for any error or failure
-          - Entire response json structure (dict) if returnJson is 'ALL'
-          - ID only, if returnJson is 'ID'
-          - map ID of newly created map, if apiUrlEnd contains '[NEW]'
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
+           - map ID of newly created map, if apiUrlEnd contains '[NEW]'
         """        
         # objgraph.show_growth()
         # logging.info('RAM:'+str(process.memory_info().rss/1024**2)+'MB')
@@ -1550,6 +1552,7 @@ class CaltopoSession():
                 if self.requestQueueChangedCallback:
                     self.requestQueueChangedCallback(self.requestQueue)
                 self.requestEvent.set()
+                return True # successfully submitted to the queue
         elif type=="GET": # no need for json in GET; sending null JSON causes downstream error
             # logging.info("SENDING GET to '"+url+"':")
             if internet:
@@ -1559,33 +1562,35 @@ class CaltopoSession():
                 params["id"]=self.id
                 params["expires"]=expires
                 params["signature"]=self._getToken(data)
+            if internet:
                 paramsPrint=copy.deepcopy(params)
                 paramsPrint['id']='.....'
                 paramsPrint['signature']='.....'
+            else:
+                paramsPrint=params
                 # 'data' argument sends dict in body; 'params' sends dict in URL query string,
                 #   which is needed by signed GET requests such as api/v1/acct/....../since/0
                 #   and for all requests to maps with 'secret' permission; so, might as well just
                 #   sign all GET requests to the internet, rather than try to determine permission
-                if skipQueue:
-                    self.syncPause=True
-                    r=self.s.get(url,params=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
-                else:
-                    requestQueueEntry={
-                        'method':'GET',
-                        'url':url,
-                        'params':params,
-                        'timeout':timeout,
-                        'proxies':self.proxyDict,
-                        'allow_redirects':False,
-                        'callbacks':callbacks
-                    }
-                    self.requestQueue.put(requestQueueEntry)
-                    if self.requestQueueChangedCallback:
-                        self.requestQueueChangedCallback(self.requestQueue)
-                    self.requestEvent.set()
+            if skipQueue:
+                self.syncPause=True
+                r=self.s.get(url,params=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
             else:
-                r=self.s.get(url,timeout=timeout,proxies=self.proxyDict)
-            logging.info("SENDING GET to '"+url+"'")
+                requestQueueEntry={
+                    'method':'GET',
+                    'url':url,
+                    'params':params,
+                    'timeout':timeout,
+                    'proxies':self.proxyDict,
+                    'allow_redirects':False,
+                    'callbacks':callbacks
+                }
+                self.requestQueue.put(requestQueueEntry)
+                if self.requestQueueChangedCallback:
+                    self.requestQueueChangedCallback(self.requestQueue)
+                self.requestEvent.set()
+                return True # successfully submitted to the queue
+            # logging.info("SENDING GET to '"+url+"'")
             # logging.info(json.dumps(paramsPrint,indent=3))
             # logging.info('Prepared request URL:')
             # logging.info(r.request.url)
@@ -1597,6 +1602,7 @@ class CaltopoSession():
                 params["id"]=self.id
                 params["expires"]=expires
                 params["signature"]=self._getToken(data)
+            if internet:
                 paramsPrint=copy.deepcopy(params)
                 paramsPrint['id']='.....'
                 paramsPrint['signature']='.....'
@@ -1622,13 +1628,14 @@ class CaltopoSession():
                 if self.requestQueueChangedCallback:
                     self.requestQueueChangedCallback(self.requestQueue)
                 self.requestEvent.set()
+                return True # successfully submitted to the queue
             # logging.info("URL:"+str(url))
             # logging.info("Ris:"+str(r))
         else:
             logging.error("sendRequest: Unrecognized request type:"+str(type))
             # self.syncPause=False
             return False
-        if skipQueue:
+        if skipQueue: # blocking request
             rval=self._handleResponse(r,newMap,returnJson,callbacks=callbacks)
             self.syncPause=False
             return rval
@@ -1771,7 +1778,7 @@ class CaltopoSession():
         logging.info('response json:')
         logging.info(json.dumps(r.json(),indent=3))
 
-        # callbacks arguments structure: list of lists
+        # 'callbacks' argument structure: list of lists
         # each top-level element is a one-or-two-element list: callback method, with its arguments
         # [
         #   [cb1,[cb1_positional_args,{cb1_kwargs}]],
@@ -1798,7 +1805,7 @@ class CaltopoSession():
                     if isinstance(arg,dict): # dict? it's the kwargs dict
                         if callbackKwArgs:
                             logging.error('callback arguments parsing violation: callback arguments structure has more than one dictionary')
-                            return
+                            return False
                         callbackKwArgs=arg
                     else: # not a dict? it's a positional arg
                         if arg.startswith('.'): # nested r.json() dict keys
@@ -2012,7 +2019,11 @@ class CaltopoSession():
         :type timeout: int, optional
         :param dataQueue: If True, the marker creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created marker, or 0 if dataQueued; False if there was a failure
+        :return:
+         - successful blocking request: ID of the created marker
+         - successful non-blocking request, submitted to the queue: True
+         - error or failure whether blocking or non-blocking: False
+         - dataQueued: 0
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addMarker request invalid: this caltopo session is not associated with a map.')
@@ -2047,23 +2058,27 @@ class CaltopoSession():
             # add to .mapData immediately
             # rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout,callback=callback,callbackArgs=callbackArgs)
             logging.info('addMarker: callbacks before prepend:'+str(callbacks))
-            callbacks=[[self._addCallback,['.result','Marker']]]+callbacks # add to .mapData immediately for use by any downstream-specified callbacks
+            callbacks=[[self._addCallback,['.result']]]+callbacks # add to .mapData immediately for use by any downstream-specified callbacks
             logging.info('addMarker: callbacks after prepend:'+str(callbacks))
-            rj=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout,callbacks=callbacks)
-            if rj: # if it was a blocking request with a valid response
-                rjr=rj['result']
-                id=rjr['id']
-                self.mapData['ids'].setdefault('Marker',[]).append(id)
-                self.mapData['state']['features'].append(rjr)
-                return id
+            r=self._sendRequest('post','marker',j,id=existingId,returnJson='ALL',timeout=timeout,callbacks=callbacks)
+            if isinstance(r,dict): # blocking request, returning response.json()
+                return self._addCallback(r['result']) # normally returns the id
+                # rjr=rj['result']
+                # id=rjr['id']
+                # self.mapData['ids'].setdefault('Marker',[]).append(id)
+                # self.mapData['state']['features'].append(rjr)
+                # return id
             else:
-                return False
+                return r # could be False if error, or True if non-blocking request submitted to the queue
 
-    def _addCallback(self,rjr,objType):
-        logging.info('addCallback called: rjr='+str(rjr)+' objType='+str(objType))
+    def _addCallback(self,rjr):
+        logging.info('addCallback called:')
+        logging.info(json.dumps(rjr,indent=3))
+        objClass=rjr['properties']['class']
         id=rjr['id']
-        self.mapData['ids'].setdefault(objType,[]).append(id)
+        self.mapData['ids'].setdefault(objClass,[]).append(id)
         self.mapData['state']['features'].append(rjr)
+        return id
 
     def addLine(self,
             points: list,
