@@ -657,6 +657,8 @@ class CaltopoSession():
                  *updated* -> timestamp of most recent update to the map \n
                  *type* -> 'map' or 'bookmark' \n
                    if type is 'bookmark', another key *permission* will exist, with corresponding value
+                 *folderId* -> folder ID, if the map is in an account-level folder or subfolder
+                 *folderName* -> folder name, or '<Top Level>'
         :rtype: list
         """        
         if refresh or not self.accountData:
@@ -676,30 +678,47 @@ class CaltopoSession():
                 logging.warning('groupAccountIds was not a list; returning an empty list.')
                 return []
             gid=groupAccountIds[0]
+            folders=[f for f in self.accountData['features']
+				if 'properties' in f.keys()
+				and f['properties'].get('class','')=='UserFolder'
+				and f['properties'].get('accountId','')==gid]
             maps=[f for f in self.accountData['features']
                     if 'properties' in f.keys()
                     and f['properties'].get('class','')=='CollaborativeMap'
                     and f['properties'].get('accountId','')==gid]
-            mapLists.append({'id':gid,'title':groupAccountTitle,'maps':maps})
+            mapLists.append({'id':gid,'title':groupAccountTitle,'maps':maps,'folders':folders})
         else: # personal maps; allow for the possibility of multiple personal accounts
             if len(self.personalAccounts)>1:
                 logging.info('The currently-signed-in user has more than one personal account; the return value will be a netsted list.')
             for personalAccount in self.personalAccounts:
                 pid=personalAccount['id']
+                folders=[f for f in self.accountData['features']
+					if 'properties' in f.keys()
+					and f['properties'].get('class','')=='UserFolder'
+					and f['properties'].get('accountId','')==gid]
                 maps=[f for f in self.accountData['features']
                         if 'properties' in f.keys()
                         and f['properties'].get('class','')=='CollaborativeMap'
                         and f['properties'].get('accountId','')==pid]
-                mapLists.append({'id':pid,'title':[x['properties']['title'] for x in self.accountData['accounts'] if x['id']==pid][0],'maps':maps})
+                mapLists.append({'id':pid,'title':[x['properties']['title'] for x in self.accountData['accounts'] if x['id']==pid][0],'maps':maps,'folders':folders})
         for mapList in mapLists:
+            folderDict={}
+            for folder in mapList['folders']:
+                folderDict[folder['id']]=folder['properties']['title']
             theList=[]
             for map in mapList['maps']:
                 mp=map['properties']
+                folderId=mp.get('folderId',None)
+                folderName='<Top Level>'
+                if folderId:
+                    folderName=folderDict[folderId]
                 md={
                     'id':map['id'],
                     'title':mp['title'],
                     'updated':mp['updated'],
-                    'type':'map'
+                    'type':'map',
+					'folderId':folderId,
+					'folderName':folderName
                 }
                 if md not in theList:
                     theList.append(md)
@@ -721,12 +740,18 @@ class CaltopoSession():
                         permission='write'
                     else:
                         permission='unknown'
+                    folderId=mp.get('folderId',None)
+                    folderName='<Top Level>'
+                    if folderId:
+                        folderName=folderDict[folderId]
                     bd={
                         'id':bp['mapId'],
                         'title':bp['title'],
                         'updated':bp['mapUpdated'],
                         'type':'bookmark',
-                        'permission':permission
+                        'permission':permission,
+						'folderId':folderId,
+						'folderName':folderName
                     }
                     if bd not in theList:
                         theList.append(bd)
