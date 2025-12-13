@@ -1,0 +1,117 @@
+PS C:\Users\caver\Documents\GitHub\caltopo_python> python caltopo_test.py
+20:46:47 [caltopo_python:256:INFO] requestWorker: waiting for event...
+20:46:47 [caltopo_python:252:INFO] Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.
+20:46:47 [caltopo_python:422:INFO] Initial cache population begins.
+20:46:47 [caltopo_python:948:INFO] inside doSync
+20:46:48 [caltopo_python:1570:INFO] SENDING GET to 'https://caltopo.com/api/v1/map/9GGGBQV/since/0'
+20:46:48 [caltopo_python:1613:INFO]  inside handleResponse...
+20:46:48 [caltopo_python:988:INFO]   Updating "ids"
+20:46:48 [caltopo_python:424:INFO] Initial cache population complete.
+20:46:48 [caltopo_python:1256:INFO] This is the first sync attempt; pausing for the normal sync interval before starting sync.
+20:46:48 [caltopo_python:1208:INFO] Caltopo syncing initiated for map 9GGGBQV.
+t1
+20:46:53 [caltopo_python:948:INFO] inside doSync
+t2
+t3
+20:46:58 [caltopo_python:258:INFO]   requestWorker: event received, processing requestQueue...
+20:46:58 [caltopo_python:261:INFO]   queue size at start of iteration:1
+20:46:58 [caltopo_python:263:INFO]   queued request:{
+   "method": "POST",
+   "url": "https://caltopo.com/api/v1/map/9GGGBQV/Marker",
+   "data": {
+      "id": "PJLLK0N9DR1F",
+      "expires": 1751341738041,
+      "signature": "PutfyGoy65SepHzKpIc2bCNotuu+GSyfI7PGCgJ4roA=",
+      "json": "{\"properties\": {\"class\": \"Marker\", \"updated\": 0, \"marker-color\": \"#FF0000\", \"marker-symbol\": \"point\", \"marker-size\": 1, \"marker-rotation\": null, \"marker-visibility\": \"visible\", \"title\": \"a\", \"description\": \"\"}, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-120.0, 39.0]}, \"type\": \"Feature\"}"
+   },
+   "timeout": 10,
+   "proxies": null,
+   "allow_redirects": false
+}
+20:46:58 [caltopo_python:268:INFO]     processing POST...
+20:46:58 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+t4
+20:47:03 [caltopo_python:268:INFO]     processing POST...
+20:47:03 [caltopo_python:1288:ERROR] Sync attempt failed; setting holdRequests
+20:47:03 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+t5
+20:47:08 [caltopo_python:1267:INFO] 9GGGBQV: sync pause begins; sync will not happen until sync pause ends
+20:47:08 [caltopo_python:268:INFO]     processing POST...
+20:47:08 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+t6
+t7
+20:47:13 [caltopo_python:1263:INFO] Main thread has ended; sync is stopping...
+20:47:13 [caltopo_python:268:INFO]     processing POST...
+20:47:13 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+20:47:14 [caltopo_python:1271:INFO] 9GGGBQV: sync pause ends; resuming sync
+20:47:14 [caltopo_python:948:INFO] inside doSync
+20:47:14 [caltopo_python:1288:ERROR] Sync attempt failed; setting holdRequests
+20:47:18 [caltopo_python:268:INFO]     processing POST...
+20:47:18 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+20:47:23 [caltopo_python:268:INFO]     processing POST...
+20:47:23 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+20:47:28 [caltopo_python:268:INFO]     processing POST...
+20:47:28 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+20:47:33 [caltopo_python:268:INFO]     processing POST...
+20:47:33 [caltopo_python:301:INFO]     response not valid; trying again in 5 seconds...
+20:47:38 [caltopo_python:268:INFO]     processing POST...
+20:47:38 [caltopo_python:297:INFO]     200 response received; removing this request from the queue
+20:47:38 [caltopo_python:1613:INFO]  inside handleResponse...
+20:47:38 [caltopo_python:304:INFO]   queue size at end of iteration:3
+20:47:38 [caltopo_python:261:INFO]   queue size at start of iteration:3
+20:47:38 [caltopo_python:263:INFO]   queued request:{
+   "method": "POST",
+   "url": "https://caltopo.com/api/v1/map/9GGGBQV/Marker",
+   "data": {
+      "id": "PJLLK0N9DR1F",
+      "expires": 1751341743045,
+      "signature": "i1zah5VLNRYI47cQ4tnV+KHOEPVACc49zS3qu6yN1OY=",
+      "json": "{\"properties\": {\"class\": \"Marker\", \"updated\": 0, \"marker-color\": \"#FF0000\", \"marker-symbol\": \"point\", \"marker-size\": 1, \"marker-rotation\": null, \"marker-visibility\": \"visible\", \"title\": \"b\", \"description\": \"\"}, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-120.1, 39.1]}, \"type\": \"Feature\"}"
+   },
+   "timeout": 10,
+   "proxies": null,
+   "allow_redirects": false
+}
+20:47:38 [caltopo_python:268:INFO]     processing POST...
+20:47:38 [caltopo_python:297:INFO]     200 response received; removing this request from the queue
+20:47:38 [caltopo_python:1613:INFO]  inside handleResponse...
+20:47:38 [caltopo_python:304:INFO]   queue size at end of iteration:2
+20:47:38 [caltopo_python:261:INFO]   queue size at start of iteration:2
+20:47:38 [caltopo_python:263:INFO]   queued request:{
+   "method": "POST",
+   "url": "https://caltopo.com/api/v1/map/9GGGBQV/Marker",
+   "data": {
+      "id": "PJLLK0N9DR1F",
+      "expires": 1751341748049,
+      "signature": "BtxJTOjzV9jxNuBJsmjnvCp2ftG+LAm13P0yrbosk90=",
+      "json": "{\"properties\": {\"class\": \"Marker\", \"updated\": 0, \"marker-color\": \"#FF0000\", \"marker-symbol\": \"point\", \"marker-size\": 1, \"marker-rotation\": null, \"marker-visibility\": \"visible\", \"title\": \"c\", \"description\": \"\"}, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-120.2, 39.2]}, \"type\": \"Feature\"}"
+   },
+   "timeout": 10,
+   "proxies": null,
+   "allow_redirects": false
+}
+20:47:38 [caltopo_python:268:INFO]     processing POST...
+20:47:38 [caltopo_python:297:INFO]     200 response received; removing this request from the queue
+20:47:38 [caltopo_python:1613:INFO]  inside handleResponse...
+20:47:38 [caltopo_python:304:INFO]   queue size at end of iteration:1
+20:47:38 [caltopo_python:261:INFO]   queue size at start of iteration:1
+20:47:38 [caltopo_python:263:INFO]   queued request:{
+   "method": "POST",
+   "url": "https://caltopo.com/api/v1/map/9GGGBQV/Marker",
+   "data": {
+      "id": "PJLLK0N9DR1F",
+      "expires": 1751341753051,
+      "signature": "vAdm+i2CT4eMO+64VA+6Cg+U8RPFvgOV59IM2lfnSmw=",
+      "json": "{\"properties\": {\"class\": \"Marker\", \"updated\": 0, \"marker-color\": \"#FF0000\", \"marker-symbol\": \"point\", \"marker-size\": 1, \"marker-rotation\": null, \"marker-visibility\": \"visible\", \"title\": \"d\", \"description\": \"\"}, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-120.3, 39.3]}, \"type\": \"Feature\"}"
+   },
+   "timeout": 10,
+   "proxies": null,
+   "allow_redirects": false
+}
+20:47:38 [caltopo_python:268:INFO]     processing POST...
+20:47:38 [caltopo_python:297:INFO]     200 response received; removing this request from the queue
+20:47:38 [caltopo_python:1613:INFO]  inside handleResponse...
+20:47:38 [caltopo_python:304:INFO]   queue size at end of iteration:0
+20:47:38 [caltopo_python:305:INFO]   requestWorker: request queue processing complete...
+20:47:38 [caltopo_python:1191:INFO] CaltopoSession instance deleted for map 9GGGBQV.
+PS C:\Users\caver\Documents\GitHub\caltopo_python>
