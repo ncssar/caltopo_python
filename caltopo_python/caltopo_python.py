@@ -375,6 +375,9 @@ class CaltopoSession():
             #  otherwise it always shows up at the bottom of the map list when sorted
             #  chronologically.  Definitely best to have it show up adjacent to the
             #  incident map.
+            # The caltopo API docs state that at least one feature is needed; if none is given, then a map
+            #  is still created, but apparently the server response with 500 (unknown server error)
+            dummyId='11111111-1111-1111-1111-111111111111'
             j['state']={
                 'type':'FeatureCollection',
                 'features':[
@@ -384,27 +387,28 @@ class CaltopoSession():
                             'type':'Point',
                             'coordinates': [-120,39]
                         },
-                        'id':'11111111-1111-1111-1111-111111111111',
+                        'id':dummyId,
                         'properties':{
                             'title':'NewMapDummyMarker'
                         }
                     }
                 ]
             }
-            # logging.info('dap='+str(self.domainAndPort))
-            # logging.info('payload='+str(json.dumps(j,indent=3)))
-            r=self._sendRequest('post','[NEW]',j,domainAndPort=self.domainAndPort,accountId=newMapAccount['accountId'],callbacks=callbacks)
-            if r:
+            # logging.info(f'openMap dap={self.domainAndPort}')
+            # logging.info(f'openMap payload={json.dumps(j,indent=3)}')
+            r=self._sendRequest('post','[NEW]',j,domainAndPort=self.domainAndPort,accountId=newMapAccount['accountId'],blocking=True)
+            if r and isinstance(r,str):
                 self.mapID=r.rstrip('/').split('/')[-1]
                 self.s=requests.session()
                 self._sendUserdata() # to get session cookies for new session
                 time.sleep(1) # to avoid a 401 on the subsequent get request
-                self.delMarker('11111111-1111-1111-1111-111111111111') # delete the dummy marker
+                self.delMarker(dummyId) # delete the dummy marker
+                logging.info(f'Created new map {self.mapID}')
             else:
-                logging.info('New map request failed.  See the log for details.')
+                logging.info(f'New map request failed.  See the log for details. Response:{r}')
                 return False
         else:
-            logging.info('Opening map '+str(mapID)+'...')
+            logging.info(f'Opening map {mapID}...')
         
         # logging.info("API version:"+str(self.apiVersion))
         # sync needs to be done here instead of in the caller, so that
@@ -2020,7 +2024,9 @@ class CaltopoSession():
                                 # logging.info(f'f6a1 {r}')
                                 # logging.warning(f'    r={r.status_code} {r.text}') # this aborts the try clause gracefully but doesn't trigger the except clause
                                 # logging.info('f6b')
-                                logging.warning(f'  response: {r}')
+                                # logging.warning(f'  response: {r}')
+                                # print gracefully if r isn't a response object
+                                logging.warning(f'    response: {getattr(r,'status_code','')} {getattr(r,'text',r)}')
                             except Exception as e:
                                 logging.error(f'Exception during print of invalid response: {e} (r={r})')
                             # if r:
