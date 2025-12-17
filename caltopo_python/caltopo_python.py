@@ -2703,9 +2703,12 @@ class CaltopoSession():
     def updateLiveTrack(self,
                         id='',
                         lat=None,
-                        lon=None):
+                        lon=None,
+                        elevation=None): # elevation is optional
         # for a LiveTrack feature whose deviceId is 'MyGroup-MyDeviceNum', based on the caltopo docs,
         # send a request that looks like https://caltopo.com/api/v1/position/report/MyGroup?id=MyDeviceNum&lat=39&lng=-120
+        if not lat or not lon:
+            logging.warning(f'Lat and lon must both be specified in a LiveTrack update. (Elevation is optional.) Skipping this update.  Specified values: lat={lat} lon={lon} elevation={elevation}')
         logging.info(' id specified: '+str(id))
         features=[f for f in self.mapData['state']['features'] if f['id']==id]
         # logging.info(json.dumps(self.mapData,indent=3))
@@ -2723,7 +2726,11 @@ class CaltopoSession():
             logging.error(f'deviceId "{deviceId}" of specified feature is malformed - it should start with "FLEET:"')
             return False
         (part1,part2)=deviceId[6:].split('-')[0:2]
-        url=f'https://caltopo.com/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}'
+        elevationSuffix=''
+        if elevation:
+            elevationSuffix=f'&ele={elevation}'
+        # url=f'https://caltopo.com/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}'
+        url=f'https://caltopo.com/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}{elevationSuffix}'
         logging.info(f'updateLiveTrack: sending GET to {url}')
         return self.s.get(url)
     
