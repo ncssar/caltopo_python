@@ -2734,6 +2734,42 @@ class CaltopoSession():
         logging.info(f'updateLiveTrack: sending GET to {url}')
         return self.s.get(url)
     
+    def stopLiveTrack(self,
+            id=''):
+        # Equivalent to 'stop listening' from the web interface:
+        #  1. record the LiveTrack's properties and geometry
+        #  2. delete the LiveTrack
+        #  3. create a Line with the same properties and geometry
+        #    NOTE: the web interface will actually specify the ID at the end of the Shape request URL,
+        #     so that the Line will have the same id as the now-deleted LiveTrack.
+        #     Doing so here would require adding that capability in addLine (and _addFeature) which 
+        #     is fairly invasive without any real benefit.  So - simplfying and 'inverting' the workflow:
+        #  1. create a Line with the same properties and geometry as the LiveTrack
+        #  2. delete the LiveTrack
+        liveTrack=self.getFeature(id=id)
+        if liveTrack:
+            ltp=liveTrack['properties']
+            ltc=ltp['class']
+            if ltc=='LiveTrack':
+                ltg=liveTrack['geometry']
+                lid=self.addLine(
+                    points=ltg['coordinates'],
+                    title=ltp['title'],
+                    width=ltp['stroke-width'],
+                    opacity=ltp['stroke-opacity'],
+                    color=ltp['stroke'],
+                    pattern=ltp['pattern'],
+                    blocking=True
+                )
+                self.delFeature(id,blocking=True)
+                return lid
+            else:
+                logging.warning(f'stopLiveTrack failure: feature with specified id {id} is not a LiveTrack: class={ltc}')
+                return False
+        else:
+            logging.warning(f'stopLiveTrack failure: no match for specified id {id}')
+            return False
+
     def addOperationalPeriod(self,
             title='New OP',
             color='#FF0000', # stroke and fill are separate payload items, but both are the same value
