@@ -1696,9 +1696,9 @@ class CaltopoSession():
             #     paramsPrint['id']='.....'
             #     paramsPrint['signature']='.....'
             # else:
-            #     paramsPrint=params
-            # logging.info("SENDING POST to '"+url+"':")
-            # logging.info(json.dumps(paramsPrint,indent=3))
+                paramsPrint=params
+            logging.info(f'SENDING {method.upper()} to {url}:')
+            logging.info(json.dumps(paramsPrint,indent=3))
             # don't print the entire PDF generation request - upstream code can print a PDF data summary
             # if 'PDFLink' not in url:
             #     logging.info(jsonForLog(paramsPrint))
@@ -2639,6 +2639,136 @@ class CaltopoSession():
         #         return id
         #     else:
         #         return False
+
+    def addLiveTrack(self,
+            title='New Line',
+            deviceId='',
+            width=2,
+            opacity=1,
+            color='#FF0000',
+            pattern='solid',
+            folderId=None,
+            # existingId=None,
+            timeout=0,
+            dataQueue=False,
+            callbacks=[],
+            blocking=None): # use self.blockingByDefault as the default, resolved in _addFeature
+        """Add a line to the current map.\n
+        (See .addLineAssignment to add an assignment feature instead.)
+
+        :param points: List of points; each point is a list: [lon,lat]
+        :type points: list
+        :param title: Title of the line; defaults to 'New Line'
+        :type title: str, optional
+        :param description: Line description; defaults to ''
+        :type description: str, optional
+        :param width: Line width in pixels; defaults to 2
+        :type width: int, optional
+        :param opacity: Line opacity, ranging from 0 to 1; defaults to 1
+        :type opacity: float, optional
+        :param color: Line color, in RGB #FFFFFF hex notation; defaults to '#FF0000'
+        :type color: str, optional
+        :param pattern: Line dash pattern; must be from the known list of pattern names; defaults to 'solid'
+        :type pattern: str, optional
+        :param folderId: Folder ID of the folder this line should be created in, if any; defaults to None
+        :param existingId: ID of an existing line to edit using this method; defaults to None
+        :type existingId: str, optional
+        :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
+        :type timeout: int, optional
+        :param dataQueue: If True, the line creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :return: ID of the created line, or 0 if dataQueued; False if there was a failure
+        """           
+        if not self.mapID or self.apiVersion<0:
+            logging.error('addLiveTrack request invalid: this caltopo session is not associated with a map.')
+            return False
+        if not deviceId.startswith('FLEET:'):
+            deviceId='FLEET:'+deviceId
+        if '-' not in deviceId or deviceId.startswith('-') or deviceId.endswith('-'):
+            logging.error(f'addLiveTrack specified deviceId "{deviceId}" is malformed: a hyphen must be present, with text before and after')
+            return False
+        j={}
+        jp={}
+        jp['title']=title
+        jp['deviceId']=deviceId
+        if folderId is not None:
+            jp['folderId']=folderId
+        jp['stroke-width']=width
+        jp['stroke-opacity']=opacity
+        jp['stroke']=color
+        jp['pattern']=pattern
+        j['properties']=jp
+        return self._addFeature('LiveTrack',j,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+    
+    def updateLiveTrack(self,
+                        id='',
+                        lat=None,
+                        lon=None,
+                        elevation=None): # elevation is optional
+        # for a LiveTrack feature whose deviceId is 'MyGroup-MyDeviceNum', based on the caltopo docs,
+        # send a request that looks like https://caltopo.com/api/v1/position/report/MyGroup?id=MyDeviceNum&lat=39&lng=-120
+        if not lat or not lon:
+            logging.warning(f'Lat and lon must both be specified in a LiveTrack update. (Elevation is optional.) Skipping this update.  Specified values: lat={lat} lon={lon} elevation={elevation}')
+        logging.info(' id specified: '+str(id))
+        features=[f for f in self.mapData['state']['features'] if f['id']==id]
+        # logging.info(json.dumps(self.mapData,indent=3))
+        if len(features)==1:
+            feature=features[0]     ## matched feature
+        else:
+            logging.info('  no match!')
+            return False
+        deviceId=feature['properties'].get('deviceId',None)
+        logging.info(f'updating LiveTrack for deviceId="{deviceId}"')
+        if not deviceId:
+            logging.error(f'specified feautre {id} has no deviceId property')
+            return False
+        if not deviceId.startswith('FLEET:'):
+            logging.error(f'deviceId "{deviceId}" of specified feature is malformed - it should start with "FLEET:"')
+            return False
+        (part1,part2)=deviceId[6:].split('-')[0:2]
+        elevationSuffix=''
+        if elevation:
+            elevationSuffix=f'&ele={elevation}'
+        # url=f'https://caltopo.com/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}'
+        url=f'https://caltopo.com/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}{elevationSuffix}'
+        logging.info(f'updateLiveTrack: sending GET to {url}')
+        return self.s.get(url)
+    
+    def stopLiveTrack(self,
+            id=''):
+        # Equivalent to 'stop listening' from the web interface:
+        #  1. record the LiveTrack's properties and geometry
+        #  2. delete the LiveTrack
+        #  3. create a Line with the same properties and geometry
+        #    NOTE: the web interface will actually specify the ID at the end of the Shape request URL,
+        #     so that the Line will have the same id as the now-deleted LiveTrack.
+        #     Doing so here would require adding that capability in addLine (and _addFeature) which 
+        #     is fairly invasive without any real benefit.  So - simplfying and 'inverting' the workflow:
+        #  1. create a Line with the same properties and geometry as the LiveTrack
+        #  2. delete the LiveTrack
+        liveTrack=self.getFeature(id=id)
+        if liveTrack:
+            ltp=liveTrack['properties']
+            ltc=ltp['class']
+            if ltc=='LiveTrack':
+                ltg=liveTrack['geometry']
+                lid=self.addLine(
+                    points=ltg['coordinates'],
+                    title=ltp['title'],
+                    width=ltp['stroke-width'],
+                    opacity=ltp['stroke-opacity'],
+                    color=ltp['stroke'],
+                    pattern=ltp['pattern'],
+                    blocking=True
+                )
+                self.delFeature(id,blocking=True)
+                return lid
+            else:
+                logging.warning(f'stopLiveTrack failure: feature with specified id {id} is not a LiveTrack: class={ltc}')
+                return False
+        else:
+            logging.warning(f'stopLiveTrack failure: no match for specified id {id}')
+            return False
 
     def addOperationalPeriod(self,
             title='New OP',
