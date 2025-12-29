@@ -118,6 +118,7 @@ from concurrent.futures import ThreadPoolExecutor
 import functools
 from typing import Callable
 import queue
+import traceback
 
 # import objgraph
 # import psutil
@@ -248,7 +249,7 @@ class CaltopoSession():
         self.syncCallback=syncCallback
         self.syncInterval=syncInterval
         self.syncCompletedCount=0
-        self.lastSuccessfulSyncTimestamp=0 # the server's integer milliseconds 'sincce' request completion time
+        self.lastSuccessfulSyncTimestamp=0 # the server's integer milliseconds 'since' request completion time
         self.lastSuccessfulSyncTSLocal=0 # this object's integer milliseconds sync completion time
         self.syncDumpFile=syncDumpFile
         self.cacheDumpFile=cacheDumpFile
@@ -290,6 +291,8 @@ class CaltopoSession():
                 raise CTSException
         else:
             logging.info('Opening a CaltopoSession object with no associated map.  Use .openMap(<mapID>) later to associate a map with this session.')
+
+        self.exceptionDict={}
 
     def openMap(self,
             mapID: str='',
@@ -427,7 +430,7 @@ class CaltopoSession():
 
         return True
     
-    def closeMap(self):
+    def closeMap(self,badResponse=None):  # if called with an argument, the map was force-closed due to a bad response
         logging.info('Closing map.')
         self._stop() # sets sync=False
         self.mapID=None
@@ -436,6 +439,7 @@ class CaltopoSession():
         self.mapData={'ids':{},'state':{'features':[]}}
         self.lastSuccessfulSyncTimestamp=0 # the server's integer milliseconds 'sincce' request completion time
         self.lastSuccessfulSyncTSLocal=0 # this object's integer milliseconds sync completion time
+        self._doCallback(self.mapClosedCallback,badResponse)
 
     def _setupSession(self) -> bool:
         """Called internally from __init__, regardless of whether this is a mapless session.  Reads account information from the config file and takes care of various other setup tasks.
@@ -1006,6 +1010,24 @@ class CaltopoSession():
             self.getAccountData()
         return [x['properties']['title'] for x in self.groupAccounts]
 
+    def _handle_caught_exception(self,exc_info):
+        rval=handle_exception(exc_info[0],exc_info[1],exc_info[2],'caught',exceptionDict=self.exceptionDict)
+        timestamp=time.strftime('%H%M%S')
+        self.exceptionDict[rval]=timestamp
+
+    def _doCallback(self,callbackFunc,*args):
+        if callbackFunc is not None:
+            # logging.info(f'calling callback {callbackFunc.__name__}...')
+            try:
+                callbackFunc(*args)
+            # except Exception as e:
+            except Exception:
+                # logging.error(f'Exception during {callbackFunc.__name__}: {e}; continuing')
+                # info=sys.exc_info()
+                # handle_exception(info[0],info[1],info[2],'caught')
+                self._handle_caught_exception(sys.exc_info())
+            # logging.info(f'back from callback {callbackFunc.__name__}')
+
     def _doSync(self,fromLoop=False):
         """Internal method to keep the cache (.mapData) in sync with the associated hosted map. **Calling this method directly could cause sync problems.** \n
            - called on a regular interval from ._syncLoop in the sync thread \n
@@ -1039,8 +1061,9 @@ class CaltopoSession():
                 if self.disconnectedFlag:
                     self._disconnectedFlagClear()
                     logging.info('reconnected (successful sync); queue size is '+str(self.requestQueue.qsize()))
-                    if self.reconnectedCallback:
-                        self.reconnectedCallback()
+                    # if self.reconnectedCallback:
+                    #     self.reconnectedCallback()
+                    self._doCallback(self.reconnectedCallback)
                 # self.holdRequests=False
                 if self.syncDumpFile:
                     with open(insertBeforeExt(self.syncDumpFile,'.since'+str(max(0,self.lastSuccessfulSyncTimestamp-500))),"w") as f:
@@ -1049,8 +1072,9 @@ class CaltopoSession():
                 # int(time.time()*1000))
                 self.lastSuccessfulSyncTimestamp=rj['result']['timestamp']
                 # logging.info('Successful caltopo sync: timestamp='+str(self.lastSuccessfulSyncTimestamp))
-                if self.syncCallback:
-                    self.syncCallback()
+                # if self.syncCallback:
+                #     self.syncCallback()
+                self._doCallback(self.syncCallback)
                 rjr=rj['result']
                 rjrsf=rjr['state']['features']
                 
@@ -1068,6 +1092,7 @@ class CaltopoSession():
                     for f in rjrsf:
                         try:
                             rjrfid=f['id']
+                            shortid=rjrfid[:4]+'..' # still works if rjrfid is None
                             prop=f['properties']
                             title=str(prop.get('title',None))
                             featureClass=str(prop['class'])
@@ -1086,19 +1111,20 @@ class CaltopoSession():
                                     #  - if f->geometry exists, replace the entire geometry dict
                                     if 'title' in prop.keys():
                                         if self.mapData['state']['features'][i]['properties']!=prop:
-                                            logging.info('  Updating properties for '+featureClass+':'+title)
+                                            logging.info(f'  Updating properties for {featureClass}:{shortid}:{title}')
                                             # logging.info('    old:'+json.dumps(self.mapData['state']['features'][i]['properties']))
                                             # logging.info('    new:'+json.dumps(prop))
                                             self.mapData['state']['features'][i]['properties']=prop
-                                            if self.propertyUpdateCallback:
-                                                self.propertyUpdateCallback(f)
+                                            # if self.propertyUpdateCallback:
+                                            #     self.propertyUpdateCallback(f)
+                                            self._doCallback(self.propertyUpdateCallback,f)
                                         else:
                                             logging.info('  response contained properties for '+featureClass+':'+title+' but they matched the cache, so no cache update or callback is performed')
                                     if title=='None':
                                         title=self.mapData['state']['features'][i]['properties']['title']
                                     if 'geometry' in f.keys():
                                         if self.mapData['state']['features'][i].get('geometry')!=f['geometry']:
-                                            logging.info('  Updating geometry for '+featureClass+':'+title)
+                                            logging.info(f'  Updating geometry for {featureClass}:{shortid}:{title}')
                                             # if geometry.incremental exists and is true, for the new geom as well as the cache geom,
                                             #  append new coordinates to existing coordinates;
                                             #  otherwise, replace the entire geometry value;
@@ -1130,23 +1156,25 @@ class CaltopoSession():
                                                 mdsfg['size']=len(mdsfgc)
                                             else: # copy entire geometry if cahce has no geomerty or was only a Point
                                                 self.mapData['state']['features'][i]['geometry']=f['geometry']
-                                            if self.geometryUpdateCallback:
-                                                self.geometryUpdateCallback(f)
+                                            # if self.geometryUpdateCallback:
+                                            #     self.geometryUpdateCallback(f)
+                                            self._doCallback(self.geometryUpdateCallback,f)
                                         else:
                                             logging.info('  response contained geometry for '+featureClass+':'+title+' but it matched the cache, so no cache update or callback is performed')
                                     processed=True
                                     break
                             # 2b - otherwise, create it - and add to ids so it doesn't get cleaned
                             if not processed:
-                                # logging.info('Adding to cache:'+featureClass+':'+title)
+                                logging.info(f'  Adding to cache:{featureClass}:{shortid}:{title}')
                                 self.mapData['state']['features'].append(f)
                                 if f['id'] not in self.mapData['ids'][prop['class']]:
                                     self.mapData['ids'][prop['class']].append(f['id'])
                                 # logging.info('mapData immediate:\n'+json.dumps(self.mapData,indent=3))
-                                if self.newFeatureCallback:
-                                    self.newFeatureCallback(f)
+                                # if self.newFeatureCallback:
+                                #     self.newFeatureCallback(f)
+                                self._doCallback(self.newFeatureCallback,f)
                         except Exception as e:
-                            logging.warning('Exception while processing sync response feature:'+str(f)+':'+str(e)+'; continuing')
+                            logging.warning(f'Exception while processing sync response feature:{f}:{e}; continuing')
                             continue
 
                 # 3 - cleanup - remove features from the cache whose ids are no longer in cached id list
@@ -1169,8 +1197,9 @@ class CaltopoSession():
                                 self.mapData['state']['features'][:]=(f for f in self.mapData['state']['features'] if not(f['id']==id and f['properties']['class']==c))
                                 deletedDict.setdefault(c,[]).append(id)
                                 deletedAnythingFlag=True
-                                if self.deletedFeatureCallback:
-                                    self.deletedFeatureCallback(id,c)
+                                # if self.deletedFeatureCallback:
+                                #     self.deletedFeatureCallback(id,c)
+                                self._doCallback(self.deletedFeatureCallback,id,c)
                     if deletedAnythingFlag:
                         logging.info('deleted items have been removed from cache:\n'+json.dumps(deletedDict,indent=3))
                 
@@ -1229,25 +1258,27 @@ class CaltopoSession():
                     # else:
                     #     logging.info('Main thread has ended; sync is stopping...')
 
-            elif self.latestResponseCode in [401]:
-                logging.error('Sync attempt returned '+str(self.latestResponseCode))
-                self.closeMap()
-                if self.mapClosedCallback:
-                    self.mapClosedCallback(self.badResponse)
-            else:
-                logging.error('Sync returned invalid or no response; sync aborted:'+str(rj))
+            elif self.latestResponseCode in [401]: # not authorized or similar response indicating the map isn't accessible, so, go ahead and close the map
+                logging.error(f'Sync attempt returned {self.latestResponseCode}, indicating that future sync attemps will not work; closing the map.')
+                self.closeMap(self.badResponse)
+                # if self.mapClosedCallback:
+                #     self.mapClosedCallback(self.badResponse)
+                # self._doCallback(self.mapClosedCallback,self.badResponse)
+            else: # any other response that didn't give 'ok' as status; or, no response at all
+                logging.error(f'Sync returned invalid or no response; sync attempt failed.  Response: {rj}')
                 # self.sync=False
                 # self.apiVersion=-1 # downstream tools may use apiVersion as indicator of link status
                 # logging.error('Sync attempt failed; setting holdRequests')
-                logging.error('Sync attempt failed')
+                # logging.error('Sync attempt failed')
                 # self.holdRequests=True
                 if not self.disconnectedFlag:
                     self._disconnectedFlagSet()
-                    logging.info('disconnected (first failed response from sync); queue size is '+str(self.requestQueue.qsize()))
-                    if self.disconnectedCallback:
-                        self.disconnectedCallback()
+                    logging.info(f'disconnected from _doSync (missed sync); queue size is {self.requestQueue.qsize()}')
+                    # if self.disconnectedCallback:
+                    #     self.disconnectedCallback()
+                    self._doCallback(self.disconnectedCallback)
         except Exception as e:
-            logging.error('Exception in _doSync:'+str(e))
+            logging.error(f'Exception in _doSync line {sys.exc_info()[2].tb_lineno}: {e}')
             if fromLoop:
                 raise e # let _syncLoop handle it, which will cause a disconnect condition
         finally:
@@ -1256,8 +1287,9 @@ class CaltopoSession():
             # logging.info('sync marker: '+self.mapID+' end')
 
     # _refresh - update the cache (self.mapData) by calling _doSync once;
-    #   only relevant if sync is off; if the latest refresh is within the sync interval value (even when sync is off),
-    #   then don't do a refresh unless forceImmediate is True
+    #   normally not needed if sync is on, but can be used to catch any changes that may have
+    #   happened since the last regulard sync; if the latest refresh is within the sync
+    #   interval value (even when sync is off), then don't do a refresh unless forceImmediate is True
     #  since _doSync() would be called from this thread, it is always blocking
     def _refresh(self,forceImmediate=False):
         """Refresh the cache (.mapData).  **This method should not need to be called when sync is on.**
@@ -1382,7 +1414,7 @@ class CaltopoSession():
         avoid blocking of the main thread.  **Calling this method directly could cause sync problems.**
         """        
         if self.syncCompletedCount==0:
-            logging.info('This is the first sync attempt; pausing for the normal sync interval before starting sync.')
+            logging.info('This is the first sync attempt of the sync loop; pausing for the normal sync interval before starting sync.')
             time.sleep(self.syncInterval)
         while self.sync:
             if not self.syncPauseManual:
@@ -1409,7 +1441,7 @@ class CaltopoSession():
                     self._doSync(fromLoop=True)
                     self.syncCompletedCount+=1
                 except Exception as e:
-                    logging.error('Exception during sync :'+str(e)) # logging.exception logs details and traceback
+                    # logging.error('Exception during sync :'+str(e)) # logging.exception logs details and traceback
                     # remove sync blockers, to let the thread shut down cleanly, avoiding a zombie loop when sync restart is attempted
                     logging.info('f0p5: clearing syncPause')
                     self._syncPauseClear()
@@ -1417,12 +1449,13 @@ class CaltopoSession():
                     self.syncThreadStarted=False
                     # self.sync=False
                     # logging.error('Sync attempt failed (exception during call to _doSync); setting holdRequests')
-                    logging.error('Sync attempt failed (exception during call to _doSync)')
+                    logging.error(f'Sync attempt failed (exception in _doSync line {sys.exc_info()[2].tb_lineno}: {e})')
                     if not self.disconnectedFlag:
                         self._disconnectedFlagSet()
-                        logging.info('disconnected (first exception during response from sync); queue size is '+str(self.requestQueue.qsize()))
-                        if self.disconnectedCallback:
-                            self.disconnectedCallback()
+                        logging.info(f'disconnected from _syncLoop (exception in _doSync); queue size is {self.requestQueue.qsize()}')
+                        # if self.disconnectedCallback:
+                        #     self.disconnectedCallback()
+                        self._doCallback(self.disconnectedCallback)
                     # self.holdRequests=True
             if self.sync: # don't bother with the sleep if sync is no longer True
                 time.sleep(self.syncInterval)
@@ -1742,8 +1775,9 @@ class CaltopoSession():
                 logging.info(f'-- QUEUE (put) {method} {urlEnd} {rest}')
                 logging.info(json.dumps(requestQueueEntry,indent=3,cls=CustomEncoder)) # CustomEncoder due to callables
                 self.requestQueue.put(requestQueueEntry)
-                if self.requestQueueChangedCallback:
-                    self.requestQueueChangedCallback(self.requestQueue)
+                # if self.requestQueueChangedCallback:
+                #     self.requestQueueChangedCallback(self.requestQueue)
+                self._doCallback(self.requestQueueChangedCallback,self.requestQueue)
                 logging.info('POST: setting requestEvent')
                 self.requestEvent.set()
                 return True # successfully submitted to the queue
@@ -1918,8 +1952,8 @@ class CaltopoSession():
                     r=None
                     while keepTrying:
                         logging.info('t1')
-                        if qr['method']=='POST':
-                            logging.info('    processing POST...')
+                        if method in ['GET','POST','DELETE']:
+                            logging.info(f'processing {method}...')
                             try:
                                 while self.syncing: # wait until any current sync is finished
                                     time.sleep(1)
@@ -1933,67 +1967,39 @@ class CaltopoSession():
                                     eval(qr['deferredHook'])
                                     logging.info('done with deferred hook')
                                 # if the signature would expire in the next 10 seconds, get a new signature now
-                                expires=qr.get('params')['expires']
+                                expires=qr['params']['expires']
                                 now=time.time()*1000
                                 if expires-now<10000:
                                     logging.info('queued request signature might be stale: now='+str(now)+' expires='+str(expires)+'; regenerating signature...')
-                                    qr['params']=self._buildParams(qr['method'],qr['urlPart'],json.loads(qr['params']['json']),qr['internet'])
+                                    qr['params']=self._buildParams(method,qr['urlPart'],json.loads(qr['params']['json']),qr['internet'])
                                     logging.info('signature regenerated')
-                                r=self.s.post(
-                                    qr.get('url'),
-                                    data=qr.get('params'), # qr.params should be used as post.data, but get.params and delete.params
-                                    timeout=qr.get('timeout'),
-                                    proxies=qr.get('proxies'),
-                                    allow_redirects=qr.get('allow_redirects')
-                                )
-                            except Exception as e:
-                                logging.error('Exception during processing of queued request: '+str(e))
+
+                                # determine the request function to call
+                                requestFunc={'GET':self.s.get,'POST':self.s.post,'DELETE':self.s.delete}[method]
+                                requestArgs={
+                                    'timeout':qr.get('timeout'),
+                                    'proxies':qr.get('proxies'),
+                                    'allow_redirects':qr.get('allow_redirects')
+                                }
+                                # build the request arguments
+                                if method=='POST':
+                                    requestArgs['data']=qr.get('params')
+                                else:
+                                    requestArgs['params']=qr.get('params')
+                                # do the request
+                                r=requestFunc(qr.get('url'),**requestArgs)
+                            # except Exception as e:
+                            except Exception:
+                                # logging.error('Exception during processing of queued request: '+str(e))
+                                self._handle_caught_exception(sys.exc_info())
                                 logging.info('f3: clearing syncPause')
                                 self._syncPauseClear() # don't leave it set, in case of exception
-                        elif qr['method']=='GET':
-                            logging.info('    processing GET...')
-                            try:
-                                while self.syncing: # wait until any current sync is finished
-                                    time.sleep(1)
-                                    pass
-                                logging.info('p2: setting syncPause')
-                                self._syncPauseSet() # set pause here to avoid leaving it set
-                                r=self.s.get(
-                                    qr.get('url'),
-                                    params=qr.get('params'),
-                                    timeout=qr.get('timeout'),
-                                    proxies=qr.get('proxies'),
-                                    allow_redirects=qr.get('allow_redirects')
-                                )
-                            except Exception as e:
-                                logging.error('Exception during processing of queued request: '+str(e))
-                                logging.info('f4: clearing syncPause')
-                                self._syncPauseClear() # don't leave it set, in case of exception
-                        elif qr['method']=='DELETE':
-                            logging.info('    processing DELETE...')
-                            try:
-                                while self.syncing: # wait until any current sync is finished
-                                    time.sleep(1)
-                                    pass
-                                logging.info('p3: setting syncPause')
-                                self._syncPauseSet() # set pause here to avoid leaving it set
-                                r=self.s.delete(
-                                    qr.get('url'),
-                                    params=qr.get('params'),
-                                    timeout=qr.get('timeout'),
-                                    proxies=qr.get('proxies'),
-                                    allow_redirects=qr.get('allow_redirects')
-                                )
-                            except Exception as e:
-                                logging.error('Exception during processing of queued request: '+str(e))
-                                logging.info('f5: clearing syncPause')
-                                self._syncPauseClear() # don't leave it set, in case of exception
-                                logging.info(' d1: requestThread is alive: '+str(self.requestThread.is_alive()))
                         else:
                             logging.info('    unknown queued request removed from queue: '+json.dumps(qr,indent=3))
                             self.requestQueue.task_done()
-                            if self.requestQueueChangedCallback:
-                                self.requestQueueChangedCallback(self.requestQueue)
+                            # if self.requestQueueChangedCallback:
+                            #     self.requestQueueChangedCallback(self.requestQueue)
+                            self._doCallback(self.requestQueueChangedCallback,self.requestQueue)
                             continue
                         if r and r.status_code==200:
                             logging.info('t5')
@@ -2002,12 +2008,14 @@ class CaltopoSession():
                                 logging.info('reconnected (successful response from queued request '+str(qr.get('url'))+'); queue size is '+str(self.requestQueue.qsize()))
                                 self._disconnectedFlagClear()
                                 # self._refresh(forceImmediate=True) # should be handled by the first callback of each request
-                                if self.reconnectedCallback:
-                                    self.reconnectedCallback()
+                                # if self.reconnectedCallback:
+                                #     self.reconnectedCallback()
+                                self._doCallback(self.reconnectedCallback)
                             logging.info('    200 response received; calling task_done to indicate that this item is complete')
-                            self.requestQueue.task_done()
-                            if self.requestQueueChangedCallback:
-                                self.requestQueueChangedCallback(self.requestQueue)
+                            self.requestQueue.task_done() # this doesn't actually change the queue; no need to call requestQueueChangedCallback here
+                            # if self.requestQueueChangedCallback:
+                            #     self.requestQueueChangedCallback(self.requestQueue)
+                            # self._doCallback(self.requestQueueChangedCallback,self.requestQueue)
                             # self.holdRequests=False
                             logging.info('sending callbacks:'+str(qr['callbacks']))
                             logging.info('t5b')
@@ -2026,25 +2034,28 @@ class CaltopoSession():
                                 # logging.info('f6b')
                                 # logging.warning(f'  response: {r}')
                                 # print gracefully if r isn't a response object
-                                logging.warning(f'    response: {getattr(r,'status_code','')} {getattr(r,'text',r)}')
+                                logging.warning(f"    response: {getattr(r,'status_code','')} {getattr(r,'text',r)}")
                             except Exception as e:
                                 logging.error(f'Exception during print of invalid response: {e} (r={r})')
                             # if r:
                             #     logging.info('    r.status_code='+str(r.status_code))
-                            if self.failedRequestCallback:
-                                self.failedRequestCallback(qr,r)
+                            # if self.failedRequestCallback:
+                            #     self.failedRequestCallback(qr,r)
+                            self._doCallback(self.failedRequestCallback,qr,r)
                             if not self.disconnectedFlag:
                                 logging.info('disconnected (no response or bad response from queued request '+str(qr.get('url'))+')')
                                 self._disconnectedFlagSet()
-                                if self.disconnectedCallback:
-                                    self.disconnectedCallback()
+                                # if self.disconnectedCallback:
+                                #     self.disconnectedCallback()
+                                self._doCallback(self.disconnectedCallback)
                             # self.holdRequests=True
                             logging.info('t6')
                             time.sleep(5)
                     logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
                 logging.info('t7')
-                if self.requestQueueChangedCallback:
-                    self.requestQueueChangedCallback(self.requestQueue)
+                # if self.requestQueueChangedCallback:
+                #     self.requestQueueChangedCallback(self.requestQueue)
+                self._doCallback(self.requestQueueChangedCallback,self.requestQueue)
                 logging.info('f7: clearing syncPause')
                 self._syncPauseClear()
                 logging.info('  requestWorker: request queue processing complete...')
@@ -4792,22 +4803,44 @@ logging.basicConfig(
 #  deal with the fact that sys.excepthook and threading.excepthook use different arguments
 #   sys.excepthook wants a 3-tuple; threading.excepthook wants an instance of
 #   _thread._ExceptHookArgs, which provides a 4-namedtuple
-def handle_exception(*args):
-    if len(args)==1:
+# this can also be called from code for handled exceptions, in which case another argment 'caught'
+#  should be appended to the argument list.
+# exceptionDict can be passed as a keyword argument, which must be a dictionary of past exceptions:
+#  keys are formatted exception strings (from traceback.format_exc()) and values are the first
+#  timestamp where that exception occurred.
+# If exceptionDict is specified and the current exception matches 
+# the exception string will be returned, in case the calling function wants to keep track of it;
+#  return values are ignored by python, for both sys.excepthook and threading.excepthook
+def handle_exception(*args,**kwargs):
+    if len(args)<3:
         a=args[0]
         [exc_type,exc_value,exc_traceback,thread]=[a.exc_type,a.exc_value,a.exc_traceback,a.thread]
     else:
-        [exc_type,exc_value,exc_traceback]=args
+        [exc_type,exc_value,exc_traceback]=args[0:3]
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
-    prefix='Uncaught exception:' # not in a thread
+    prefix1='Uncaught'
+    logFunc=logging.critical
+    if 'caught' in args:
+        prefix1='Successfully handled'
+        logFunc=logging.error
+    prefix=prefix1+' exception:' # not in a thread
     try:
         if thread and thread.__class__.__name__=='Thread':
-            prefix='Uncaught exception in '+thread.name+':' # in a thread
+            prefix=prefix1+' exception in '+thread.name+':' # in a thread
     except UnboundLocalError:
         pass
-    logging.critical(prefix, exc_info=(exc_type, exc_value, exc_traceback))
+    exceptionDict=kwargs.get('exceptionDict',[])
+    # if exceptionDict:
+    #     logging.info(f'Exception dict passed to handle_exception: {exceptionDict}')
+    excStr=traceback.format_exc()
+    if excStr in exceptionDict:
+        logFunc(f'{prefix1} repeated exception from {exceptionDict[excStr]} ({excStr.splitlines()[-1]}); traceback printing suppressed')
+    else:
+        logFunc(prefix, exc_info=(exc_type, exc_value, exc_traceback))
+        return excStr # igonored by sys.excepthook and threading.excepthook; can be used by calling code
+    
 sys.excepthook = handle_exception
 threading.excepthook = handle_exception
 
