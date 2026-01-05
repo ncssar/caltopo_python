@@ -85,9 +85,10 @@
 #  To prevent main-thread requests from being sent while a sync request is
 #  in process, _doSync sets self.syncing just before sending the 'since'
 #  request, and leaves it set until the sync response is processed.
-#   TO DO: If a main-thread request wants to be sent while self.syncing is
-#   set, the request is queued, and is sent after the next sync response is
-#   processed.
+#  
+#  If a main-thread request (whether blocking or not) wants to be sent while
+#  self.syncing is set, the request is queued, and is sent after the next sync
+#  response is processed.
 #
 #  NOTE : is this block-and-queue necessary?  Since the http requests
 #  and responses should be able to synchronize themselves, maybe it's not
@@ -119,6 +120,7 @@ import functools
 from typing import Callable
 import queue
 import traceback
+import re
 
 # import objgraph
 # import psutil
@@ -1087,7 +1089,8 @@ class CaltopoSession():
                 
                 # 2 - update existing features as needed
                 if len(rjrsf)>0:
-                    logging.info('  processing '+str(len(rjrsf))+' feature(s):'+str([x['id'] for x in rjrsf]))
+                    # logging.info('  processing '+str(len(rjrsf))+' feature(s):'+str([x['id'] for x in rjrsf]))
+                    logging.info('  processing '+str(len(rjrsf))+' feature(s):'+str([x['id'][:4]+'..' for x in rjrsf]))
                     # logging.info(json.dumps(rj,indent=3))
                     for f in rjrsf:
                         try:
@@ -1176,7 +1179,9 @@ class CaltopoSession():
                         except Exception as e:
                             logging.warning(f'Exception while processing sync response feature:{f}:{e}; continuing')
                             continue
-
+                else:
+                    logging.info(' no data to process from this sync response')
+                    
                 # 3 - cleanup - remove features from the cache whose ids are no longer in cached id list
                 #  (ids will be part of the response whenever feature(s) were added or deleted)
                 #  (finishing an apptrack moves the id from AppTracks to Shapes, so the id count is not affected)
@@ -1383,12 +1388,14 @@ class CaltopoSession():
     # thread-safe set and clear functions for syncPause
     def _syncPauseSet(self):
         # with self.syncPauseLock:
-        logging.info('_syncPauseSet called from thread '+threading.current_thread().name)
+        if not self.disconnectedFlag and not self.syncing:
+            logging.info('_syncPauseSet called from thread '+threading.current_thread().name)
         self.syncPause=True 
 
     def _syncPauseClear(self):
         # with self.syncPauseLock:
-        logging.info('_syncPauseClear called from thread '+threading.current_thread().name)
+        if not self.disconnectedFlag and not self.syncing:
+            logging.info('_syncPauseClear called from thread '+threading.current_thread().name)
         self.syncPause=False
                 
     # thread-safe set and clear functions for disconnectedFlag
@@ -1730,8 +1737,8 @@ class CaltopoSession():
             #     paramsPrint['signature']='.....'
             # else:
                 paramsPrint=params
-            logging.info(f'SENDING {method.upper()} to {url}:')
-            logging.info(json.dumps(paramsPrint,indent=3))
+            # logging.info(f'SENDING {method.upper()} to {url}:')
+            # logging.info(json.dumps(paramsPrint,indent=3))
             # don't print the entire PDF generation request - upstream code can print a PDF data summary
             # if 'PDFLink' not in url:
             #     logging.info(jsonForLog(paramsPrint))
@@ -1743,6 +1750,8 @@ class CaltopoSession():
                 rest=''
             if blocking:
                 logging.info(f'-- BLOCKING (sending now, timeout={timeout}) {method} {url} {rest}')
+                if not self.syncing:
+                    logging.info(json.dumps(paramsPrint,indent=3))
                 self._syncPauseSet() # setting this now, even if during sync, will prevent recursive sync attempt
                 # note that DNS lookup (NameResolutionError / Failed to resolve / getaddrinfo failed) happens immediately,
                 #  regardless of timeout value, since DNS lookup happens before connection attempt; timeout only
@@ -1751,9 +1760,11 @@ class CaltopoSession():
                     if method=='POST':
                         r=self.s.post(url,data=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
                     elif method=='GET':
-                        logging.info('sending GET to '+str(url)+' with params '+str(params))
+                        if not self.syncing:
+                            logging.info('sending GET to '+str(url)+' with params '+str(params))
                         r=self.s.get(url,params=params,timeout=timeout,proxies=self.proxyDict,allow_redirects=False)
-                        logging.info('back from GET - sent GET to '+str(r.url))
+                        if not self.syncing:
+                            logging.info('back from GET - sent GET to '+str(r.url))
                     elif method=='DELETE':
                         r=self.s.delete(url,params=params,timeout=timeout,proxies=self.proxyDict)   ## use params for query vs data for body data
                 except Exception as e:
@@ -1870,12 +1881,12 @@ class CaltopoSession():
             # self.syncPause=False
             return False
         if blocking: # blocking request
-            logging.info('_sendRequest: calling _handleResponse when blocking=True')
+            if not self.syncing:
+                logging.info('_sendRequest: calling _handleResponse when blocking=True')
             rval=self._handleResponse(r,newMap,returnJson,callbacks=callbacks)
             # logging.info('_sendRequest: back from _handleResponse when blocking=True; rval='+str(rval))
-            logging.info('_sendRequest: back from _handleResponse when blocking=True')
-            logging.info('f1: clearing syncPause')
-            logging.info(' f1b: requestThread is alive: '+str(self.requestThread.is_alive()))
+            if not self.syncing:
+                logging.info('f1: _sendRequest: back from _handleResponse when blocking=True; clearing syncPause; requestThread is alive: '+str(self.requestThread.is_alive()))
             self._syncPauseClear()
             return rval
 
@@ -1951,14 +1962,14 @@ class CaltopoSession():
                     keepTrying=True
                     r=None
                     while keepTrying:
-                        logging.info('t1')
+                        # logging.info('t1')
                         if method in ['GET','POST','DELETE']:
                             logging.info(f'processing {method}...')
                             try:
                                 while self.syncing: # wait until any current sync is finished
                                     time.sleep(1)
                                     pass
-                                logging.info('p1: setting syncPause')
+                                # logging.info('p1: setting syncPause')
                                 self._syncPauseSet() # set pause here to avoid leaving it set
 
                                 # perform deferredHook now if specified as part of the queued request
@@ -1992,7 +2003,7 @@ class CaltopoSession():
                             except Exception:
                                 # logging.error('Exception during processing of queued request: '+str(e))
                                 self._handle_caught_exception(sys.exc_info())
-                                logging.info('f3: clearing syncPause')
+                                # logging.info('f3: clearing syncPause')
                                 self._syncPauseClear() # don't leave it set, in case of exception
                         else:
                             logging.info('    unknown queued request removed from queue: '+json.dumps(qr,indent=3))
@@ -2002,7 +2013,7 @@ class CaltopoSession():
                             self._doCallback(self.requestQueueChangedCallback,self.requestQueue)
                             continue
                         if r and r.status_code==200:
-                            logging.info('t5')
+                            # logging.info('t5')
                             keepTrying=False
                             if self.disconnectedFlag:
                                 logging.info('reconnected (successful response from queued request '+str(qr.get('url'))+'); queue size is '+str(self.requestQueue.qsize()))
@@ -2018,15 +2029,15 @@ class CaltopoSession():
                             # self._doCallback(self.requestQueueChangedCallback,self.requestQueue)
                             # self.holdRequests=False
                             logging.info('sending callbacks:'+str(qr['callbacks']))
-                            logging.info('t5b')
+                            # logging.info('t5b')
                             rv=self._handleResponse(r,callbacks=qr['callbacks'])
-                            logging.info('t5c: clearing syncPause')
+                            # logging.info('t5c: clearing syncPause')
                             self._syncPauseClear() # leave it set until after _handleResponse to avoid cache race conditions
                             logging.info(' t5c: requestThread is alive: '+str(self.requestThread.is_alive()))
                         else:
-                            logging.info('f6: clearing syncPause')
+                            # logging.info('f6: clearing syncPause')
                             self._syncPauseClear() # resume sync immediately if response wasn't valid
-                            logging.warning('    response not valid; trying again in 5 seconds... '+str(qr.get('url')))
+                            details=''
                             try:
                                 # logging.info('f6a')
                                 # logging.info(f'f6a1 {r}')
@@ -2034,9 +2045,13 @@ class CaltopoSession():
                                 # logging.info('f6b')
                                 # logging.warning(f'  response: {r}')
                                 # print gracefully if r isn't a response object
-                                logging.warning(f"    response: {getattr(r,'status_code','')} {getattr(r,'text',r)}")
+                                codeText=getattr(r,'status_code','')
+                                if codeText:
+                                    codeText+=' '
+                                details=f" ({codeText}{getattr(r,'text',r)})"
                             except Exception as e:
                                 logging.error(f'Exception during print of invalid response: {e} (r={r})')
+                            logging.warning(f'    response not valid{details}; trying again in 5 seconds... {qr.get("url")}')
                             # if r:
                             #     logging.info('    r.status_code='+str(r.status_code))
                             # if self.failedRequestCallback:
@@ -2049,7 +2064,7 @@ class CaltopoSession():
                                 #     self.disconnectedCallback()
                                 self._doCallback(self.disconnectedCallback)
                             # self.holdRequests=True
-                            logging.info('t6')
+                            # logging.info('t6')
                             time.sleep(5)
                     logging.info('  queue size at end of iteration:'+str(self.requestQueue.qsize()))
                 logging.info('t7')
@@ -2074,7 +2089,8 @@ class CaltopoSession():
         # urlEnd=r.url.split('/')[-1] # the url of the original request, used to determine what code to run at the end
         # logging.info(' inside handleResponse... urlEnd='+urlEnd)
         # logging.info('  full response:'+json.dumps(r.json(),indent=3))
-        logging.info('p4: setting syncPause')
+        if not self.syncing:
+            logging.info('p4: setting syncPause')
         self._syncPauseSet()
         self.latestResponseCode=r.status_code # for use by doSync, syncLoop, etc, since the response here will just be False if other than 200
         self.badResponse=None
@@ -2085,7 +2101,8 @@ class CaltopoSession():
             except Exception as e:
                 logging.error(f'Exception while printing bad responsne: {e}')
 
-        logging.info('inside handleResponse')
+        if not self.syncing:
+            logging.info('inside handleResponse')
         # logging.info('r:'+str(r))
 
         # try: # this clause resulted in very large log files
@@ -2104,9 +2121,10 @@ class CaltopoSession():
         # any argument value that starts with period will be treated as (nested) keys into <response>.json()
 
         # process any (nested) dict keys in arguments
-        logging.info('initial callbacks:')
+        if callbacks and not self.syncing:
+            logging.info(f'initial callbacks: {callbacks}')
         # logging.info(json.dumps(callbacks,indent=3))
-        logging.info(str(callbacks))
+        # logging.info(str(callbacks))
 
         processedCallbacks=[]
         for cb in callbacks:
@@ -2142,9 +2160,8 @@ class CaltopoSession():
             processedCallbacks.append([cbFunc,callbackArgs,callbackKwArgs])
         callbacks=processedCallbacks
 
-        logging.info('processed callbacks:')
-        # logging.info(json.dumps(callbacks,indent=3))
-        logging.info(str(callbacks))
+        if callbacks and not self.syncing:
+            logging.info(f'processed callbacks: {callbacks}')
     
         if newMap:
             # for CTD 4221 and newer, and internet, a new map request should return 200, and the response data
@@ -2254,7 +2271,8 @@ class CaltopoSession():
                             alist=[f for f in rj['result']['state']['features'] if 'properties' in f.keys() and 'class' in f['properties'].keys() and f['properties']['class'].lower()=='assignment']
                             for a in alist:
                                 a['properties']['title']=str(a['properties'].get('letter',''))+' '+str(a['properties'].get('number',''))
-                        logging.info('f16: clearing syncPause')
+                        if not self.syncing:
+                            logging.info('f16: clearing syncPause')
                         self._syncPauseClear()
                         return rj
         # self.syncPause=False
@@ -2273,8 +2291,7 @@ class CaltopoSession():
             # third element is the dict of kwargs
             logging.info('handleResponse: calling callback '+str(cb[0])+' with args='+str(cb[1])+' and kwargs='+str(cb[2]))
             cb[0](*cb[1],**cb[2]) # run the callback
-        logging.info('handleResponse: done calling all callbacks')
-        logging.info('f17: clearing syncPause')
+        logging.info('f17: handleResponse: done calling all callbacks; clearing syncPause')
         self._syncPauseClear()
 
     def _addFeature(self,
@@ -4835,8 +4852,16 @@ def handle_exception(*args,**kwargs):
     # if exceptionDict:
     #     logging.info(f'Exception dict passed to handle_exception: {exceptionDict}')
     excStr=traceback.format_exc()
-    if excStr in exceptionDict:
-        logFunc(f'{prefix1} repeated exception from {exceptionDict[excStr]} ({excStr.splitlines()[-1]}); traceback printing suppressed')
+    lastLine=excStr.splitlines()[-1]
+    if 'getaddrinfo failed' in lastLine:
+        lastLine=re.sub('object at 0x.*>','object at 0x....>',lastLine)
+        if lastLine in exceptionDict:
+            logFunc(f'{prefix1} repeated getaddrinfo exception from {exceptionDict[lastLine]}; entire traceback suppressed')
+        else:
+            logFunc(f'{prefix1} getaddrinfo exception; suppressing possibly-lengthy traceback chain; final line of exception: {lastLine}')
+            return lastLine # so that only the last line is treated as a repeated exception; it includes the expires time and signature
+    elif excStr in exceptionDict:
+        logFunc(f'{prefix1} repeated exception from {exceptionDict[excStr]} ({lastLine}); traceback printing suppressed')
     else:
         logFunc(prefix, exc_info=(exc_type, exc_value, exc_traceback))
         return excStr # igonored by sys.excepthook and threading.excepthook; can be used by calling code
