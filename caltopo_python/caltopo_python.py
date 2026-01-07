@@ -159,7 +159,7 @@ class CaltopoSession():
             accountId=None, # 6-character accountId
             accountIdInternet=None, # in case CTD requires a different accountId than caltopo.com
             sync=True,
-            syncInterval=5,
+            syncInterval=10,
             syncTimeout=10,
             syncDumpFile=None,
             cacheDumpFile=None,
@@ -452,7 +452,7 @@ class CaltopoSession():
         # set a flag: is this an internet session?
         #  if so, id and key are strictly required, and accountId is needed to print
         #  if not, all three are only needed in order to print
-        self.internet=self.domainAndPort and self.domainAndPort.lower() in ['sartopo.com','caltopo.com']
+        self.internet=self.domainAndPort and self.domainAndPort.lower() in ['sartopo.com','caltopo.com','testing.caltopo.com']
         id=None
         key=None
         accountId=None
@@ -1088,6 +1088,8 @@ class CaltopoSession():
                     logging.info('  Updating "ids"')
                 
                 # 2 - update existing features as needed
+                # there may be a lot of apptrack geometry updates per sync, so consolidate them to just one logging line
+                apptracksGeometryList=[]
                 if len(rjrsf)>0:
                     # logging.info('  processing '+str(len(rjrsf))+' feature(s):'+str([x['id'] for x in rjrsf]))
                     logging.info('  processing '+str(len(rjrsf))+' feature(s):'+str([x['id'][:4]+'..' for x in rjrsf]))
@@ -1127,7 +1129,10 @@ class CaltopoSession():
                                         title=self.mapData['state']['features'][i]['properties']['title']
                                     if 'geometry' in f.keys():
                                         if self.mapData['state']['features'][i].get('geometry')!=f['geometry']:
-                                            logging.info(f'  Updating geometry for {featureClass}:{shortid}:{title}')
+                                            if featureClass=='AppTrack':
+                                                apptracksGeometryList.append(f'{title}[{shortid}]')
+                                            else:
+                                                logging.info(f'  Updating geometry for {featureClass}:{shortid}:{title}')
                                             # if geometry.incremental exists and is true, for the new geom as well as the cache geom,
                                             #  append new coordinates to existing coordinates;
                                             #  otherwise, replace the entire geometry value;
@@ -1179,6 +1184,9 @@ class CaltopoSession():
                         except Exception as e:
                             logging.warning(f'Exception while processing sync response feature:{f}:{e}; continuing')
                             continue
+                    if apptracksGeometryList:
+                        apptrackSuffix='s' if len(apptracksGeometryList)>1 else ''
+                        logging.info(f'  Updated geometry for {len(apptracksGeometryList)} AppTrack{apptrackSuffix}: {apptracksGeometryList}')
                 else:
                     logging.info(' no data to process from this sync response')
                     
@@ -2323,10 +2331,16 @@ class CaltopoSession():
                 callbacks=[[self._addFeatureCallback,['.result']]]+callbacks # add to .mapData immediately for use by any downstream-specified callbacks
             logging.info('adding '+str(className)+' blocking='+str(blocking)+': callbacks after prepend:'+str(callbacks))
             # r=self._sendRequest('post',className,j,id=existingId,returnJson=returnJson,timeout=timeout,callbacks=callbacks,blocking=blocking)
-            r=self._sendRequest('post',className,j,returnJson=returnJson,timeout=timeout,callbacks=callbacks,blocking=blocking)
+            # always call _sendRequest with returnJson='ALL' so that there is a full dict to add to the cache immediately
+            r=self._sendRequest('post',className,j,returnJson='ALL',timeout=timeout,callbacks=callbacks,blocking=blocking)
             logging.info('r while adding '+str(className)+':'+str(r))
             if isinstance(r,dict): # blocking request, returning response.json()
-                return self._addFeatureCallback(r['result']) # normally returns the id
+                # return self._addFeatureCallback(r['result']) # normally returns the id
+                afr=self._addFeatureCallback(r['result']) # normally returns the id
+                if returnJson=='ALL':
+                    return r
+                elif returnJson=='ID':
+                    return afr # the ID
             else:
                 return r # could be False if error, or True if non-blocking request submitted to the queue
     
