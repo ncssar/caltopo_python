@@ -2441,6 +2441,7 @@ class CaltopoSession():
             label="New Folder",
             visible=True,
             labelVisible=True,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -2468,7 +2469,7 @@ class CaltopoSession():
         j['properties']['visible']=visible
         j['properties']['labelVisible']=labelVisible
         # return self._addFeature('Folder',j,existingId='',callbacks=callbacks,returnJson='ID',timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('Folder',j,callbacks=callbacks,returnJson='ID',timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('Folder',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
         # if dataQueue:
         #     self.dataQueue.setdefault('folder',[]).append(j)
         #     return 0
@@ -2498,6 +2499,7 @@ class CaltopoSession():
             # existingId=None,
             # update=0,
             size=1,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -2573,7 +2575,7 @@ class CaltopoSession():
         #     j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
         # return self._addFeature('Marker',j,existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('Marker',j,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('Marker',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
         # if dataQueue:
         #     self.dataQueue.setdefault('Marker',[]).append(j)
         #     return 0
@@ -2601,6 +2603,7 @@ class CaltopoSession():
             pattern='solid',
             folderId=None,
             # existingId=None,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -2665,7 +2668,7 @@ class CaltopoSession():
         #     j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
         # return self._addFeature('Shape',j,existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('Shape',j,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('Shape',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
         # if dataQueue:
         #     self.dataQueue.setdefault('Shape',[]).append(j)
         #     return 0
@@ -2694,6 +2697,7 @@ class CaltopoSession():
             stroke='#FF0000',
             fill='#FF0000',
             # existingId=None,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -2749,7 +2753,7 @@ class CaltopoSession():
         #     j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
         # return self._addFeature('Shape',j,existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('Shape',j,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('Shape',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
         # if dataQueue:
         #     self.dataQueue.setdefault('Shape',[]).append(j)
         #     return 0
@@ -2775,6 +2779,7 @@ class CaltopoSession():
             pattern='solid',
             folderId=None,
             # existingId=None,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -2824,7 +2829,7 @@ class CaltopoSession():
         jp['stroke']=color
         jp['pattern']=pattern
         j['properties']=jp
-        return self._addFeature('LiveTrack',j,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('LiveTrack',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
     
     def updateLiveTrack(self,
                         id='',
@@ -2903,6 +2908,7 @@ class CaltopoSession():
             strokeWidth=2,
             fillOpacity=0.1,
             # existingId=None,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -2945,7 +2951,7 @@ class CaltopoSession():
         # j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
         # return self._addFeature('OperationalPeriod',j,returnJson='ID',existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('OperationalPeriod',j,returnJson='ID',callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('OperationalPeriod',j,returnJson=returnJson,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
         # if dataQueue:
         #     self.dataQueue.setdefault('OperationalPeriod',[]).append(j)
         #     return 0
@@ -2983,6 +2989,7 @@ class CaltopoSession():
             preparedBy='',
             status='DRAFT',
             # existingId=None,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -3072,7 +3079,7 @@ class CaltopoSession():
         #     j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
         # return self._addFeature('Assignment',j,existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('Assignment',j,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('Assignment',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
         # if dataQueue:
         #     self.dataQueue.setdefault('Assignment',[]).append(j)
         #     return 0
@@ -3121,6 +3128,7 @@ class CaltopoSession():
             preparedBy='',
             status='DRAFT',
             # existingId=None,
+            returnJson='ID',
             timeout=0,
             dataQueue=False,
             callbacks=[],
@@ -3211,7 +3219,7 @@ class CaltopoSession():
         #     j['id']=existingId
         # logging.info("sending json: "+json.dumps(j,indent=3))
         # return self._addFeature('Assignment',j,existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('Assignment',j,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+        return self._addFeature('Assignment',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
         # if dataQueue:
         #     self.dataQueue.setdefault('Assignment',[]).append(j)
         #     return 0
