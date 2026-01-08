@@ -188,7 +188,7 @@ class CaltopoSession():
         :param account: Account name; used to reference a section of the config file; defaults to None
         :type account: str, optional
         :param id: 12-character credential ID; specify here to override value from config file; defaults to None
-        :type id: _type_, optional
+        :type id: str, optional
         :param key: Credential key; specify here to override value from config file; defaults to None
         :type key: str, optional
         :param accountId: 6-character account ID; specify here to override value from config file; defaults to None
@@ -197,7 +197,7 @@ class CaltopoSession():
         :type accountIdInternet: str, optional
         :param sync: If True, the session will use multi-threaded background sync to keep the local cache in sync with the specified hosted map; defaults to True
         :type sync: bool, optional
-        :param syncInterval: Sync interval in seconds; defaults to 5
+        :param syncInterval: Sync interval in seconds; defaults to 10
         :type syncInterval: int, optional
         :param syncTimeout: Sync timeout in seconds; defaults to 10
         :type syncTimeout: int, optional
@@ -213,6 +213,16 @@ class CaltopoSession():
         :type newFeatureCallback: function, optional
         :param deletedFeatureCallback: Function to call when a feature was deleted from the local cache during sync; the function will be called with the deleted feature object as the only argument; defaults to None
         :type deletedFeatureCallback: function, optional
+        :param requestQueueChangedCallback: Function to call when the non-blocking request queue changes; the function will be called with the deleted feature object as the only argument; defaults to None
+        :type requestQueueChangedCallback: function, optional
+        :param failedRequestCallback: Function to call when a web request returns a response other than 200 / OK; the function will be called with the deleted feature object as the only argument; defaults to None
+        :type failedRequestCallback: function, optional
+        :param disconnectedCallback: Function to call when a disconnect is detected, from an invalid response or a request timeout; the function will be called with the deleted feature object as the only argument; defaults to None
+        :type disconnectedCallback: function, optional
+        :param reconnectedCallback: Function to call when a resconnect is detected, from the first good response following a disconnect; the function will be called with the deleted feature object as the only argument; defaults to None
+        :type reconnectedCallback: function, optional
+        :param mapClosedCallback: Function to call when a map is closed; the function will be called with the deleted feature object as the only argument; defaults to None
+        :type mapClosedCallback: function, optional
         :param syncCallback: Function to call on each successful sync; the function will be called with no arguments; defaults to None
         :type syncCallback: function, optional
         :param useFiddlerProxy: If True, all requests for this session will be sent through the Fiddler proxy, which allows Fiddler to watch outgoing network traffic for debug purposes; defaults to False
@@ -221,6 +231,8 @@ class CaltopoSession():
         :type caseSensitiveComparisons: bool, optional
         :param validatePoints: one of 'modify', 'warn', or False: should coordinates be checked or modified for correct longitude-then-latitide sequence as requests are sent; defaults to 'modify'; setting to False disables calls to ._validatePoints from ._sendRequest
         :type validatePoints: optional
+        :param blockingByDefault: If True, all requests are blocking unless specified otherwise in an argument to the individual request: the request takes place in the main thread, and execution will stop until the response is available; if False, all requests are non-blocking unless specified otherwise in an argument to the individual request: the request takes place in a separate thread, and its response is handled by callbacks.  See the blocking / non-blocking documentation for more detail; defaults to True
+        :type blockingByDefault: bool, optional
         """            
         self.s=requests.session()
         self.apiVersion=-1
@@ -433,6 +445,11 @@ class CaltopoSession():
         return True
     
     def closeMap(self,badResponse=None):  # if called with an argument, the map was force-closed due to a bad response
+        """Close an open map (stop syncing, clear the cache, etc.), but leave the mapless session open.
+
+        :param badResponse: optional requests.Response object to be passed to mapClosedCallback, which could be used to show the 'reason' for the map closure; defaults to None
+        :type badResponse: requests.Response, optional
+        """
         logging.info('Closing map.')
         self._stop() # sets sync=False
         self.mapID=None
@@ -625,6 +642,8 @@ class CaltopoSession():
             callbacks=[]) -> dict:
         """Get all account data for the session account.  Populates .accountData, .groupAccounts, and .personalAccounts.
 
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: value of .accountData
         :rtype: dict
         """        
@@ -713,6 +732,8 @@ class CaltopoSession():
         :type refresh: bool, optional
         :param titlesOnly: If True, the return value will be a list of strings only; defaults to False
         :type titlesOnly: bool, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: List of dicts, chronologically sorted (most recent first) by the value of 'updated': \n
                  *id* -> 5-character map ID \n
                  *title* -> map title \n
@@ -846,6 +867,8 @@ class CaltopoSession():
         :type refresh: bool, optional
         :param titlesOnly: If True, the return value will be a list of strings only; defaults to False
         :type titlesOnly: bool, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: list of dicts: \n
                  *groupAccountTitle* -> title of the group account \n
                    -OR- \n
@@ -883,6 +906,8 @@ class CaltopoSession():
         :type mapID: str, optional
         :param refresh: If True, a refresh will be performed before getting the map title; defaults to False
         :type refresh: bool, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: Map title
         :rtype: str
         """        
@@ -909,6 +934,8 @@ class CaltopoSession():
 
         :param refresh: If True, a refresh will be performed before getting the folder data; defaults to False
         :type refresh: bool, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: List representing the account's folder structure
         :rtype: list
         """
@@ -1005,6 +1032,8 @@ class CaltopoSession():
 
         :param refresh: If True, a refresh will be performed before getting the account titles; defaults to False
         :type refresh: bool, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: List of account titles
         :rtype: list
         """        
@@ -1018,6 +1047,15 @@ class CaltopoSession():
         self.exceptionDict[rval]=timestamp
 
     def _doCallback(self,callbackFunc,*args):
+        """Helper method to call the specified callback with the specified arguments.
+        
+        This 'wrapper' method ensures that any exceptions during the 'downstream' callback execution won't interfere with the CaltopoSession execution.
+
+        :param callbackFunc: Callable function or method to be called.
+        :type callbackFunc: Callable
+        :param *args: List (or Tuple) of positional arguments to pass to callbackFunc
+        :type *args: Tuple
+        """
         if callbackFunc is not None:
             # logging.info(f'calling callback {callbackFunc.__name__}...')
             try:
@@ -1036,6 +1074,8 @@ class CaltopoSession():
            - called once from .openMap, when the map is first opened \n
            - called as needed from ._refresh
 
+        :param fromLoop: A flag to indicate whether this is being called from ._syncLoop.  If True, any exception during sync will be passed along to _syncLoop for handling, and will typically cause a disconnect.  False would indicate that an immediate sync is being request from some other internal method.  Defaults to False.
+        :type fromLoop: bool, optional
         """
         # to flag a disconnect condition, re-raise the exception to _syncLoop
         try:
@@ -1603,9 +1643,9 @@ class CaltopoSession():
             accountId: str='',
             blocking=None,
             callbacks=[]): # see 'callbacks' structure notes
-        """Send HTTP request to the server.
+        """Send an HTTP request to the server.
 
-        :param method: HTTP request action verb; currently, the only acceptable values are 'GET', 'POST', or 'DELETE'
+        :param method: HTTP request action verb; currently, must be one of 'GET', 'POST', or 'DELETE'
         :type method: str
         :param apiUrlEnd: Text of the 'final section' of the request URL \n
           - typical values are 'Folder', 'Shape', 'Marker', etc.
@@ -1625,6 +1665,10 @@ class CaltopoSession():
         :type domainAndPort: str, optional
         :param accountId: account ID if the request should be made in regards to a different team account that the user has access to, such as new map creation in a team account; defaults to ''
         :type accountId: str, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: various, depending on request details: \n
           - False for any error or failure, whether queued or blocking
           - True for a non-blocking request successfully submitted to the queue
@@ -1919,6 +1963,11 @@ class CaltopoSession():
         return params
 
     def _requestWorker(self,event):
+        """Intrnal requestThread worker method.  Waits for an event, then processes all requests in requestQueue, then resumes waiting.  **Calling this method directly could cause sync problems or crashes.**
+
+        :param event: The threading event that the worker waits for; the event is set when a non-blocking request is enqueued in _sendRequest, and is cleared here.
+        """
+
         # daemon or non-daemon?
         #  - if this method is run in a daemon thread, it could abort in the middle of execution,
         #     meaning that some requests might never get sent, if the downstream application ends
@@ -2090,6 +2139,17 @@ class CaltopoSession():
             newMap=False,
             returnJson='',
             callbacks=[]):
+        """Internal method to handle HTTP request responses, for both blocking and non-blocking requests.  **Calling this method directly could cause sync problems or crashes.**
+        
+        :param r: The response object.
+        :type r: requests.Response
+        :param newMap: Flag to indicate whether this response came from a new map creation request; defaults to False.
+        :type newMap: bool, optional
+        :param returnJson: see 'Returns' section below; defaults to ''
+        :type returnJson: str, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        """
         # Before the existence of requestQueue, this was part of _sendResponse, so all response handling
         #  was guaranteed to be performed before another request could be sent.  With requestThread, that
         #  guarantee no longer exists.  So, any code that was run by the calling method (e.g. addMarker)
@@ -2311,6 +2371,29 @@ class CaltopoSession():
             timeout=0,
             dataQueue=False,
             blocking=None):
+        """Internal method holding the core functionality shared by the other add... methods.  **Calling this method directly could cause sync problems.**
+        
+        :param className: Class name of the feature to add.
+        :type className: str
+        :param j: json parameters of the feature to add.
+        :type j: dict
+        :param returnJson: see 'Returns' section below; defaults to ''
+        :type returnJson: str, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
+        :type timeout: int, optional
+        :param dataQueue: If True, the folder creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :type dataQueue: bool, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
+        """
         if dataQueue:
             self.dataQueue.setdefault(className,[]).append(j)
             return 0
@@ -2345,6 +2428,7 @@ class CaltopoSession():
                 return r # could be False if error, or True if non-blocking request submitted to the queue
     
     def _addFeatureCallback(self,rjr):
+        """Internal method, called from _addFeature, to immediately add new feature data to the cache.  **Calling this method directly could cause sync problems.**"""
         logging.info('addFeatureCallback called:')
         logging.info(json.dumps(rjr,indent=3))
         objClass=rjr['properties']['class']
