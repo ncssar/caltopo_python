@@ -2149,6 +2149,12 @@ class CaltopoSession():
         :type returnJson: str, optional
         :param callbacks: optional list of callback specifications; see the callbacks documentation
         :type callbacks: list, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
+           - map ID of newly created map, if apiUrlEnd contains '[NEW]'
         """
         # Before the existence of requestQueue, this was part of _sendResponse, so all response handling
         #  was guaranteed to be performed before another request could be sent.  With requestThread, that
@@ -2366,7 +2372,7 @@ class CaltopoSession():
             className,
             j,
             # existingId='',
-            returnJson='ALL',
+            returnJson='ID',
             callbacks=[],
             timeout=0,
             dataQueue=False,
@@ -2377,7 +2383,7 @@ class CaltopoSession():
         :type className: str
         :param j: json parameters of the feature to add.
         :type j: dict
-        :param returnJson: see 'Returns' section below; defaults to ''
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
         :type returnJson: str, optional
         :param callbacks: optional list of callback specifications; see the callbacks documentation
         :type callbacks: list, optional
@@ -2454,11 +2460,22 @@ class CaltopoSession():
         :type label: bool, optional
         :param labelVisible: If True, labels will be visible for objects in this folder.
         :type label: bool, optional
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the folder creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created folder, or 0 if dataQueued; False if there was a failure
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """                      
         if not self.mapID or self.apiVersion<0:
             logging.error('addFolder request invalid: this caltopo session is not associated with a map.')
@@ -2519,23 +2536,27 @@ class CaltopoSession():
         :param symbol: Marker symbol name; must be one of the known symbol names; defaults to 'point'
         :type symbol: str, optional
         :param rotation: Marker rotation; not valid for all marker styles; defaults to None
+        :type rotation: int, optional
         :param folderId: Folder ID of the folder this marker should be created in, if any; defaults to None
         :type folderId: str, optional
-        :param existingId: ID of an existing marker to edit using this method; defaults to None
-        :type existingId: str, optional
-        :param update: Updated timestamp for this feature; defaults to 0
-        :type update: int, optional
         :param size: Marker size; defaults to 1
         :type size: int, optional
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the marker creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return:
-         - successful blocking request: ID of the created marker
-         - successful non-blocking request, submitted to the queue: True
-         - error or failure whether blocking or non-blocking: False
-         - dataQueued: 0
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addMarker request invalid: this caltopo session is not associated with a map.')
@@ -2626,13 +2647,23 @@ class CaltopoSession():
         :param pattern: Line dash pattern; must be from the known list of pattern names; defaults to 'solid'
         :type pattern: str, optional
         :param folderId: Folder ID of the folder this line should be created in, if any; defaults to None
-        :param existingId: ID of an existing line to edit using this method; defaults to None
-        :type existingId: str, optional
+        :type folderId: str, optional
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the line creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created line, or 0 if dataQueued; False if there was a failure
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """           
         if not self.mapID or self.apiVersion<0:
             logging.error('addLine request invalid: this caltopo session is not associated with a map.')
@@ -2711,6 +2742,7 @@ class CaltopoSession():
         :param title: Title of the polygon; defaults to 'New Shape'
         :type title: str, optional
         :param folderId: Folder ID of the folder this line should be created in, if any; defaults to None
+        :type folderId: str, optional
         :param description: Polygon description; defaults to ''
         :type description: str, optional
         :param strokeOpacity: Opacity of the boundary line, ranging from 0 to 1; defaults to 1
@@ -2723,12 +2755,22 @@ class CaltopoSession():
         :type stroke: str, optional
         :param fill: Color of the polygon fill, in RGB #FFFFFF hex format; defaults to '#FF0000'
         :type fill: str, optional
-        :param existingId: ID of an existing polygon to edit using this method; defaults to None
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the polygon creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created polygon, or 0 if dataQueued; False if there was a failure
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addPolygon request invalid: this caltopo session is not associated with a map.')
@@ -2771,7 +2813,7 @@ class CaltopoSession():
         #         return False
 
     def addLiveTrack(self,
-            title='New Line',
+            title='New LiveTrack',
             deviceId='',
             width=2,
             opacity=1,
@@ -2784,15 +2826,13 @@ class CaltopoSession():
             dataQueue=False,
             callbacks=[],
             blocking=None): # use self.blockingByDefault as the default, resolved in _addFeature
-        """Add a line to the current map.\n
-        (See .addLineAssignment to add an assignment feature instead.)
+        """Add a LiveTrack to the current map.\n
+          This method does not define any initial set of points for the LiveTrack.  All updates must be done using .updateLiveTrack, or direct GET requests to the URL as noted in the CalTopo documentation.
 
-        :param points: List of points; each point is a list: [lon,lat]
-        :type points: list
         :param title: Title of the line; defaults to 'New Line'
         :type title: str, optional
-        :param description: Line description; defaults to ''
-        :type description: str, optional
+        :param deviceId: string starting with 'FLEET:' followed by a hyphenated unique device identifier; see CalTopo documentation for details
+        :type deviceId: str
         :param width: Line width in pixels; defaults to 2
         :type width: int, optional
         :param opacity: Line opacity, ranging from 0 to 1; defaults to 1
@@ -2802,13 +2842,23 @@ class CaltopoSession():
         :param pattern: Line dash pattern; must be from the known list of pattern names; defaults to 'solid'
         :type pattern: str, optional
         :param folderId: Folder ID of the folder this line should be created in, if any; defaults to None
-        :param existingId: ID of an existing line to edit using this method; defaults to None
-        :type existingId: str, optional
+        :type folderId: str, optional
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the line creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created line, or 0 if dataQueued; False if there was a failure
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """           
         if not self.mapID or self.apiVersion<0:
             logging.error('addLiveTrack request invalid: this caltopo session is not associated with a map.')
@@ -2836,6 +2886,17 @@ class CaltopoSession():
                         lat=None,
                         lon=None,
                         elevation=None): # elevation is optional
+        """Append one new location to an existing LiveTrack
+
+        :param id: ID of the LiveTrack feature to be updated
+        :type id: str
+        :param lat: Latitude of the new point, in WGS84 decimal degrees
+        :type lat: float
+        :param lon: Longitude of the new point, in WGS84 decimal degrees
+        :type lon: float
+        :param elevation: Optional elevation of the new point, in feet; defaults to None
+        :return: requests.Response object from the .get request if successful; False for a failure of any reason
+        """
         # for a LiveTrack feature whose deviceId is 'MyGroup-MyDeviceNum', based on the caltopo docs,
         # send a request that looks like https://caltopo.com/api/v1/position/report/MyGroup?id=MyDeviceNum&lat=39&lng=-120
         if not lat or not lon:
@@ -2867,6 +2928,11 @@ class CaltopoSession():
     
     def stopLiveTrack(self,
             id=''):
+        """Stop a LiveTrack recording; the server will automatically convert it to a Line with the same ID.
+
+        :param id: ID of the LiveTrack
+        :type id: str
+        """
         # Equivalent to 'stop listening' from the web interface:
         #  1. record the LiveTrack's properties and geometry
         #  2. delete the LiveTrack
@@ -2926,13 +2992,22 @@ class CaltopoSession():
         :type strokeWidth: int, optional
         :param fillOpacity: Opacity of polygon fill of assignments in this operational period, ranging from 0 to 1; defaults to 0.1
         :type fillOpacity: float, optional
-        :param existingId: ID of an existing operational period to edit using this method; defaults to None
-        :type existingId: str, optional
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the operational period creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created operational period, or 0 if dataQueued; False if there was a failure
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addOperationalPeriod request invalid: this caltopo session is not associated with a map.')
@@ -3035,13 +3110,22 @@ class CaltopoSession():
         :type preparedBy: str, optional
         :param status: Overall status of the assignment; must be one of DRAFT, PREPARED, INPROGRESS, or COMPLETED; defaults to 'DRAFT'
         :type status: str, optional
-        :param existingId: ID of an existing line assignment to edit using this method; defaults to None
-        :type existingId: str, optional
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the line assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created line assignment, or 0 if dataQueued; False if there was a failure
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addLineAssignment request invalid: this caltopo session is not associated with a map.')
@@ -3175,13 +3259,22 @@ class CaltopoSession():
         :type preparedBy: str, optional
         :param status: Overall status of the assignment; must be one of DRAFT, PREPARED, INPROGRESS, or COMPLETED; defaults to 'DRAFT'
         :type status: str, optional
-        :param existingId: ID of an existing area assignment to edit using this method; defaults to None
-        :type existingId: str, optional
+        :param returnJson: see 'Returns' section below; defaults to 'ID'
+        :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
         :param dataQueue: If True, the area assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
-        :return: ID of the created area assignment, or 0 if dataQueued; False if there was a failure
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
+        :return: various, depending on request details: \n
+          - False for any error or failure, whether queued or blocking
+          - True for a non-blocking request successfully submitted to the queue
+          - for blocking requests:
+           - Entire response json structure (dict) if returnJson is 'ALL'
+           - ID only, if returnJson is 'ID'
         """            
         if not self.mapID or self.apiVersion<0:
             logging.error('addAreaAssignment request invalid: this caltopo session is not associated with a map.')
@@ -3325,6 +3418,10 @@ class CaltopoSession():
         :param markerOrId: Marker ID, or entire marker data object; defaults to ''
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
         :return: Return value from the delete request, or False if there was an error prior to the request
         """        
         if not self.mapID or self.apiVersion<0:
@@ -3345,6 +3442,8 @@ class CaltopoSession():
         :type markersOrIds: list, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
         :return: Return value from the delete request, or False if there was an error prior to the request
         """        
         if not self.mapID or self.apiVersion<0:
@@ -3377,6 +3476,10 @@ class CaltopoSession():
         :type fClass: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
         :return: Return value from the delete request, or False if there was an error prior to the request
         """        
         if not self.mapID or self.apiVersion<0:
@@ -3436,8 +3539,7 @@ class CaltopoSession():
     #  see discussion at https://github.com/ncssar/sartopo_python/issues/34
     def delFeatures(self,
             featuresOrIdAndClassList=[],
-            timeout=0,
-            callbacks=[]):
+            timeout=0):
         """Delete one or more features on the current map, in a non-blocking asynchronous batch of delete requests.\n
 
         :param featuresOrIdAndClassList: List of dicts specifying the features to delete; each dict is either a complete feature data object, or this simplified dict; defaults to [] \n
@@ -3512,8 +3614,7 @@ class CaltopoSession():
             allowMultiTitleMatch=False,
             # since=0,
             timeout=0,
-            forceRefresh=False,
-            callbacks=[]):
+            forceRefresh=False):
         """Get the complete feature data structure/s for one or more features from the local cache, after a refresh if needed. \n
         The features to get data for can be specified / filtered in various methods:\n
             - all features of a given class
@@ -3643,8 +3744,7 @@ class CaltopoSession():
             allowMultiTitleMatch=False,
             # since=0,
             timeout=0,
-            forceRefresh=False,
-            callbacks=[]):
+            forceRefresh=False):
         """Get the complete feature data structure for one feature from the local cache, after a refresh if needed.\n
         This convenience function calls .getFeatures, but will only have a valid return if exactly one feature is a match.\n
         All arguments are the same as for .getFeatures; see that method's documentation.
@@ -3740,12 +3840,18 @@ class CaltopoSession():
         :param letter: Assignment letter used for selection; defaults to None\n
             (only relevant for assignment features)
         :type letter: str, optional
+        :param folderId: ID of the folder that the feature should be placed in; specifying this argument is the same as specifying properties['folderId']; defaults to None
+        :type folderId: str, optional
         :param properties: Dict of properties to edit; defaults to None
         :type properties: dict, optional
         :param geometry: Dict of geometry to edit; defaults to None
         :type geometry: dict, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
         :return: ID of the edited feature (should be the same as the 'id' argument), or False if there was a failure prior to the edit request
         """            
         # we need to run _addFeatureCallback to add to .mapData immediately, but, we don't want its presence to force it to be a non-blocking call;
@@ -3904,7 +4010,8 @@ class CaltopoSession():
             newCoords,
             id=None,
             title=None,
-            callbacks=[]):
+            callbacks=[],
+            blocking=None):
         """Move an existing marker.\n
         The marker to move can be specified either with ID or by title.\n
         This convenience function calls .editFeature.
@@ -3915,9 +4022,13 @@ class CaltopoSession():
         :type id: str, optional
         :param title: Title of the marker to move; defaults to None
         :type title: str, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
         :return: ID of the edited feature (should be the same as the 'id' argument, if specified), or False if there was a failure prior to the edit request
         """        
-        self.editFeature(id=id,title=title,className='Marker',geometry={'coordinates':[newCoords[0],newCoords[1],0,0]},callbacks=callbacks)
+        self.editFeature(id=id,title=title,className='Marker',geometry={'coordinates':[newCoords[0],newCoords[1],0,0]},callbacks=callbacks,blocking=blocking)
 
     # editMarkerDescription - convenienec functon - calls editFeature
     #   specify either id or title
@@ -3925,7 +4036,8 @@ class CaltopoSession():
             newDescription,
             id=None,
             title=None,
-            callbacks=[]):
+            callbacks=[],
+            blocking=None):
         """Edit the description of an existing marker.\n
         The marker to edit can be specified either with ID or by title.\n
         This convenience function calls .editFeature.
@@ -3936,9 +4048,13 @@ class CaltopoSession():
         :type id: str, optional
         :param title: Title of the marker to move; defaults to None
         :type title: str, optional
+        :param callbacks: optional list of callback specifications; see the callbacks documentation
+        :type callbacks: list, optional
+        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+        :type blocking: bool or None, optional
         :return: ID of the edited feature (should be the same as the 'id' argument, if specified), or False if there was a failure prior to the edit request
         """          
-        self.editFeature(id=id,title=title,className='Marker',properties={'description':newDescription},callbacks=callbacks)
+        self.editFeature(id=id,title=title,className='Marker',properties={'description':newDescription},callbacks=callbacks,blocking=blocking)
 
     # _removeDuplicatePoints - walk a list of points - if a given point is
     #   very close to the previous point, delete it (<0.00001 degrees)
@@ -4061,8 +4177,7 @@ class CaltopoSession():
             target,
             cutter,
             deleteCutter=True,
-            useResultNameSuffix=True,
-            callbacks=[]):
+            useResultNameSuffix=True):
         """Cut a 'target' geometry using a 'cutter' geometry:
             - remove a notch from a polygon target, using a polygon cutter
             - slice a polygon target, using a polygon cutter or a line cutter
@@ -4304,8 +4419,7 @@ class CaltopoSession():
     def expand(self,
             target,
             p2,
-            deleteP2=True,
-            callbacks=[]):
+            deleteP2=True):
         """Expand a 'target' polygon to include the area of the 'p2' polygon.\n
         This is basically a boolean 'OR' operation, using Shapely's '|' method.
 
@@ -4500,8 +4614,7 @@ class CaltopoSession():
     def getBounds(self,
             objectList: list,
             padDeg=0.0001,
-            padPct=None,
-            callbacks=[]):
+            padPct=None):
         """Get the bounding box of a list of features, optionally oversized by padDeg or padPct.\n
         Shapely.bounds is used to compute the extent of each feature.
 
@@ -4630,8 +4743,7 @@ class CaltopoSession():
             deleteBoundary=False,
             useResultNameSuffix=False,
             drawSizedBoundary=False,
-            noDraw=False,
-            callbacks=[]):
+            noDraw=False):
         """Remove portions of a line or polygon that are outside a boundary polygon.
         Optionally grow the boundary polygon by the specified distance before cropping.
 
