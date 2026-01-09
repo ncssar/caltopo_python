@@ -231,7 +231,7 @@ class CaltopoSession():
         :type caseSensitiveComparisons: bool, optional
         :param validatePoints: one of 'modify', 'warn', or False: should coordinates be checked or modified for correct longitude-then-latitide sequence as requests are sent; defaults to 'modify'; setting to False disables calls to ._validatePoints from ._sendRequest
         :type validatePoints: optional
-        :param blockingByDefault: If True, all requests are blocking unless specified otherwise in an argument to the individual request: the request takes place in the main thread, and execution will stop until the response is available; if False, all requests are non-blocking unless specified otherwise in an argument to the individual request: the request takes place in a separate thread, and its response is handled by callbacks.  See the blocking / non-blocking documentation for more detail; defaults to True
+        :param blockingByDefault: If True, all requests are blocking unless specified otherwise in an argument to the individual request: the request takes place in the main thread, and main thread execution will stop until the response is available; if False, all requests are non-blocking unless specified otherwise in an argument to the individual request: the request takes place in a separate thread, and its response is handled by callbacks; the request is blocking within the request thread, but the main thread is not blocked.  See the blocking / non-blocking documentation for more detail; defaults to True
         :type blockingByDefault: bool, optional
         """            
         self.s=requests.session()
@@ -720,8 +720,7 @@ class CaltopoSession():
             groupAccountTitle: str='',
             includeBookmarks=True,
             refresh=False,
-            titlesOnly=False,
-            callbacks=[]) -> list:
+            titlesOnly=False) -> list:
         """Get a list of all maps in the user's personal account, or in the specified group account.
 
         :param groupAccountTitle: Title of the group account to get the map list from; defaults to '', in which case only the personal map list is returned
@@ -732,8 +731,6 @@ class CaltopoSession():
         :type refresh: bool, optional
         :param titlesOnly: If True, the return value will be a list of strings only; defaults to False
         :type titlesOnly: bool, optional
-        :param callbacks: optional list of callback specifications; see the callbacks documentation
-        :type callbacks: list, optional
         :return: List of dicts, chronologically sorted (most recent first) by the value of 'updated': \n
                  *id* -> 5-character map ID \n
                  *title* -> map title \n
@@ -855,8 +852,7 @@ class CaltopoSession():
             includePersonal=False,
             includeBookmarks=True,
             refresh=False,
-            titlesOnly=False,
-            callbacks=[]) -> list:
+            titlesOnly=False) -> list:
         """Get a structured list of maps from all group accounts of which the current user is a member.  Optionally include the user's personal account(s).
 
         :param includePersonal: If True, the user's personal account(s) will be included in the return value; defaults to False
@@ -867,8 +863,6 @@ class CaltopoSession():
         :type refresh: bool, optional
         :param titlesOnly: If True, the return value will be a list of strings only; defaults to False
         :type titlesOnly: bool, optional
-        :param callbacks: optional list of callback specifications; see the callbacks documentation
-        :type callbacks: list, optional
         :return: list of dicts: \n
                  *groupAccountTitle* -> title of the group account \n
                    -OR- \n
@@ -898,16 +892,13 @@ class CaltopoSession():
 
     def getMapTitle(self,
             mapID='',
-            refresh=False,
-            callbacks=[]) -> str:
+            refresh=False) -> str:
         """Get the title of a map specified by mapID.
 
         :param mapID: 5-character map ID; defaults to ''
         :type mapID: str, optional
         :param refresh: If True, a refresh will be performed before getting the map title; defaults to False
         :type refresh: bool, optional
-        :param callbacks: optional list of callback specifications; see the callbacks documentation
-        :type callbacks: list, optional
         :return: Map title
         :rtype: str
         """        
@@ -928,14 +919,11 @@ class CaltopoSession():
             return titles[0]
     
     def getAccountsAndFolders(self,
-            refresh=False,
-            callbacks=[]) -> list:
+            refresh=False) -> list:
         """Get a list of all of the group accounts for which the current account is a member, and their folders (and subfolders).
 
         :param refresh: If True, a refresh will be performed before getting the folder data; defaults to False
         :type refresh: bool, optional
-        :param callbacks: optional list of callback specifications; see the callbacks documentation
-        :type callbacks: list, optional
         :return: List representing the account's folder structure
         :rtype: list
         """
@@ -1026,14 +1014,11 @@ class CaltopoSession():
         return aaf
 
     def getGroupAccountTitles(self,
-            refresh=False,
-            callbacks=[]) -> list:
+            refresh=False) -> list:
         """Get the titles of all of the user's group accounts.
 
         :param refresh: If True, a refresh will be performed before getting the account titles; defaults to False
         :type refresh: bool, optional
-        :param callbacks: optional list of callback specifications; see the callbacks documentation
-        :type callbacks: list, optional
         :return: List of account titles
         :rtype: list
         """        
