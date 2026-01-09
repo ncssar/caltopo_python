@@ -94,7 +94,7 @@ Non-blocking requests  (new in 2.0.0)
 -------------------------------------
 Requests can be set to run in another thread ('in the background') so that main thread execution isn't delayed, regardless of connection quality.
 
-See details in the :doc:`non-blocking` page.
+See details in the :doc:`nonblocking` page.
 
 Examples
 ========
@@ -175,7 +175,7 @@ Getting map data and account data
    # get the list of titles of group accounts of which joe@domain.com is a member
    cts.getGroupAccountTitles()
 
-   # get the account's entire hierarchical listing of folders, maps, and bookmarks
+   # get the account's group account and folder structure, including lists of paths and folder IDs
    cts.getAccountsAndFolders()
 
 Adding features

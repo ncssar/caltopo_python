@@ -221,7 +221,7 @@ class CaltopoSession():
         :type disconnectedCallback: function, optional
         :param reconnectedCallback: Function to call when a resconnect is detected, from the first good response following a disconnect; the function will be called with the deleted feature object as the only argument; defaults to None
         :type reconnectedCallback: function, optional
-        :param mapClosedCallback: Function to call when a map is closed; the function will be called with the deleted feature object as the only argument; defaults to None
+        :param mapClosedCallback: Function to call when a map is closed; the function will optionally be called with a requests.Response object as the only argument; defaults to None
         :type mapClosedCallback: function, optional
         :param syncCallback: Function to call on each successful sync; the function will be called with no arguments; defaults to None
         :type syncCallback: function, optional
@@ -920,11 +920,12 @@ class CaltopoSession():
     
     def getAccountsAndFolders(self,
             refresh=False) -> list:
-        """Get a list of all of the group accounts for which the current account is a member, and their folders (and subfolders).
+        """Get a list of all of the group accounts for which the current account is a member, and their subaccounts and folders (and subfolders).\n
+        A flat list of pathnames and folder IDs is also generated for each group account, which can be used to build a folder selection GUI.
 
         :param refresh: If True, a refresh will be performed before getting the folder data; defaults to False
         :type refresh: bool, optional
-        :return: List representing the account's folder structure
+        :return: List of dictionaries representing the account's group account and hierarrchical folder structure; rather than document the structure here, it's best to try this method and look at the results
         :rtype: list
         """
 
