@@ -45,12 +45,19 @@ So how do we make use of the newly created marker data in the non-blocking examp
     def added(id):
     print(f'Callback triggered; id={id}')
 
-    a=addMarker(39,-120,'MyMarker',blocking=False,callbacks=[[added,'.result.i']])
+    a=addMarker(39,-120,'MyMarker',blocking=False,callbacks=[[added,['.result.id']]])
     print(f'Done with addMarker: {a}')
+
+Which would probably give this output:
+
+.. code-block:: python
+
+    Done with addMarker: True
+    Callback triggerd; id=abcd1234....
 
 So, the addMarker line returns 'immediately', but the callback isn't triggered until a valid HTTP response is received.  If everything is 'normal', this will happen just as quickly as the printed line from the blocking example.  But, if there is an intermittent or dropped connection, this might not happen for some time.
 
-See the detailed callback documentation for a full explanation of the callbacks argument.  In the example, after a valid HTTP response is received, added will be called with only the 'id' value from the response passed as an argument.
+See the Callbacks section below for a full explanation of the callbacks argument.  In the example, after a valid HTTP response is received, 'added' will be called with only the 'id' value from the response passed as an argument.
 
 Basically, your code will need to be written a bit differently to make use of non-blocking requests.
 
@@ -69,3 +76,21 @@ There are a few mechanisms you can use to specify whether a given request should
 For example, if you have a piece of code written for blocking requests, and you want to preserve that functionality while switching to caltopo_python v2, you can specify blockingByDefault=True when creating the CaltopoSession object.
 
 As you migrate your code to work in the non-blocking paradigm, you can change to blockingByDefault=False.
+
+Callbacks
+---------
+
+Most of the methods that actually make HTTP requests have a standardized optional argument named 'callbacks', which can be specified as a list of lists.
+
+Each list is of the form [function[,*args[,**kwargs]]] where function is the callable function object; args is a list of positional arguments for the callback; and kwargs is a dict of keyword arguments for the callback.
+
+The callbacks argument is a list of lists because you may need to specify more than one callback function to be called.  The callbacks are called sequentially in whichever thread called _sendRequest and _handleResponse: if the request was blocking (in the main thread), them the callback/s will also be blocking (in the main thread).  But if the request was non-blocking, the callbacks will be run in a background thread meaning that no GUI calls can happen directly in those callbacks: you would need to do callback thread redirection with a signal mechanism, as in the NOTE above.
+
+Some pre-processing is done on the callbacks argument value before the callback function/s are actually called:
+
+- For add... methods, a standardized callback _addFeatureCallback is prepended (so that it is called first - even if no other callbacks are specified), with the request response passed as an argument.  _addFeatureCallback immediately adds the new feature to the cache.
+- Argument values that are strings can use a placeholder syntax, to be evaluated at callback execution time (i.e. after the cache has been populated): if the string starts with a period, then periods are hierarchy delimiters, separating key names in the response's json dictionary.
+
+ - '.a.b.c' is evaluated as 'r.json()["a"]["b"]["c"]' where r is the response object passed to _handleResponse
+ - '.id' is evaluated as 'r.json()["id"]'
+ - '.result.id' is the most commonly used based on the CalTopo response structure, and is evaluated as 'r.json()["result"]["id"]
