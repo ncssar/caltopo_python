@@ -7,7 +7,7 @@ Blocking:
 
 .. code-block:: python
     
-    a=addMarker(39,-120,'MyMarker')
+    a=cts.addMarker(39,-120,'MyMarker')
     print(f'Done with addMarker: {a}')
 
 The line doesn't get printed until the marker has been created, or the request times out.  Execution is 'blocked' until the addMarker function, including the HTTP request inside it, finishes.  This might not happen for several seconds, depending on the internet connection, the server response time, etc.
@@ -16,7 +16,7 @@ Non-blocking:
 
 .. code-block:: python
 
-    a=addMarker(39,-120,'MyMarker',blocking=False)
+    a=cts.addMarker(39,-120,'MyMarker',blocking=False)
     print(f'Done with addMarker: {a}')
 
 blocking=False tells caltopo_python that the HTTP request should not block execution.  So, the line is printed 'immediately', regardless of internet connection or server response time or any other related connectivity issues.
@@ -43,9 +43,9 @@ So how do we make use of the newly created marker data in the non-blocking examp
 .. code-block:: python
 
     def added(id):
-    print(f'Callback triggered; id={id}')
+        print(f'Callback triggered; id={id}')
 
-    a=addMarker(39,-120,'MyMarker',blocking=False,callbacks=[[added,['.result.id']]])
+    a=cts.addMarker(39,-120,'MyMarker',blocking=False,callbacks=[[added,['.result.id']]])
     print(f'Done with addMarker: {a}')
 
 Which would probably give this output:
@@ -77,6 +77,8 @@ For example, if you have a piece of code written for blocking requests, and you 
 
 As you migrate your code to work in the non-blocking paradigm, you can change to blockingByDefault=False.
 
+Also keep in mind that the main thread could end before a non-blocking response is available.  Since the request thread is a daemon thread, it will end immediately when the main thread ends.  So, if you want to be assured of getting a response to a non-blocking request, you should take other steps to make sure your main thread continues running until the response is available.
+
 Callbacks
 ---------
 
@@ -89,8 +91,9 @@ The callbacks argument is a list of lists because you may need to specify more t
 Some pre-processing is done on the callbacks argument value before the callback function/s are actually called:
 
 - For add... methods, a standardized callback _addFeatureCallback is prepended (so that it is called first - even if no other callbacks are specified), with the request response passed as an argument.  _addFeatureCallback immediately adds the new feature to the cache.
+- The entire response object is always available to the callback argument preprocessing; you don't need to specify returnJson='ALL' in the add... method call
 - Argument values that are strings can use a placeholder syntax, to be evaluated at callback execution time (i.e. after the cache has been populated): if the string starts with a period, then periods are hierarchy delimiters, separating key names in the response's json dictionary.
 
  - '.a.b.c' is evaluated as 'r.json()["a"]["b"]["c"]' where r is the response object passed to _handleResponse
  - '.id' is evaluated as 'r.json()["id"]'
- - '.result.id' is the most commonly used based on the CalTopo response structure, and is evaluated as 'r.json()["result"]["id"]
+ - '.result.id' is the most commonly used based on the CalTopo response structure, and is evaluated as 'r.json()["result"]["id"]'
