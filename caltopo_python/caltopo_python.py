@@ -312,7 +312,7 @@ class CaltopoSession():
             mapID: str='',
             newTitle: str='newMap',
             newTeamAccount: str='',
-            newPath: str='',
+            newFolderIDOrPath: str='',
             newMode: str='cal',
             newSharing: str='SECRET',
             callbacks=[]) -> bool:
@@ -329,8 +329,8 @@ class CaltopoSession():
         :type newTitle: str, optional
         :param newTeamAccount: name of an existing team account that the user has access to; defaults to '' in which case the map will be created in the user's own account
         :type newTeamAccount: str, optional
-        :param newPath: folder path of newly created map; this is a case-sensitive slash-delimited folder path, and must exactly match an existing folder; defaults to '' in which case the map will be created in the root of the account
-        :type newPath: str, optional
+        :param newFolderIDOrPath: folder ID or path of newly created map; the path is a case-sensitive slash-delimited folder path, and must exactly match an existing folder; defaults to '' in which case the map will be created in the root of the account
+        :type newFolderIDOrPath: str, optional
         :param newMode: map mode of the newly created map; defaults to 'cal' for recreation mode; the only other allowed value is 'sar'
         :type newMode: str, optional
         :param newSharing: sharing mode of the the newly created map; defaults to 'SECRET'; other allowed values are 'PRIVATE', 'URL', or 'PUBLIC'; see CalTopo documentaiton for details
@@ -355,14 +355,15 @@ class CaltopoSession():
                 else:
                     logging.warning('new map team account '+str(newTeamAccount)+' does not exist, or is not accessible by the current user; the new map will be created in the current user\'s account.')
                     newTeamAccount=''
-                    newPath=''
+                    newFolderIDOrPath=''
             validPaths=[x[0] for x in newMapAccount['pathsAndIds']]
-            if newPath and newPath not in validPaths:
-                logging.warning('new map path '+str(newPath)+' was not found in the list of valid folder paths of the specified account; the new map will be created in the root of the specified account.')
-                logging.warning('  valid paths:')
-                for p in validPaths:
-                    logging.warning('    '+str(p))
-                newPath=''
+            validIDs=[x[1] for x in newMapAccount['pathsAndIds']]
+            if newFolderIDOrPath and newFolderIDOrPath not in validPaths and newFolderIDOrPath not in validIDs:
+                logging.warning('new map folder specification '+str(newFolderIDOrPath)+' was not found in the lists of valid folder IDs or paths of the specified account; the new map will be created in the root of the specified account.')
+                logging.warning('  valid folder paths and IDs:')
+                for f in newMapAccount['pathsAndIds']:
+                    logging.warning(f'     {f[0]} : {f[1]}')
+                newFolderIDOrPath=''
             if newMode not in ['cal','sar']:
                 logging.warning('new map mode '+str(newMode)+' is not in the valid list of map modes ("cal" or "sar"); using mode "cal" for recreation mode.')
                 newMode='cal'
@@ -370,8 +371,8 @@ class CaltopoSession():
                 logging.warning('new map sharing mode '+str(newSharing)+' is not in the valid list of sharing modes (PRIVATE, SECRET, URL, or PUBLIC).  Using "SECRET" for the new map.')
                 newSharing='SECRET'
             logLine='creating a new map with title "'+newTitle+'", map mode "'+newMode+'", and sharing mode "'+newSharing+'"'
-            if newPath:
-                logLine+=' in folder "'+newPath+'"'
+            if newFolderIDOrPath:
+                logLine+=' in folder "'+newFolderIDOrPath+'"'
             else:
                 logLine+=' in the root'
             if newTeamAccount:
@@ -386,8 +387,11 @@ class CaltopoSession():
                 'mapConfig':{'activeLayers':[['mbt',1]]},
                 'sharing':newSharing
             }
-            if newPath:
-                j['properties']['folderId']=[x[1] for x in newMapAccount['pathsAndIds'] if x[0]==newPath][0]
+            if newFolderIDOrPath:
+                if newFolderIDOrPath in validIDs:
+                    j['properties']['folderId']=newFolderIDOrPath
+                else:
+                    j['properties']['folderId']=[x[1] for x in newMapAccount['pathsAndIds'] if x[0]==newFolderIDOrPath][0]
             # At least one feature must exist to set the 'updated' field of the map;
             #  otherwise it always shows up at the bottom of the map list when sorted
             #  chronologically.  Definitely best to have it show up adjacent to the
