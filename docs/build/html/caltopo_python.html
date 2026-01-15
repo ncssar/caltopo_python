@@ -5,12 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>caltopo_python module &#8212; caltopo_python 1.0.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=b649bb2e" />
-    <script src="_static/documentation_options.js?v=8d563738"></script>
-    <script src="_static/doctools.js?v=9a2dae69"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <title>caltopo_python module &#8212; caltopo_python 2.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=3b7bce31" />
+    <script src="_static/documentation_options.js?v=51b770b3"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -23,14 +24,15 @@
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
             <p class="logo"><a href="index.html">
-              <img class="logo" src="_static/caltopo_python_logo.png" alt="Logo"/>
+              <img class="logo" src="_static/caltopo_python_logo.png" alt="Logo of caltopo_python"/>
             </a></p><hr />
 <p><ul>
 <li><a href="./index.html">Home</a>
 <li><a href="./caltopo_python.html">Class Reference</a>
+<li><a href="./nonblocking.html">Non-blocking requests</a>
 <li><a href="./credentials.html">Credentials</a>
 <li><a href="./fixedChoices.html">Fixed Choices</a>
 <li><a href="./migration.html">Migration</a>
@@ -40,15 +42,15 @@
     <hr>
     <ul>
 <li><a class="reference internal" href="#">caltopo_python module</a><ul>
-<li><a class="reference internal" href="#caltopo_python.CaltopoSession"><code class="docutils literal notranslate"><span class="pre">CaltopoSession</span></code></a><ul>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession"><code class="docutils literal notranslate"><span class="pre">CaltopoSession</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.openMap"><code class="docutils literal notranslate"><span class="pre">openMap()</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession.closeMap"><code class="docutils literal notranslate"><span class="pre">closeMap()</span></code></a></li>
 <li><a class="reference internal" href="#account-data-access-methods"><strong>Account data access methods</strong></a><ul>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.getAccountData"><code class="docutils literal notranslate"><span class="pre">getAccountData()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.getMapList"><code class="docutils literal notranslate"><span class="pre">getMapList()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.getAllMapLists"><code class="docutils literal notranslate"><span class="pre">getAllMapLists()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.getMapTitle"><code class="docutils literal notranslate"><span class="pre">getMapTitle()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession.getAccountsAndFolders"><code class="docutils literal notranslate"><span class="pre">getAccountsAndFolders()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.getGroupAccountTitles"><code class="docutils literal notranslate"><span class="pre">getGroupAccountTitles()</span></code></a></li>
 </ul>
 </li>
@@ -58,9 +60,10 @@
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.addLine"><code class="docutils literal notranslate"><span class="pre">addLine()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.addPolygon"><code class="docutils literal notranslate"><span class="pre">addPolygon()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.addOperationalPeriod"><code class="docutils literal notranslate"><span class="pre">addOperationalPeriod()</span></code></a></li>
-<li><a class="reference internal" href="#caltopo_python.CaltopoSession.addLineAssignment"><code class="docutils literal notranslate"><span class="pre">addLineAssignment()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession.addAssignment"><code class="docutils literal notranslate"><span class="pre">addAssignment()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.addAreaAssignment"><code class="docutils literal notranslate"><span class="pre">addAreaAssignment()</span></code></a></li>
-<li><a class="reference internal" href="#caltopo_python.CaltopoSession.addAppTrack"><code class="docutils literal notranslate"><span class="pre">addAppTrack()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession.addLineAssignment"><code class="docutils literal notranslate"><span class="pre">addLineAssignment()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession.addLiveTrack"><code class="docutils literal notranslate"><span class="pre">addLiveTrack()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.flush"><code class="docutils literal notranslate"><span class="pre">flush()</span></code></a></li>
 </ul>
 </li>
@@ -73,6 +76,8 @@
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.editFeature"><code class="docutils literal notranslate"><span class="pre">editFeature()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.moveMarker"><code class="docutils literal notranslate"><span class="pre">moveMarker()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession.editMarkerDescription"><code class="docutils literal notranslate"><span class="pre">editMarkerDescription()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession.updateLiveTrack"><code class="docutils literal notranslate"><span class="pre">updateLiveTrack()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession.stopLiveTrack"><code class="docutils literal notranslate"><span class="pre">stopLiveTrack()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#feature-deletion-methods"><strong>Feature deletion methods</strong></a><ul>
@@ -101,6 +106,9 @@
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession._resume"><code class="docutils literal notranslate"><span class="pre">_resume()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession._syncLoop"><code class="docutils literal notranslate"><span class="pre">_syncLoop()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession._sendRequest"><code class="docutils literal notranslate"><span class="pre">_sendRequest()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession._requestWorker"><code class="docutils literal notranslate"><span class="pre">_requestWorker()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession._handleResponse"><code class="docutils literal notranslate"><span class="pre">_handleResponse()</span></code></a></li>
+<li><a class="reference internal" href="#caltopo_python.CaltopoSession._addFeature"><code class="docutils literal notranslate"><span class="pre">_addFeature()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession._delAsync"><code class="docutils literal notranslate"><span class="pre">_delAsync()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession._buffer2"><code class="docutils literal notranslate"><span class="pre">_buffer2()</span></code></a></li>
 <li><a class="reference internal" href="#caltopo_python.CaltopoSession._intersection2"><code class="docutils literal notranslate"><span class="pre">_intersection2()</span></code></a></li>
@@ -148,21 +156,21 @@
 <p>An exception class is also defined, CTSException, which could be thrown during initialization but is not documented here.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CaltopoSession</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domainAndPort</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'localhost:8080'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configpath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accountId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accountIdInternet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sync</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncInterval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncTimeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncDumpFile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cacheDumpFile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">propertyUpdateCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometryUpdateCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newFeatureCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deletedFeatureCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">useFiddlerProxy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caseSensitiveComparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validatePoints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'modify'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CaltopoSession</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domainAndPort</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'localhost:8080'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configpath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accountId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accountIdInternet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sync</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncInterval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncTimeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncDumpFile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cacheDumpFile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">propertyUpdateCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometryUpdateCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newFeatureCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deletedFeatureCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requestQueueChangedCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">failedRequestCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disconnectedCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reconnectedCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapClosedCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syncCallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">useFiddlerProxy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caseSensitiveComparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validatePoints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'modify'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blockingByDefault</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession" title="Link to this definition">¶</a></dt>
 <dd><p>The core session object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>domainAndPort</strong> (<em>str</em><em>, </em><em>optional</em>) – Domain-and-port portion of the URL; defaults to ‘localhost:8080’; common values are ‘caltopo.com’ for the web interface, and ‘localhost:8080’ (or different hostname or port as needed) for CalTopo Desktop</p></li>
-<li><p><strong>mapID</strong> (<em>str</em><em>, </em><em>optional</em>) – 3-to-7-character map ID, or [NEW] followed by new map specification (see .openMap documentation); omit this argument during initialization to create a ‘mapless’ session; defaults to None</p></li>
+<li><p><strong>mapID</strong> (<em>str</em><em>, </em><em>optional</em>) – 3-to-7-character map ID, or [NEW] optionally followed by new map specification (see .openMap documentation); omit this argument during initialization to create a ‘mapless’ session; defaults to None</p></li>
 <li><p><strong>configpath</strong> (<em>str</em><em>, </em><em>optional</em>) – Configuration file path (full file name); defaults to None</p></li>
 <li><p><strong>account</strong> (<em>str</em><em>, </em><em>optional</em>) – Account name; used to reference a section of the config file; defaults to None</p></li>
-<li><p><strong>id</strong> (<em>_type_</em><em>, </em><em>optional</em>) – 12-character credential ID; specify here to override value from config file; defaults to None</p></li>
+<li><p><strong>id</strong> (<em>str</em><em>, </em><em>optional</em>) – 12-character credential ID; specify here to override value from config file; defaults to None</p></li>
 <li><p><strong>key</strong> (<em>str</em><em>, </em><em>optional</em>) – Credential key; specify here to override value from config file; defaults to None</p></li>
 <li><p><strong>accountId</strong> (<em>str</em><em>, </em><em>optional</em>) – 6-character account ID; specify here to override value from config file; defaults to None</p></li>
 <li><p><strong>accountIdInternet</strong> (<em>str</em><em>, </em><em>optional</em>) – 6-character internet-specific account ID; specify here to override value from config file; defaults to None</p></li>
 <li><p><strong>sync</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the session will use multi-threaded background sync to keep the local cache in sync with the specified hosted map; defaults to True</p></li>
-<li><p><strong>syncInterval</strong> (<em>int</em><em>, </em><em>optional</em>) – Sync interval in seconds; defaults to 5</p></li>
+<li><p><strong>syncInterval</strong> (<em>int</em><em>, </em><em>optional</em>) – Sync interval in seconds; defaults to 10</p></li>
 <li><p><strong>syncTimeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Sync timeout in seconds; defaults to 10</p></li>
 <li><p><strong>syncDumpFile</strong> (<em>str</em><em>, </em><em>optional</em>) – Base filename (will be appended by timestamp) to dump the results of each sync call; defaults to None</p></li>
 <li><p><strong>cacheDumpFile</strong> (<em>str</em><em>, </em><em>optional</em>) – Base filename (will be appended by timestamp) to dump the local cache contents on each sync call; defaults to None</p></li>
@@ -170,10 +178,16 @@
 <li><p><strong>geometryUpdateCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when any feature’s geometry has changed during sync; the function will be called with the affected feature object as the only argument; defaults to None</p></li>
 <li><p><strong>newFeatureCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when a new feature was added to the local cache during sync; the function will be called with the new feature object as the only argument; defaults to None</p></li>
 <li><p><strong>deletedFeatureCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when a feature was deleted from the local cache during sync; the function will be called with the deleted feature object as the only argument; defaults to None</p></li>
+<li><p><strong>requestQueueChangedCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when the non-blocking request queue changes; the function will be called with the deleted feature object as the only argument; defaults to None</p></li>
+<li><p><strong>failedRequestCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when a web request returns a response other than 200 / OK; the function will be called with the deleted feature object as the only argument; defaults to None</p></li>
+<li><p><strong>disconnectedCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when a disconnect is detected, from an invalid response or a request timeout; the function will be called with the deleted feature object as the only argument; defaults to None</p></li>
+<li><p><strong>reconnectedCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when a resconnect is detected, from the first good response following a disconnect; the function will be called with the deleted feature object as the only argument; defaults to None</p></li>
+<li><p><strong>mapClosedCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call when a map is closed; the function will optionally be called with a requests.Response object as the only argument; defaults to None</p></li>
 <li><p><strong>syncCallback</strong> (<em>function</em><em>, </em><em>optional</em>) – Function to call on each successful sync; the function will be called with no arguments; defaults to None</p></li>
 <li><p><strong>useFiddlerProxy</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, all requests for this session will be sent through the Fiddler proxy, which allows Fiddler to watch outgoing network traffic for debug purposes; defaults to False</p></li>
 <li><p><strong>caseSensitiveComparisons</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, various string comparisons will be done in a case-sensitive manner; see ._caseMatch; defaults to False</p></li>
 <li><p><strong>validatePoints</strong> (<em>optional</em>) – one of ‘modify’, ‘warn’, or False: should coordinates be checked or modified for correct longitude-then-latitide sequence as requests are sent; defaults to ‘modify’; setting to False disables calls to ._validatePoints from ._sendRequest</p></li>
+<li><p><strong>blockingByDefault</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, all requests are blocking unless specified otherwise in an argument to the individual request: the request takes place in the main thread, and main thread execution will stop until the response is available; if False, all requests are non-blocking unless specified otherwise in an argument to the individual request: the request takes place in a separate thread, and its response is handled by callbacks; the request is blocking within the request thread, but the main thread is not blocked.  See the blocking / non-blocking documentation for more detail; defaults to True</p></li>
 </ul>
 </dd>
 </dl>
@@ -181,20 +195,21 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.openMap">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">openMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mapID</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#caltopo_python.CaltopoSession.openMap" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">openMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mapID</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newTitle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'newMap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newTeamAccount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newFolderIDOrPath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newMode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newSharing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'SECRET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#caltopo_python.CaltopoSession.openMap" title="Link to this definition">¶</a></dt>
 <dd><p>Open a map for usage in the current session.
 This is automatically called during session initialization (by _setupSession) if mapID was specified when the session was created, but can be called later from your code if the session was initially ‘mapless’.</p>
-<p>If mapID starts with ‘[NEW]’, a new map will be created and opened for use in the current session.  You can follow the [NEW] keyword by the new map’s mode and title in the format <em>[sar:]&lt;title&gt;</em></p>
-<ul class="simple">
-<li><p>[NEW] - creates a new map with the default title ‘newMap’</p></li>
-<li><p>[NEW]myOtherMap - creates a new map with the title ‘myOtherMap’</p></li>
-<li><p>[NEW]sar:mySARMap - creates a new SAR-mode map with the title ‘mySARMap’</p></li>
-</ul>
+<p>If mapID is ‘[NEW]’, a new map will be created and opened for use in the current session.  The remaining arguments are only relevant if mapID is ‘[NEW]’.</p>
 <p>The new map’s ID will be stored in the session’s .mapID varaiable.</p>
-<p>NOTE: New map creation only works with CalTopo Desktop in this version of the module.  It does not currently work for caltopo.com.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mapID</strong> (<em>str</em><em>, </em><em>optional</em>) – 3-to-7-character Map ID, or ‘[NEW]’ with specification described above; defaults to ‘’</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mapID</strong> (<em>str</em><em>, </em><em>optional</em>) – 3-to-7-character Map ID, or ‘[NEW]’ as above; defaults to ‘’</p></li>
+<li><p><strong>newTitle</strong> (<em>str</em><em>, </em><em>optional</em>) – title of newly created map; defaults to newMap</p></li>
+<li><p><strong>newTeamAccount</strong> (<em>str</em><em>, </em><em>optional</em>) – name of an existing team account that the user has access to; defaults to ‘’ in which case the map will be created in the user’s own account</p></li>
+<li><p><strong>newFolderIDOrPath</strong> (<em>str</em><em>, </em><em>optional</em>) – folder ID or path of newly created map; the path is a case-sensitive slash-delimited folder path, and must exactly match an existing folder; defaults to ‘’ in which case the map will be created in the root of the account</p></li>
+<li><p><strong>newMode</strong> (<em>str</em><em>, </em><em>optional</em>) – map mode of the newly created map; defaults to ‘cal’ for recreation mode; the only other allowed value is ‘sar’</p></li>
+<li><p><strong>newSharing</strong> (<em>str</em><em>, </em><em>optional</em>) – sharing mode of the the newly created map; defaults to ‘SECRET’; other allowed values are ‘PRIVATE’, ‘URL’, or ‘PUBLIC’; see CalTopo documentaiton for details</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True if map was opened successfully; False otherwise.</p>
@@ -205,20 +220,34 @@ This is automatically called during session initialization (by _setupSession) if
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.closeMap">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">closeMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">badResponse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.closeMap" title="Link to this definition">¶</a></dt>
+<dd><p>Close an open map (stop syncing, clear the cache, etc.), but leave the mapless session open.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>badResponse</strong> (<em>requests.Response</em><em>, </em><em>optional</em>) – optional requests.Response object to be passed to mapClosedCallback, which could be used to show the ‘reason’ for the map closure; defaults to None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <section id="account-data-access-methods">
 <h2><strong>Account data access methods</strong><a class="headerlink" href="#account-data-access-methods" title="Link to this heading">¶</a></h2>
 <p>These methods may be called from either a mapless or a map-associated session.</p>
 <blockquote>
 <div><dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.getAccountData">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">getAccountData</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#caltopo_python.CaltopoSession.getAccountData" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">getAccountData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#caltopo_python.CaltopoSession.getAccountData" title="Link to this definition">¶</a></dt>
 <dd><p>Get all account data for the session account.  Populates .accountData, .groupAccounts, and .personalAccounts.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>value of .accountData</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>value of .accountData</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -245,6 +274,8 @@ This is automatically called during session initialization (by _setupSession) if
 <blockquote>
 <div><p>if type is ‘bookmark’, another key <em>permission</em> will exist, with corresponding value</p>
 </div></blockquote>
+<p><em>folderId</em> -&gt; folder ID, if the map is in an account-level folder or subfolder
+<em>folderName</em> -&gt; folder name, or ‘&lt;Top Level&gt;’</p>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -303,6 +334,24 @@ This is automatically called during session initialization (by _setupSession) if
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.getAccountsAndFolders">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">getAccountsAndFolders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#caltopo_python.CaltopoSession.getAccountsAndFolders" title="Link to this definition">¶</a></dt>
+<dd><p>Get a list of all of the group accounts for which the current account is a member, and their subaccounts and folders (and subfolders).</p>
+<p>A flat list of pathnames and folder IDs is also generated for each group account, which can be used to build a folder selection GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>refresh</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, a refresh will be performed before getting the folder data; defaults to False</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of dictionaries representing the account’s group account and hierarrchical folder structure; rather than document the structure here, it’s best to try this method and look at the results</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.getGroupAccountTitles">
 <span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">getGroupAccountTitles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#caltopo_python.CaltopoSession.getGroupAccountTitles" title="Link to this definition">¶</a></dt>
 <dd><p>Get the titles of all of the user’s group accounts.</p>
@@ -329,25 +378,42 @@ that calls the appropriate .add… method with existingId specified.</p>
 <blockquote>
 <div><dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addFolder">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addFolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Folder'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addFolder" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addFolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Folder'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelVisible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addFolder" title="Link to this definition">¶</a></dt>
 <dd><p>Add a folder to the current map.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the folder; defaults to “New Folder”</p></li>
+<li><p><strong>label</strong> (<em>bool</em><em>, </em><em>optional</em>) – Name of the folder; defaults to “New Folder”</p></li>
+<li><p><strong>visible</strong> – If True, the folder will be initially checked and expanded in the left bar, and new objects added to the folder will be visible.</p></li>
+<li><p><strong>labelVisible</strong> – If True, labels will be visible for objects in this folder.</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
-<li><p><strong>queue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the folder creation will be enqueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the folder creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>ID of the created folder, or 0 if queued; False if there was a failure</p>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addMarker">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Marker'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'point'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addMarker" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Marker'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'point'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addMarker" title="Link to this definition">¶</a></dt>
 <dd><p>Add a marker to the current map.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -358,24 +424,37 @@ that calls the appropriate .add… method with existingId specified.</p>
 <li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – Marker description; defaults to ‘’</p></li>
 <li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Marker color, in RGB #FFFFFF hex notation; defaults to ‘#FF0000’</p></li>
 <li><p><strong>symbol</strong> (<em>str</em><em>, </em><em>optional</em>) – Marker symbol name; must be one of the known symbol names; defaults to ‘point’</p></li>
-<li><p><strong>rotation</strong> – Marker rotation; not valid for all marker styles; defaults to None</p></li>
+<li><p><strong>rotation</strong> (<em>int</em><em>, </em><em>optional</em>) – Marker rotation; not valid for all marker styles; defaults to None</p></li>
 <li><p><strong>folderId</strong> (<em>str</em><em>, </em><em>optional</em>) – Folder ID of the folder this marker should be created in, if any; defaults to None</p></li>
-<li><p><strong>existingId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of an existing marker to edit using this method; defaults to None</p></li>
-<li><p><strong>update</strong> (<em>int</em><em>, </em><em>optional</em>) – Updated timestamp for this feature; defaults to 0</p></li>
 <li><p><strong>size</strong> (<em>int</em><em>, </em><em>optional</em>) – Marker size; defaults to 1</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
-<li><p><strong>queue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the marker creation will be enqueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the marker creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>ID of the created marker, or 0 if queued; False if there was a failure</p>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addLine">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Line'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'solid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addLine" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Line'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'solid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addLine" title="Link to this definition">¶</a></dt>
 <dd><p>Add a line to the current map.</p>
 <p>(See .addLineAssignment to add an assignment feature instead.)</p>
 <dl class="field-list simple">
@@ -388,21 +467,35 @@ that calls the appropriate .add… method with existingId specified.</p>
 <li><p><strong>opacity</strong> (<em>float</em><em>, </em><em>optional</em>) – Line opacity, ranging from 0 to 1; defaults to 1</p></li>
 <li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Line color, in RGB #FFFFFF hex notation; defaults to ‘#FF0000’</p></li>
 <li><p><strong>pattern</strong> (<em>str</em><em>, </em><em>optional</em>) – Line dash pattern; must be from the known list of pattern names; defaults to ‘solid’</p></li>
-<li><p><strong>folderId</strong> – Folder ID of the folder this line should be created in, if any; defaults to None</p></li>
-<li><p><strong>existingId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of an existing line to edit using this method; defaults to None</p></li>
+<li><p><strong>folderId</strong> (<em>str</em><em>, </em><em>optional</em>) – Folder ID of the folder this line should be created in, if any; defaults to None</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
-<li><p><strong>queue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the line creation will be enqueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the line creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>ID of the created line, or 0 if queued; False if there was a failure</p>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addPolygon">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addPolygon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Shape'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeWidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stroke</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addPolygon" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addPolygon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">Shape'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeWidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stroke</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addPolygon" title="Link to this definition">¶</a></dt>
 <dd><p>Add a polygon to the current map.</p>
 <p>(See .addAreaAssignment to add an assignment feature instead.)</p>
 <dl class="field-list simple">
@@ -414,27 +507,41 @@ that calls the appropriate .add… method with existingId specified.</p>
 </ul>
 </p></li>
 <li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Title of the polygon; defaults to ‘New Shape’</p></li>
-<li><p><strong>folderId</strong> – Folder ID of the folder this line should be created in, if any; defaults to None</p></li>
+<li><p><strong>folderId</strong> (<em>str</em><em>, </em><em>optional</em>) – Folder ID of the folder this line should be created in, if any; defaults to None</p></li>
 <li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – Polygon description; defaults to ‘’</p></li>
 <li><p><strong>strokeOpacity</strong> (<em>float</em><em>, </em><em>optional</em>) – Opacity of the boundary line, ranging from 0 to 1; defaults to 1</p></li>
 <li><p><strong>strokeWidth</strong> (<em>int</em><em>, </em><em>optional</em>) – Width of the boundary line in pixels; defaults to 2</p></li>
 <li><p><strong>fillOpacity</strong> (<em>float</em><em>, </em><em>optional</em>) – Opacity of the polygon fill, ranging from 0 to 1; defaults to 0.1</p></li>
 <li><p><strong>stroke</strong> (<em>str</em><em>, </em><em>optional</em>) – Color of the boundary line, in RGB #FFFFFF hex format; defaults to ‘#FF0000’</p></li>
 <li><p><strong>fill</strong> (<em>str</em><em>, </em><em>optional</em>) – Color of the polygon fill, in RGB #FFFFFF hex format; defaults to ‘#FF0000’</p></li>
-<li><p><strong>existingId</strong> – ID of an existing polygon to edit using this method; defaults to None</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
-<li><p><strong>queue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the polygon creation will be enqueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the polygon creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>ID of the created polygon, or 0 if queued; False if there was a failure</p>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addOperationalPeriod">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addOperationalPeriod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">OP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeWidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addOperationalPeriod" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addOperationalPeriod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">OP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strokeWidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillOpacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addOperationalPeriod" title="Link to this definition">¶</a></dt>
 <dd><p>Add an Operational Period to the current map.</p>
 <p>(This is a SAR-specific feature and has no meaning in ‘Recreation’ mode.)</p>
 <dl class="field-list simple">
@@ -445,68 +552,45 @@ that calls the appropriate .add… method with existingId specified.</p>
 <li><p><strong>strokeOpacity</strong> (<em>float</em><em>, </em><em>optional</em>) – Opacity of boundary lines of assignments in this operational period, ranging from 0 to 1; defaults to 1</p></li>
 <li><p><strong>strokeWidth</strong> (<em>int</em><em>, </em><em>optional</em>) – Width of boundary lines of assignments in this operational period, in pixels; defaults to 2</p></li>
 <li><p><strong>fillOpacity</strong> (<em>float</em><em>, </em><em>optional</em>) – Opacity of polygon fill of assignments in this operational period, ranging from 0 to 1; defaults to 0.1</p></li>
-<li><p><strong>existingId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of an existing operational period to edit using this method; defaults to None</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
-<li><p><strong>queue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the operational period creation will be enqueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the operational period creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>ID of the created operational period, or 0 if queued; False if there was a failure</p>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addLineAssignment">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addLineAssignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">letter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resourceType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GROUND'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teamSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">responsivePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unresponsivePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previousEfforts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transportation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeAllocated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primaryFrequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondaryFrequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preparedBy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DRAFT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addLineAssignment" title="Link to this definition">¶</a></dt>
-<dd><p>Add a Line Assignment to the current map.</p>
-<p>(This is a SAR-specific feature and has no meaning in ‘Recreation’ mode.)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>points</strong> (<em>list</em>) – List of points; each point is a list: [lon,lat]</p></li>
-<li><p><strong>number</strong> (<em>str</em><em>, </em><em>optional</em>) – String value to put in the ‘number’ field, if any; defaults to None</p></li>
-<li><p><strong>letter</strong> (<em>str</em><em>, </em><em>optional</em>) – String value to put in the ‘letter’ field, if any; defaults to None</p></li>
-<li><p><strong>opId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of the Operational Period feature that this assignment will belong to, if any; defaults to None</p></li>
-<li><p><strong>folderId</strong> (<em>str</em><em>, </em><em>optional</em>) – Folder ID of the folder this line assignment should be created in, if any; defaults to None</p></li>
-<li><p><strong>resourceType</strong> (<em>str</em><em>, </em><em>optional</em>) – Resource type; must be from the allowable list of resource types; defaults to ‘GROUND’</p></li>
-<li><p><strong>teamSize</strong> (<em>int</em><em>, </em><em>optional</em>) – Team size (number of people), defaults to 0</p></li>
-<li><p><strong>priority</strong> (<em>str</em><em>, </em><em>optional</em>) – Priority for the assignment; must be one of LOW, MEDIUM, or HIGH; defaults to ‘LOW’</p></li>
-<li><p><strong>responsivePOD</strong> (<em>str</em><em>, </em><em>optional</em>) – Expected POD for a responsive subject; must be one of LOW, MEDIUM, or HIGH; defaults to ‘LOW’</p></li>
-<li><p><strong>unresponsivePOD</strong> (<em>str</em><em>, </em><em>optional</em>) – Expected POD for an unresponsive subject; must be one of LOW, MEDIUM, or HIGH; defaults to ‘LOW’</p></li>
-<li><p><strong>cluePOD</strong> (<em>str</em><em>, </em><em>optional</em>) – Expected POD for clues; must be one of LOW, MEDIUM, or HIGH; defaults to ‘LOW’</p></li>
-<li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – Assignment description; defaults to ‘’</p></li>
-<li><p><strong>previousEfforts</strong> (<em>str</em><em>, </em><em>optional</em>) – Description of previous efforts in the assignment; defaults to ‘’</p></li>
-<li><p><strong>transportation</strong> (<em>str</em><em>, </em><em>optional</em>) – Description of how the team should transport to and from the assignment; defaults to ‘’</p></li>
-<li><p><strong>timeAllocated</strong> (<em>str</em><em>, </em><em>optional</em>) – Allotted time (typically a number of hours) to complete the assignment; can be a string or integer; defaults to 0</p></li>
-<li><p><strong>primaryFrequency</strong> (<em>str</em><em>, </em><em>optional</em>) – Primary radio frequency or channel name; defaults to ‘’</p></li>
-<li><p><strong>secondaryFrequency</strong> (<em>str</em><em>, </em><em>optional</em>) – Secondary radio frequency or channel name; defaults to ‘’</p></li>
-<li><p><strong>preparedBy</strong> (<em>str</em><em>, </em><em>optional</em>) – Name or ID of the person who prepared the assignment; defaults to ‘’</p></li>
-<li><p><strong>status</strong> (<em>str</em><em>, </em><em>optional</em>) – Overall status of the assignment; must be one of DRAFT, PREPARED, INPROGRESS, or COMPLETED; defaults to ‘DRAFT’</p></li>
-<li><p><strong>existingId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of an existing line assignment to edit using this method; defaults to None</p></li>
-<li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
-<li><p><strong>queue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the line assignment creation will be enqueued / deferred until a call to .flush; defaults to False</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>ID of the created line assignment, or 0 if queued; False if there was a failure</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addAreaAssignment">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addAreaAssignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">letter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resourceType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GROUND'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teamSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">responsivePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unresponsivePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previousEfforts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transportation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeAllocated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primaryFrequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondaryFrequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preparedBy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DRAFT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addAreaAssignment" title="Link to this definition">¶</a></dt>
-<dd><p>Add an Area Assignment to the current map.</p>
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addAssignment">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addAssignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geomType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">letter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resourceType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GROUND'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teamSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">responsivePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unresponsivePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluePOD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LOW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previousEfforts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transportation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeAllocated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primaryFrequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondaryFrequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preparedBy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DRAFT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addAssignment" title="Link to this definition">¶</a></dt>
+<dd><p>Add a Line or Area Assignment to the current map.</p>
 <p>(This is a SAR-specific feature and has no meaning in ‘Recreation’ mode.)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>points</strong> (<em>list</em>) – <p>List of points; each point is a list: [lon,lat]</p>
 <ul>
-<li><p>The final point does not need to be the same as the first point; the polygon will be automatically closed</p></li>
+<li><p>For an Area assignment, the final point does not need to be the same as the first point; the polygon will be automatically closed</p></li>
 </ul>
 </p></li>
+<li><p><strong>geomType</strong> (<em>string</em>) – ‘Line’ or ‘Area’; specified here for direct calls, or, passed from addLineAssignment or addAreaAssignment</p></li>
 <li><p><strong>number</strong> (<em>str</em><em>, </em><em>optional</em>) – String value to put in the ‘number’ field, if any; defaults to None</p></li>
 <li><p><strong>letter</strong> (<em>str</em><em>, </em><em>optional</em>) – String value to put in the ‘letter’ field, if any; defaults to None</p></li>
 <li><p><strong>opId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of the Operational Period feature that this assignment will belong to, if any; defaults to None</p></li>
@@ -525,35 +609,81 @@ that calls the appropriate .add… method with existingId specified.</p>
 <li><p><strong>secondaryFrequency</strong> (<em>str</em><em>, </em><em>optional</em>) – Secondary radio frequency or channel name; defaults to ‘’</p></li>
 <li><p><strong>preparedBy</strong> (<em>str</em><em>, </em><em>optional</em>) – Name or ID of the person who prepared the assignment; defaults to ‘’</p></li>
 <li><p><strong>status</strong> (<em>str</em><em>, </em><em>optional</em>) – Overall status of the assignment; must be one of DRAFT, PREPARED, INPROGRESS, or COMPLETED; defaults to ‘DRAFT’</p></li>
-<li><p><strong>existingId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of an existing area assignment to edit using this method; defaults to None</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
-<li><p><strong>queue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the area assignment creation will be enqueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the assignment creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>ID of the created area assignment, or 0 if queued; False if there was a failure</p>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addAppTrack">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addAppTrack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">AppTrack'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addAppTrack" title="Link to this definition">¶</a></dt>
-<dd><p>Add an AppTrack to the current map.</p>
-<p>Normally, AppTracks are only added from the CalTopo app.</p>
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addAreaAssignment">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addAreaAssignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geomType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Area'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addAreaAssignment" title="Link to this definition">¶</a></dt>
+<dd><p>Convenience method that calls addAssignment with geomType=’Area’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addLineAssignment">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addLineAssignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geomType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Line'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addLineAssignment" title="Link to this definition">¶</a></dt>
+<dd><p>Convenience method that calls addAssignment with geomType=’Line’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.addLiveTrack">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">addLiveTrack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'New</span> <span class="pre">LiveTrack'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deviceId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#FF0000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'solid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.addLiveTrack" title="Link to this definition">¶</a></dt>
+<dd><p>Add a LiveTrack to the current map.</p>
+<blockquote>
+<div><p>This method does not define any initial set of points for the LiveTrack.  All updates must be done using .updateLiveTrack, or direct GET requests to the URL as noted in the CalTopo documentation.</p>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>points</strong> (<em>list</em>) – List of points; each point is a list: [lon,lat]</p></li>
-<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – AppTrack title; defaults to ‘New AppTrack’</p></li>
-<li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – AppTrack description; defaults to ‘’</p></li>
-<li><p><strong>folderId</strong> (<em>str</em><em>, </em><em>optional</em>) – Folder ID of the folder this AppTrack should be created in, if any; defaults to None</p></li>
-<li><p><strong>existingId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of an existing AppTrack to edit using this method; defaults to ‘’</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Title of the line; defaults to ‘New Line’</p></li>
+<li><p><strong>deviceId</strong> (<em>str</em>) – string starting with ‘FLEET:’ followed by a hyphenated unique device identifier; see CalTopo documentation for details</p></li>
+<li><p><strong>width</strong> (<em>int</em><em>, </em><em>optional</em>) – Line width in pixels; defaults to 2</p></li>
+<li><p><strong>opacity</strong> (<em>float</em><em>, </em><em>optional</em>) – Line opacity, ranging from 0 to 1; defaults to 1</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Line color, in RGB #FFFFFF hex notation; defaults to ‘#FF0000’</p></li>
+<li><p><strong>pattern</strong> (<em>str</em><em>, </em><em>optional</em>) – Line dash pattern; must be from the known list of pattern names; defaults to ‘solid’</p></li>
+<li><p><strong>folderId</strong> (<em>str</em><em>, </em><em>optional</em>) – Folder ID of the folder this line should be created in, if any; defaults to None</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the line creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Entire JSON response from the AppTrack creation request, or False if there was a failure prior to the request</p>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -561,8 +691,8 @@ that calls the appropriate .add… method with existingId specified.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.flush">
 <span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.flush" title="Link to this definition">¶</a></dt>
-<dd><p>Saves any queued (deferred) request data to the hosted map.</p>
-<p>Any of the feature creation methods can be called with queue=True to queue (defer) the creation until this method is called.</p>
+<dd><p>Saves any dataQueued (deferred) request data to the hosted map.</p>
+<p>Any of the feature creation methods can be called with dataQueue=True to dataQueue (defer) the creation until this method is called.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum allowable duration for the save request, in seconds; defaults to 20</p>
@@ -642,7 +772,7 @@ that calls the appropriate .add… method with existingId specified.</p>
 <blockquote>
 <div><dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.editFeature">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">editFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">className</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">letter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.editFeature" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">editFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">className</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">letter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folderId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.editFeature" title="Link to this definition">¶</a></dt>
 <dd><p>Edit properties and/or geometry of a specified feature.</p>
 <p>The feature to edit can be specified in various methods:</p>
 <blockquote>
@@ -654,7 +784,6 @@ that calls the appropriate .add… method with existingId specified.</p>
 <p>Only the specific properties or geometries to be edited need to be included in the
 properties and geometry arguments; they will be merged with existing properties and geometries.
 However, when editing geometry, it probably makes more sense to overwrite the entire geometry dictionary.</p>
-<p>This is a convenience method that calls the appropriate .add… method with existingId specified.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -664,9 +793,12 @@ However, when editing geometry, it probably makes more sense to overwrite the en
 <li><p><strong>letter</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>Assignment letter used for selection; defaults to None</p>
 <p>(only relevant for assignment features)</p>
 </p></li>
+<li><p><strong>folderId</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of the folder that the feature should be placed in; specifying this argument is the same as specifying properties[‘folderId’]; defaults to None</p></li>
 <li><p><strong>properties</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dict of properties to edit; defaults to None</p></li>
 <li><p><strong>geometry</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dict of geometry to edit; defaults to None</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -677,7 +809,7 @@ However, when editing geometry, it probably makes more sense to overwrite the en
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.moveMarker">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">moveMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">newCoords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.moveMarker" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">moveMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">newCoords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.moveMarker" title="Link to this definition">¶</a></dt>
 <dd><p>Move an existing marker.</p>
 <p>The marker to move can be specified either with ID or by title.</p>
 <p>This convenience function calls .editFeature.</p>
@@ -687,6 +819,8 @@ However, when editing geometry, it probably makes more sense to overwrite the en
 <li><p><strong>newCoords</strong> (<em>list</em>) – List of [lon,lat] that the marker should be moved to</p></li>
 <li><p><strong>id</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of the marker to move; defaults to None</p></li>
 <li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Title of the marker to move; defaults to None</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -697,7 +831,7 @@ However, when editing geometry, it probably makes more sense to overwrite the en
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.editMarkerDescription">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">editMarkerDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">newDescription</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.editMarkerDescription" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">editMarkerDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">newDescription</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.editMarkerDescription" title="Link to this definition">¶</a></dt>
 <dd><p>Edit the description of an existing marker.</p>
 <p>The marker to edit can be specified either with ID or by title.</p>
 <p>This convenience function calls .editFeature.</p>
@@ -707,10 +841,42 @@ However, when editing geometry, it probably makes more sense to overwrite the en
 <li><p><strong>newDescription</strong> – The new description</p></li>
 <li><p><strong>id</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of the marker to move; defaults to None</p></li>
 <li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Title of the marker to move; defaults to None</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>ID of the edited feature (should be the same as the ‘id’ argument, if specified), or False if there was a failure prior to the edit request</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.updateLiveTrack">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">updateLiveTrack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.updateLiveTrack" title="Link to this definition">¶</a></dt>
+<dd><p>Append one new location to an existing LiveTrack</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>str</em>) – ID of the LiveTrack feature to be updated</p></li>
+<li><p><strong>lat</strong> (<em>float</em>) – Latitude of the new point, in WGS84 decimal degrees</p></li>
+<li><p><strong>lon</strong> (<em>float</em>) – Longitude of the new point, in WGS84 decimal degrees</p></li>
+<li><p><strong>elevation</strong> – Optional elevation of the new point, in feet; defaults to None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>requests.Response object from the .get request if successful; False for a failure of any reason</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession.stopLiveTrack">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">stopLiveTrack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.stopLiveTrack" title="Link to this definition">¶</a></dt>
+<dd><p>Stop a LiveTrack recording; the server will automatically convert it to a Line with the same ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>id</strong> (<em>str</em>) – ID of the LiveTrack</p>
 </dd>
 </dl>
 </dd></dl>
@@ -722,7 +888,7 @@ However, when editing geometry, it probably makes more sense to overwrite the en
 <blockquote>
 <div><dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.delFeature">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">delFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">featureOrId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fClass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.delFeature" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">delFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">featureOrId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fClass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.delFeature" title="Link to this definition">¶</a></dt>
 <dd><p>Delete the specified feature from the current map.
 The feature to delete can be specified by ID, or by passing the entire marker data object.</p>
 <dl class="field-list simple">
@@ -731,6 +897,8 @@ The feature to delete can be specified by ID, or by passing the entire marker da
 <li><p><strong>featureOrId</strong> (<em>str</em><em>, </em><em>optional</em>) – Feature ID, or entire feature data object; defaults to ‘’</p></li>
 <li><p><strong>fClass</strong> (<em>str</em><em>, </em><em>optional</em>) – Feature class; there should be no need to specify a value here, since the code will try to automatically determine the class from the feature data object; defaults to ‘’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -763,7 +931,7 @@ The feature to delete can be specified by ID, or by passing the entire marker da
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.delMarker">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">delMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markerOrId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.delMarker" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">delMarker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markerOrId</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.delMarker" title="Link to this definition">¶</a></dt>
 <dd><p>Delete a marker on the current map.</p>
 <p>The marker to delete can be specified by ID, or by passing the entire marker data object.</p>
 <p>This convenience function calls .delFeature.</p>
@@ -772,6 +940,8 @@ The feature to delete can be specified by ID, or by passing the entire marker da
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>markerOrId</strong> – Marker ID, or entire marker data object; defaults to ‘’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -782,7 +952,7 @@ The feature to delete can be specified by ID, or by passing the entire marker da
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession.delMarkers">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">delMarkers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markersOrIds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.delMarkers" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">delMarkers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markersOrIds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession.delMarkers" title="Link to this definition">¶</a></dt>
 <dd><p>Delete one or more markers on the current map, in a non-blocking asynchronous batch of delete requests.</p>
 <p>The markers to delete can be specified by ID, or by passing the entire marker data objects; all markers to delete should be specified in the same manner.</p>
 <p>This convenience function calls .delFeatures.</p>
@@ -791,6 +961,7 @@ The feature to delete can be specified by ID, or by passing the entire marker da
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>markersOrIds</strong> (<em>list</em><em>, </em><em>optional</em>) – List of marker IDs, or of entire marker data objects; defaults to []</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -898,7 +1069,7 @@ Optionally grow the boundary polygon by the specified distance before cropping.<
 </section>
 <section id="internal-data-management-methods">
 <h2><strong>Internal data management methods</strong><a class="headerlink" href="#internal-data-management-methods" title="Link to this heading">¶</a></h2>
-<p>These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.</p>
+<p>These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.  Not all internal data management methods are documented.</p>
 <blockquote>
 <div><dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession._setupSession">
@@ -931,13 +1102,20 @@ Optionally grow the boundary polygon by the specified distance before cropping.<
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession._doSync">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_doSync</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._doSync" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_doSync</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fromLoop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._doSync" title="Link to this definition">¶</a></dt>
 <dd><p>Internal method to keep the cache (.mapData) in sync with the associated hosted map. <strong>Calling this method directly could cause sync problems.</strong></p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>called on a regular interval from ._syncLoop in the sync thread</p></li>
 <li><p>called once from .openMap, when the map is first opened</p></li>
 <li><p>called as needed from ._refresh</p></li>
 </ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fromLoop</strong> (<em>bool</em><em>, </em><em>optional</em>) – A flag to indicate whether this is being called from ._syncLoop.  If True, any exception during sync will be passed along to _syncLoop for handling, and will typically cause a disconnect.  False would indicate that an immediate sync is being request from some other internal method.  Defaults to False.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -995,12 +1173,12 @@ avoid blocking of the main thread.  <strong>Calling this method directly could c
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession._sendRequest">
-<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_sendRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apiUrlEnd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domainAndPort</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._sendRequest" title="Link to this definition">¶</a></dt>
-<dd><p>Send HTTP request to the server.</p>
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_sendRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apiUrlEnd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domainAndPort</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accountId</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._sendRequest" title="Link to this definition">¶</a></dt>
+<dd><p>Send an HTTP request to the server.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>type</strong> (<em>str</em>) – HTTP request action verb; currently, the only acceptable values are ‘GET’, ‘POST’, or ‘DELETE’</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – HTTP request action verb; currently, must be one of ‘GET’, ‘POST’, or ‘DELETE’</p></li>
 <li><p><strong>apiUrlEnd</strong> (<em>str</em>) – <p>Text of the ‘final section’ of the request URL</p>
 <ul>
 <li><p>typical values are ‘Folder’, ‘Shape’, ‘Marker’, etc.</p></li>
@@ -1014,16 +1192,101 @@ avoid blocking of the main thread.  <strong>Calling this method directly could c
 <li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘’</p></li>
 <li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
 <li><p><strong>domainAndPort</strong> (<em>str</em><em>, </em><em>optional</em>) – Domain and port to send the request to; if not specified here, uses the value of .domainAndPort; defaults to ‘’</p></li>
+<li><p><strong>accountId</strong> (<em>str</em><em>, </em><em>optional</em>) – account ID if the request should be made in regards to a different team account that the user has access to, such as new map creation in a team account; defaults to ‘’</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><p>various, depending on request details:</p>
 <ul class="simple">
-<li><p>False for any error or failure</p></li>
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
 <li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
 <li><p>ID only, if returnJson is ‘ID’</p></li>
 <li><p>map ID of newly created map, if apiUrlEnd contains ‘[NEW]’</p></li>
 </ul>
+</div></blockquote>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession._requestWorker">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_requestWorker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._requestWorker" title="Link to this definition">¶</a></dt>
+<dd><p>Intrnal requestThread worker method.  Waits for an event, then processes all requests in requestQueue, then resumes waiting.  <strong>Calling this method directly could cause sync problems or crashes.</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The threading event that the worker waits for; the event is set when a non-blocking request is enqueued in _sendRequest, and is cleared here.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession._handleResponse">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_handleResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newMap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._handleResponse" title="Link to this definition">¶</a></dt>
+<dd><p>Internal method to handle HTTP request responses, for both blocking and non-blocking requests.  <strong>Calling this method directly could cause sync problems or crashes.</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>requests.Response</em>) – The response object.</p></li>
+<li><p><strong>newMap</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to indicate whether this response came from a new map creation request; defaults to False.</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘’</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+<li><p>map ID of newly created map, if apiUrlEnd contains ‘[NEW]’</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="caltopo_python.CaltopoSession._addFeature">
+<span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_addFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">className</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnJson</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataQueue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._addFeature" title="Link to this definition">¶</a></dt>
+<dd><p>Internal method holding the core functionality shared by the other add… methods.  <strong>Calling this method directly could cause sync problems.</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>className</strong> (<em>str</em>) – Class name of the feature to add.</p></li>
+<li><p><strong>j</strong> (<em>dict</em>) – json parameters of the feature to add.</p></li>
+<li><p><strong>returnJson</strong> (<em>str</em><em>, </em><em>optional</em>) – see ‘Returns’ section below; defaults to ‘ID’</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>, </em><em>optional</em>) – optional list of callback specifications; see the callbacks documentation</p></li>
+<li><p><strong>timeout</strong> (<em>int</em><em>, </em><em>optional</em>) – Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0</p></li>
+<li><p><strong>dataQueue</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the folder creation will be endataQueued / deferred until a call to .flush; defaults to False</p></li>
+<li><p><strong>blocking</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>various, depending on request details:</p>
+<ul class="simple">
+<li><p>False for any error or failure, whether queued or blocking</p></li>
+<li><p>True for a non-blocking request successfully submitted to the queue</p></li>
+<li><p>for blocking requests:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Entire response json structure (dict) if returnJson is ‘ALL’</p></li>
+<li><p>ID only, if returnJson is ‘ID’</p></li>
+</ul>
+</div></blockquote>
 </p>
 </dd>
 </dl>
@@ -1031,7 +1294,7 @@ avoid blocking of the main thread.  <strong>Calling this method directly could c
 
 <dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession._delAsync">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_delAsync</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idAndClassList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._delAsync" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">CaltopoSession.</span></span><span class="sig-name descname"><span class="pre">_delAsync</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idAndClassList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#caltopo_python.CaltopoSession._delAsync" title="Link to this definition">¶</a></dt>
 <dd><p>Internal method to delete several features asynchronously, in a sepearate thread pool.
 <strong>This method should not be called directly.  It is called by .delFeatures.</strong></p>
 <dl class="field-list simple">
@@ -1102,7 +1365,7 @@ avoid blocking of the main thread.  <strong>Calling this method directly could c
 </section>
 <section id="internal-helper-methods">
 <h2><strong>Internal helper methods</strong><a class="headerlink" href="#internal-helper-methods" title="Link to this heading">¶</a></h2>
-<p>These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.</p>
+<p>These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.  Not all internal helper methods are documented.</p>
 <blockquote>
 <div><dl class="py method">
 <dt class="sig sig-object py" id="caltopo_python.CaltopoSession._caseMatch">
@@ -1287,11 +1550,11 @@ avoid blocking of the main thread.  <strong>Calling this method directly could c
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &#169;2024, Tom Grundy.
+      &#169;2026, Tom Grundy.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="_sources/caltopo_python.rst.txt"

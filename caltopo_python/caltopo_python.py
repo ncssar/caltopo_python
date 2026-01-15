@@ -3062,11 +3062,11 @@ class CaltopoSession():
             dataQueue=False,
             callbacks=[],
             blocking=None): # use self.blockingByDefault as the default, resolved in _addFeature
-        """Add a Line Assignment to the current map.\n
+        """Add a Line or Area Assignment to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
-        :param points: List of points; each point is a list: [lon,lat]\n
-        - For area assignments, the final point does not need to be the same as the first point; the polygon will be automatically closed
+        :param points: List of points; each point is a list: [lon,lat] \n
+            - For an Area assignment, the final point does not need to be the same as the first point; the polygon will be automatically closed
         :type points: list
         :param geomType: 'Line' or 'Area'; specified here for direct calls, or, passed from addLineAssignment or addAreaAssignment
         :type geomType: string
@@ -3361,9 +3361,6 @@ class CaltopoSession():
 
     functools.update_wrapper(addAreaAssignment,addAssignment)
     functools.update_wrapper(addLineAssignment,addAssignment)
-
-    addAreaAssignment.__doc__="""Convenince function that calls addAssignment with geomType='Area'; see addAssignment for details."""
-    addLineAssignment.__doc__="""Convenince function that calls addAssignment with geomType='Line'; see addAssignment for details."""
 
     def flush(self,timeout=20):
         """Saves any dataQueued (deferred) request data to the hosted map.\n

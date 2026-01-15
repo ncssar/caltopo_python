@@ -22,6 +22,7 @@ An exception class is also defined, CTSException, which could be thrown during i
 .. -------------------------
 
 .. automethod:: CaltopoSession.openMap
+.. automethod:: CaltopoSession.closeMap
 
 **Account data access methods**
 -------------------------------
@@ -31,6 +32,7 @@ These methods may be called from either a mapless or a map-associated session.
    .. automethod:: CaltopoSession.getMapList
    .. automethod:: CaltopoSession.getAllMapLists
    .. automethod:: CaltopoSession.getMapTitle
+   .. automethod:: CaltopoSession.getAccountsAndFolders
    .. automethod:: CaltopoSession.getGroupAccountTitles
 
 **Feature creation methods**
@@ -44,9 +46,16 @@ that calls the appropriate .add... method with existingId specified.
    .. automethod:: CaltopoSession.addLine
    .. automethod:: CaltopoSession.addPolygon
    .. automethod:: CaltopoSession.addOperationalPeriod
-   .. automethod:: CaltopoSession.addLineAssignment
-   .. automethod:: CaltopoSession.addAreaAssignment
-   .. automethod:: CaltopoSession.addAppTrack
+   .. automethod:: CaltopoSession.addAssignment
+   .. automethod:: CaltopoSession.addAreaAssignment(...,geomType='Area')
+      
+      Convenience method that calls addAssignment with geomType='Area'
+
+   .. automethod:: CaltopoSession.addLineAssignment(...,geomType='Line')
+
+      Convenience method that calls addAssignment with geomType='Line'
+
+   .. automethod:: CaltopoSession.addLiveTrack
    .. automethod:: CaltopoSession.flush
 
 **Feature query methods**
@@ -61,6 +70,8 @@ that calls the appropriate .add... method with existingId specified.
    .. automethod:: CaltopoSession.editFeature
    .. automethod:: CaltopoSession.moveMarker
    .. automethod:: CaltopoSession.editMarkerDescription
+   .. automethod:: CaltopoSession.updateLiveTrack
+   .. automethod:: CaltopoSession.stopLiveTrack
 
 **Feature deletion methods**
 ----------------------------
@@ -81,7 +92,7 @@ These methods use the python |shapely_link| module.
 
 **Internal data management methods**
 ------------------------------------
-These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.
+These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.  Not all internal data management methods are documented.
 
    .. automethod:: CaltopoSession._setupSession
    .. automethod:: CaltopoSession._sendUserdata
@@ -94,13 +105,16 @@ These methods are typically only called internally, from other class methods.  T
    .. automethod:: CaltopoSession._resume
    .. automethod:: CaltopoSession._syncLoop
    .. automethod:: CaltopoSession._sendRequest
+   .. automethod:: CaltopoSession._requestWorker
+   .. automethod:: CaltopoSession._handleResponse
+   .. automethod:: CaltopoSession._addFeature
    .. automethod:: CaltopoSession._delAsync
    .. automethod:: CaltopoSession._buffer2
    .. automethod:: CaltopoSession._intersection2
 
 **Internal helper methods**
 ---------------------------
-These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.
+These methods are typically only called internally, from other class methods.  They can be called from downstream code if needed, with caution.  Not all internal helper methods are documented.
 
    .. automethod:: CaltopoSession._caseMatch
    .. automethod:: CaltopoSession._twoify

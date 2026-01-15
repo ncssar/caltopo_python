@@ -15,11 +15,11 @@ caltopo_python
 CalTopo is a very popular web-browser-based and smartphone-app-based mapping tool.  SARTopo is a mostly-obsolete
 name that refers to a set of Search-And-Rescue-specific features inside the CalTopo tool. See |caltopo_link| and |training_link|.
 
-Being a web-based tool, CalTopo uses a web API to accomplish most user actions.  The API is not currently documented or developed for general public use, and could change at any time.
+Being a web-based tool, CalTopo uses a web API to accomplish most user actions.  In 2025, CalTopo released documentation for many parts of the API.  See |api_link|.  Other parts of the API, used by this module, are not documented by CalTopo and are subject to change at any time.
 
-This module provides a 'session' object which manages a data connection to a hosted map, and provides several wrapper methods and convenience methods that make calls to the non-publicized CalTopo API.
+This module provides a 'session' object which manages a data connection to a hosted map, and provides several wrapper methods and convenience methods that make calls to the CalTopo API.
 
-If your CalTopo account is a member of a SAR team account, you can use this module for SAR-specific features on a caltopo.com map.
+If your CalTopo account is a member of a CalTopo Team account, you can use this module for SAR-specific features on a caltopo.com map.
 
 **This third-party module is not written or maintained by CalTopo LLC or the authors of caltopo.com.**
 
@@ -44,12 +44,12 @@ Install this package in the usual manner:
    
    pip install caltopo_python
 
-To activate online requests, you will need to determine your account ID, credential ID, and public key.  See details at the :doc:`credentials` page.
+To activate online requests, you will need to determine your account ID, credential ID, and public key.  See details at the |api_link| and older unofficial details on the :doc:`credentials` page.
 
 **NOTE: caltopo_python was formerly called sartopo_python.**
-caltopo_python 1.0.x will be identical to sartopo_python 2.0.x.
+caltopo_python 1.0.x will be identical to sartopo_python 2.0.x.  Only caltopo_python will get new versions going forward.
 
-For more information, see the :doc:`migration` page.
+For more information on migrating from sartopo_python to caltopo_python, see the :doc:`migration` page.
 
 Key Features
 ===============
@@ -90,6 +90,12 @@ This sync procedure is done in a background thread, so that it doesn't delay or 
 
 You can also write callback functions that will be called whenever map data changes are found during sync.
 
+Non-blocking requests  (new in 2.0.0)
+-------------------------------------
+Requests can be set to run in another thread ('in the background') so that main thread execution isn't delayed, regardless of connection quality.
+
+See details in the :doc:`nonblocking` page.
+
 Examples
 ========
 
@@ -101,12 +107,12 @@ Opening a session
    from caltopo_python import CaltopoSession
 
    # open an online session and map
-   cts=CaltopoSession('caltopo.com','A1B2C',
+   cts=CaltopoSession('caltopo.com','A1B2C3D',
          configpath='../../cts.ini',
          account='joe@domain.com')
 
    # open a CalTopo Desktop session and map
-   cts=CaltopoSession('localhost:8080','A1B2C',
+   cts=CaltopoSession('localhost:8080','A1B2C3D',
          configpath='../../cts.ini',
          account='joe@domain.com')
 
@@ -116,7 +122,10 @@ Opening a session
          account='joe@domain.com')
 
    # open a map, for a session that was initially mapless
-   cts.openMap('A1B2C')
+   cts.openMap('A1B2C3D')
+   
+   # close the map, but leave the mapless session open
+   cts.closeMap()
 
 Syncing and callbacks
 ---------------------
@@ -138,7 +147,7 @@ Syncing and callbacks
 
    # open a session, connecting to the defined callbacks;
    #  syncing is enabled by default, since the 'sync' argument defaults to True
-   cts=CaltopoSession('caltopo.com','A1B2C',
+   cts=CaltopoSession('caltopo.com','A1B2C3D',
          configpath='../../cts.ini',
          account='joe@domain.com',
          propUpdateCallback=pucb,
@@ -165,6 +174,9 @@ Getting map data and account data
 
    # get the list of titles of group accounts of which joe@domain.com is a member
    cts.getGroupAccountTitles()
+
+   # get the account's group account and folder structure, including lists of paths and folder IDs
+   cts.getAccountsAndFolders()
 
 Adding features
 ---------------
@@ -298,6 +310,10 @@ Configuration file
 .. |training_link| raw:: html
 
    <a href="https://training.caltopo.com" target="_blank">training.caltopo.com</a>
+
+.. |api_link| raw:: html
+
+   <a href="https://training.caltopo.com/all_users/team-accounts/teamapi" target="_blank">Teams API documentation at training.caltopo.com</a>
    
 
 

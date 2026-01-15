@@ -47,8 +47,14 @@ that calls the appropriate .add... method with existingId specified.
    .. automethod:: CaltopoSession.addPolygon
    .. automethod:: CaltopoSession.addOperationalPeriod
    .. automethod:: CaltopoSession.addAssignment
-   .. automethod:: CaltopoSession.addLineAssignment
-   .. automethod:: CaltopoSession.addAreaAssignment
+   .. automethod:: CaltopoSession.addAreaAssignment(...,geomType='Area')
+      
+      Convenience method that calls addAssignment with geomType='Area'
+
+   .. automethod:: CaltopoSession.addLineAssignment(...,geomType='Line')
+
+      Convenience method that calls addAssignment with geomType='Line'
+
    .. automethod:: CaltopoSession.addLiveTrack
    .. automethod:: CaltopoSession.flush
 

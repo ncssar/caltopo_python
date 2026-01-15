@@ -5,12 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>caltopo_python &#8212; caltopo_python 1.0.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=b649bb2e" />
-    <script src="_static/documentation_options.js?v=8d563738"></script>
-    <script src="_static/doctools.js?v=9a2dae69"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <title>caltopo_python &#8212; caltopo_python 2.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=3b7bce31" />
+    <script src="_static/documentation_options.js?v=51b770b3"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -23,14 +24,15 @@
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
             <p class="logo"><a href="#">
-              <img class="logo" src="_static/caltopo_python_logo.png" alt="Logo"/>
+              <img class="logo" src="_static/caltopo_python_logo.png" alt="Logo of caltopo_python"/>
             </a></p><hr />
 <p><ul>
 <li><a href="./index.html">Home</a>
 <li><a href="./caltopo_python.html">Class Reference</a>
+<li><a href="./nonblocking.html">Non-blocking requests</a>
 <li><a href="./credentials.html">Credentials</a>
 <li><a href="./fixedChoices.html">Fixed Choices</a>
 <li><a href="./migration.html">Migration</a>
@@ -68,9 +70,9 @@
 <h1>caltopo_python<a class="headerlink" href="#caltopo-python" title="Link to this heading">¶</a></h1>
 <p>CalTopo is a very popular web-browser-based and smartphone-app-based mapping tool.  SARTopo is a mostly-obsolete
 name that refers to a set of Search-And-Rescue-specific features inside the CalTopo tool. See <a href="https://caltopo.com" target="_blank">caltopo.com</a> and <a href="https://training.caltopo.com" target="_blank">training.caltopo.com</a>.</p>
-<p>Being a web-based tool, CalTopo uses a web API to accomplish most user actions.  The API is not currently documented or developed for general public use, and could change at any time.</p>
-<p>This module provides a ‘session’ object which manages a data connection to a hosted map, and provides several wrapper methods and convenience methods that make calls to the non-publicized CalTopo API.</p>
-<p>If your CalTopo account is a member of a SAR team account, you can use this module for SAR-specific features on a caltopo.com map.</p>
+<p>Being a web-based tool, CalTopo uses a web API to accomplish most user actions.  In 2025, CalTopo released documentation for many parts of the API.  See <a href="https://training.caltopo.com/all_users/team-accounts/teamapi" target="_blank">Teams API documentation at training.caltopo.com</a>.  Other parts of the API, used by this module, are not documented by CalTopo and are subject to change at any time.</p>
+<p>This module provides a ‘session’ object which manages a data connection to a hosted map, and provides several wrapper methods and convenience methods that make calls to the CalTopo API.</p>
+<p>If your CalTopo account is a member of a CalTopo Team account, you can use this module for SAR-specific features on a caltopo.com map.</p>
 <p><strong>This third-party module is not written or maintained by CalTopo LLC or the authors of caltopo.com.</strong></p>
 <p><strong>DISCLAIMER: This module can edit and delete CalTopo map features.  At the time of this module’s publication, CalTopo does not have any ‘undo’ capability.</strong>
 Only you can take steps to prevent loss of map data due to use of this module - whether due to accidental misuse, or due to an unexpected bug in the module.  You should always consider exporting a full GeoJSON from your map before using this code.</p>
@@ -93,10 +95,10 @@ Only you can take steps to prevent loss of map data due to use of this module - 
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">caltopo_python</span>
 </pre></div>
 </div>
-<p>To activate online requests, you will need to determine your account ID, credential ID, and public key.  See details at the <a class="reference internal" href="credentials.html"><span class="doc">Credentials</span></a> page.</p>
+<p>To activate online requests, you will need to determine your account ID, credential ID, and public key.  See details at the <a href="https://training.caltopo.com/all_users/team-accounts/teamapi" target="_blank">Teams API documentation at training.caltopo.com</a> and older unofficial details on the <a class="reference internal" href="credentials.html"><span class="doc">Credentials</span></a> page.</p>
 <p><strong>NOTE: caltopo_python was formerly called sartopo_python.</strong>
-caltopo_python 1.0.x will be identical to sartopo_python 2.0.x.</p>
-<p>For more information, see the <a class="reference internal" href="migration.html"><span class="doc">Migration</span></a> page.</p>
+caltopo_python 1.0.x will be identical to sartopo_python 2.0.x.  Only caltopo_python will get new versions going forward.</p>
+<p>For more information on migrating from sartopo_python to caltopo_python, see the <a class="reference internal" href="migration.html"><span class="doc">Migration</span></a> page.</p>
 </section>
 <section id="key-features">
 <h1>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">¶</a></h1>
@@ -131,20 +133,25 @@ the number of web requests needed, which reduces the time taken for most tasks.<
 <p>This sync procedure is done in a background thread, so that it doesn’t delay or interfere with your code.  Sync can be paused or disabled if needed.</p>
 <p>You can also write callback functions that will be called whenever map data changes are found during sync.</p>
 </section>
+<section id="non-blocking-requests-new-in-2-0-0">
+<h2>Non-blocking requests  (new in 2.0.0)<a class="headerlink" href="#non-blocking-requests-new-in-2-0-0" title="Link to this heading">¶</a></h2>
+<p>Requests can be set to run in another thread (‘in the background’) so that main thread execution isn’t delayed, regardless of connection quality.</p>
+<p>See details in the <a class="reference internal" href="nonblocking.html"><span class="doc">Non-blocking requests</span></a> page.</p>
+</section>
 </section>
 <section id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h1>
 <section id="opening-a-session">
 <h2>Opening a session<a class="headerlink" href="#opening-a-session" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">caltopo_python</span> <span class="kn">import</span> <span class="n">CaltopoSession</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">caltopo_python</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaltopoSession</span>
 
 <span class="c1"># open an online session and map</span>
-<span class="n">cts</span><span class="o">=</span><span class="n">CaltopoSession</span><span class="p">(</span><span class="s1">&#39;caltopo.com&#39;</span><span class="p">,</span><span class="s1">&#39;A1B2C&#39;</span><span class="p">,</span>
+<span class="n">cts</span><span class="o">=</span><span class="n">CaltopoSession</span><span class="p">(</span><span class="s1">&#39;caltopo.com&#39;</span><span class="p">,</span><span class="s1">&#39;A1B2C3D&#39;</span><span class="p">,</span>
       <span class="n">configpath</span><span class="o">=</span><span class="s1">&#39;../../cts.ini&#39;</span><span class="p">,</span>
       <span class="n">account</span><span class="o">=</span><span class="s1">&#39;joe@domain.com&#39;</span><span class="p">)</span>
 
 <span class="c1"># open a CalTopo Desktop session and map</span>
-<span class="n">cts</span><span class="o">=</span><span class="n">CaltopoSession</span><span class="p">(</span><span class="s1">&#39;localhost:8080&#39;</span><span class="p">,</span><span class="s1">&#39;A1B2C&#39;</span><span class="p">,</span>
+<span class="n">cts</span><span class="o">=</span><span class="n">CaltopoSession</span><span class="p">(</span><span class="s1">&#39;localhost:8080&#39;</span><span class="p">,</span><span class="s1">&#39;A1B2C3D&#39;</span><span class="p">,</span>
       <span class="n">configpath</span><span class="o">=</span><span class="s1">&#39;../../cts.ini&#39;</span><span class="p">,</span>
       <span class="n">account</span><span class="o">=</span><span class="s1">&#39;joe@domain.com&#39;</span><span class="p">)</span>
 
@@ -154,28 +161,31 @@ the number of web requests needed, which reduces the time taken for most tasks.<
       <span class="n">account</span><span class="o">=</span><span class="s1">&#39;joe@domain.com&#39;</span><span class="p">)</span>
 
 <span class="c1"># open a map, for a session that was initially mapless</span>
-<span class="n">cts</span><span class="o">.</span><span class="n">openMap</span><span class="p">(</span><span class="s1">&#39;A1B2C&#39;</span><span class="p">)</span>
+<span class="n">cts</span><span class="o">.</span><span class="n">openMap</span><span class="p">(</span><span class="s1">&#39;A1B2C3D&#39;</span><span class="p">)</span>
+
+<span class="c1"># close the map, but leave the mapless session open</span>
+<span class="n">cts</span><span class="o">.</span><span class="n">closeMap</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
 <section id="syncing-and-callbacks">
 <h2>Syncing and callbacks<a class="headerlink" href="#syncing-and-callbacks" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define callback functions</span>
-<span class="k">def</span> <span class="nf">pucb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pucb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Property Updated: pucb called with args &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
 
-<span class="k">def</span> <span class="nf">gucb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gucb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Geometry Updated: gucb called with args &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
 
-<span class="k">def</span> <span class="nf">nfcb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">nfcb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;New Feature: nfcb called with args &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
 
-<span class="k">def</span> <span class="nf">dfcb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dfcb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Deleted Feature: dfcb called with args &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
 
 <span class="c1"># open a session, connecting to the defined callbacks;</span>
 <span class="c1">#  syncing is enabled by default, since the &#39;sync&#39; argument defaults to True</span>
-<span class="n">cts</span><span class="o">=</span><span class="n">CaltopoSession</span><span class="p">(</span><span class="s1">&#39;caltopo.com&#39;</span><span class="p">,</span><span class="s1">&#39;A1B2C&#39;</span><span class="p">,</span>
+<span class="n">cts</span><span class="o">=</span><span class="n">CaltopoSession</span><span class="p">(</span><span class="s1">&#39;caltopo.com&#39;</span><span class="p">,</span><span class="s1">&#39;A1B2C3D&#39;</span><span class="p">,</span>
       <span class="n">configpath</span><span class="o">=</span><span class="s1">&#39;../../cts.ini&#39;</span><span class="p">,</span>
       <span class="n">account</span><span class="o">=</span><span class="s1">&#39;joe@domain.com&#39;</span><span class="p">,</span>
       <span class="n">propUpdateCallback</span><span class="o">=</span><span class="n">pucb</span><span class="p">,</span>
@@ -201,6 +211,9 @@ the number of web requests needed, which reduces the time taken for most tasks.<
 
 <span class="c1"># get the list of titles of group accounts of which joe@domain.com is a member</span>
 <span class="n">cts</span><span class="o">.</span><span class="n">getGroupAccountTitles</span><span class="p">()</span>
+
+<span class="c1"># get the account&#39;s group account and folder structure, including lists of paths and folder IDs</span>
+<span class="n">cts</span><span class="o">.</span><span class="n">getAccountsAndFolders</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
@@ -322,11 +335,11 @@ specifying points in [lon,lat] sequence.  See the <em>._validatePoints</em> docu
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &#169;2024, Tom Grundy.
+      &#169;2026, Tom Grundy.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="_sources/index.rst.txt"
