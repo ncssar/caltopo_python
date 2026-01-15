@@ -3033,8 +3033,10 @@ class CaltopoSession():
         #     else:
         #         return False
 
-    def addLineAssignment(self,
+    # def addLineAssignment(self,
+    def addAssignment(self,
             points: list,
+            geomType=None,
             number=None,
             letter=None,
             title=None,
@@ -3063,8 +3065,11 @@ class CaltopoSession():
         """Add a Line Assignment to the current map.\n
         (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
-        :param points: List of points; each point is a list: [lon,lat]
+        :param points: List of points; each point is a list: [lon,lat]\n
+        - For area assignments, the final point does not need to be the same as the first point; the polygon will be automatically closed
         :type points: list
+        :param geomType: 'Line' or 'Area'; specified here for direct calls, or, passed from addLineAssignment or addAreaAssignment
+        :type geomType: string
         :param number: String value to put in the 'number' field, if any; defaults to None
         :type number: str, optional
         :param letter: String value to put in the 'letter' field, if any; defaults to None
@@ -3105,7 +3110,7 @@ class CaltopoSession():
         :type returnJson: str, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param dataQueue: If True, the line assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
+        :param dataQueue: If True, the assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
         :type dataQueue: bool, optional
         :param callbacks: optional list of callback specifications; see the callbacks documentation
         :type callbacks: list, optional
@@ -3117,9 +3122,12 @@ class CaltopoSession():
           - for blocking requests:
            - Entire response json structure (dict) if returnJson is 'ALL'
            - ID only, if returnJson is 'ID'
-        """            
+        """
+        if not isinstance(geomType,str) or geomType not in ['Line','Area']:
+            logging.error(f'geomType was specified as {geomType}; must be either Line or Area; assignment will not be added')
+            return False       
         if not self.mapID or self.apiVersion<0:
-            logging.error('addLineAssignment request invalid: this caltopo session is not associated with a map.')
+            logging.error(f'add{geomType}Assignment request invalid: this caltopo session is not associated with a map.')
             return False
         j={}
         jp={}
@@ -3148,6 +3156,7 @@ class CaltopoSession():
             jp['operationalPeriodId']=opId
         if folderId is not None:
             jp['folderId']=folderId
+        logging.info(f'assignment geometry type:{geomType}')
         jp['resourceType']=resourceType
         jp['teamSize']=teamSize
         jp['priority']=priority
@@ -3162,8 +3171,12 @@ class CaltopoSession():
         jp['secondaryFrequency']=secondaryFrequency
         jp['preparedBy']=preparedBy
         jp['status']=status
-        jg['type']='LineString'
-        jg['coordinates']=points
+        if geomType=='Line':
+            jg['type']='LineString'
+            jg['coordinates']=points
+        else:
+            jg['type']='Polygon'
+            jg['coordinates']=[points]
         j['properties']=jp
         j['geometry']=jg
         # if existingId is not None:
@@ -3198,150 +3211,159 @@ class CaltopoSession():
     #     logging.info('generated buffer response:'+json.dumps(rj,indent=3))
     #     return rj
 
-    def addAreaAssignment(self,
-            points: list,
-            number=None,
-            letter=None,
-            title=None,
-            opId=None,
-            folderId=None,
-            resourceType='GROUND',
-            teamSize=0,
-            priority='LOW',
-            responsivePOD='LOW',
-            unresponsivePOD='LOW',
-            cluePOD='LOW',
-            description='',
-            previousEfforts='',
-            transportation='',
-            timeAllocated=0,
-            primaryFrequency='',
-            secondaryFrequency='',
-            preparedBy='',
-            status='DRAFT',
-            # existingId=None,
-            returnJson='ID',
-            timeout=0,
-            dataQueue=False,
-            callbacks=[],
-            blocking=None): # use self.blockingByDefault as the default, resolved in _addFeature
-        """Add an Area Assignment to the current map.\n
-        (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
+    # def addAreaAssignment(self,
+    #         points: list,
+    #         number=None,
+    #         letter=None,
+    #         title=None,
+    #         opId=None,
+    #         folderId=None,
+    #         resourceType='GROUND',
+    #         teamSize=0,
+    #         priority='LOW',
+    #         responsivePOD='LOW',
+    #         unresponsivePOD='LOW',
+    #         cluePOD='LOW',
+    #         description='',
+    #         previousEfforts='',
+    #         transportation='',
+    #         timeAllocated=0,
+    #         primaryFrequency='',
+    #         secondaryFrequency='',
+    #         preparedBy='',
+    #         status='DRAFT',
+    #         # existingId=None,
+    #         returnJson='ID',
+    #         timeout=0,
+    #         dataQueue=False,
+    #         callbacks=[],
+    #         blocking=None): # use self.blockingByDefault as the default, resolved in _addFeature
+    #     """Add an Area Assignment to the current map.\n
+    #     (This is a SAR-specific feature and has no meaning in 'Recreation' mode.)
 
-        :param points: List of points; each point is a list: [lon,lat] \n
-            - The final point does not need to be the same as the first point; the polygon will be automatically closed
-        :type points: list
-        :param number: String value to put in the 'number' field, if any; defaults to None
-        :type number: str, optional
-        :param letter: String value to put in the 'letter' field, if any; defaults to None
-        :type letter: str, optional
-        :param opId: ID of the Operational Period feature that this assignment will belong to, if any; defaults to None
-        :type opId: str, optional
-        :param folderId: Folder ID of the folder this line assignment should be created in, if any; defaults to None
-        :type folderId: str, optional
-        :param resourceType: Resource type; must be from the allowable list of resource types; defaults to 'GROUND'
-        :type resourceType: str, optional
-        :param teamSize: Team size (number of people), defaults to 0
-        :type teamSize: int, optional
-        :param priority: Priority for the assignment; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
-        :type priority: str, optional
-        :param responsivePOD: Expected POD for a responsive subject; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
-        :type responsivePOD: str, optional
-        :param unresponsivePOD: Expected POD for an unresponsive subject; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
-        :type unresponsivePOD: str, optional
-        :param cluePOD: Expected POD for clues; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
-        :type cluePOD: str, optional
-        :param description: Assignment description; defaults to ''
-        :type description: str, optional
-        :param previousEfforts: Description of previous efforts in the assignment; defaults to ''
-        :type previousEfforts: str, optional
-        :param transportation: Description of how the team should transport to and from the assignment; defaults to ''
-        :type transportation: str, optional
-        :param timeAllocated: Allotted time (typically a number of hours) to complete the assignment; can be a string or integer; defaults to 0
-        :type timeAllocated: str, optional
-        :param primaryFrequency: Primary radio frequency or channel name; defaults to ''
-        :type primaryFrequency: str, optional
-        :param secondaryFrequency: Secondary radio frequency or channel name; defaults to ''
-        :type secondaryFrequency: str, optional
-        :param preparedBy: Name or ID of the person who prepared the assignment; defaults to ''
-        :type preparedBy: str, optional
-        :param status: Overall status of the assignment; must be one of DRAFT, PREPARED, INPROGRESS, or COMPLETED; defaults to 'DRAFT'
-        :type status: str, optional
-        :param returnJson: see 'Returns' section below; defaults to 'ID'
-        :type returnJson: str, optional
-        :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
-        :type timeout: int, optional
-        :param dataQueue: If True, the area assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
-        :type dataQueue: bool, optional
-        :param callbacks: optional list of callback specifications; see the callbacks documentation
-        :type callbacks: list, optional
-        :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
-        :type blocking: bool or None, optional
-        :return: various, depending on request details: \n
-          - False for any error or failure, whether queued or blocking
-          - True for a non-blocking request successfully submitted to the queue
-          - for blocking requests:
-           - Entire response json structure (dict) if returnJson is 'ALL'
-           - ID only, if returnJson is 'ID'
-        """            
-        if not self.mapID or self.apiVersion<0:
-            logging.error('addAreaAssignment request invalid: this caltopo session is not associated with a map.')
-            return False
-        j={}
-        jp={}
-        jg={}
-        # calculating the title property from the title, letter, and number arguments:
-        # build a space-delimited string from all of the arguments that are given;
-        #   this way, at least it will be clear to the viewer that something is amiss;
-        #   also flag a warning if either letter or number are specified along with title
-        titleParts=[]
-        if title is not None:
-            titleParts.append(str(title))
-            if letter is not None:
-                logging.warning(f'When title is specified ({title}), letter should not be specified ({letter}).  It is included in the title for clarity.')
-            if number is not None:
-                logging.warning(f'When title is specified ({title}), number should not be specified ({number}).  It is included in the title for clarity.')
-        if letter is not None:
-            titleParts.append(str(letter))
-        if number is not None:
-            titleParts.append(str(number))
-        jp['title']=' '.join(titleParts)
-        if number is not None:
-            jp['number']=str(number)
-        if letter is not None:
-            jp['letter']=str(letter)
-        if opId is not None:
-            jp['operationalPeriodId']=opId
-        if folderId is not None:
-            jp['folderId']=folderId
-        jp['resourceType']=resourceType
-        jp['teamSize']=teamSize
-        jp['priority']=priority
-        jp['responsivePOD']=responsivePOD
-        jp['unresponsivePOD']=unresponsivePOD
-        jp['cluePOD']=cluePOD
-        jp['description']=description
-        jp['previousEfforts']=previousEfforts
-        jp['transportation']=transportation
-        jp['timeAllocated']=timeAllocated
-        jp['primaryFrequency']=primaryFrequency
-        jp['secondaryFrequency']=secondaryFrequency
-        jp['preparedBy']=preparedBy
-        jp['status']=status
-        jg['type']='Polygon'
-        jg['coordinates']=[points]
-        j['properties']=jp
-        j['geometry']=jg
-        # if existingId is not None:
-        #     j['id']=existingId
-        # logging.info("sending json: "+json.dumps(j,indent=3))
-        # return self._addFeature('Assignment',j,existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        return self._addFeature('Assignment',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
-        # if dataQueue:
-        #     self.dataQueue.setdefault('Assignment',[]).append(j)
-        #     return 0
-        # else:
-        #     return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout,callbacks=callbacks)
+    #     :param points: List of points; each point is a list: [lon,lat] \n
+    #         - The final point does not need to be the same as the first point; the polygon will be automatically closed
+    #     :type points: list
+    #     :param number: String value to put in the 'number' field, if any; defaults to None
+    #     :type number: str, optional
+    #     :param letter: String value to put in the 'letter' field, if any; defaults to None
+    #     :type letter: str, optional
+    #     :param opId: ID of the Operational Period feature that this assignment will belong to, if any; defaults to None
+    #     :type opId: str, optional
+    #     :param folderId: Folder ID of the folder this line assignment should be created in, if any; defaults to None
+    #     :type folderId: str, optional
+    #     :param resourceType: Resource type; must be from the allowable list of resource types; defaults to 'GROUND'
+    #     :type resourceType: str, optional
+    #     :param teamSize: Team size (number of people), defaults to 0
+    #     :type teamSize: int, optional
+    #     :param priority: Priority for the assignment; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
+    #     :type priority: str, optional
+    #     :param responsivePOD: Expected POD for a responsive subject; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
+    #     :type responsivePOD: str, optional
+    #     :param unresponsivePOD: Expected POD for an unresponsive subject; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
+    #     :type unresponsivePOD: str, optional
+    #     :param cluePOD: Expected POD for clues; must be one of LOW, MEDIUM, or HIGH; defaults to 'LOW'
+    #     :type cluePOD: str, optional
+    #     :param description: Assignment description; defaults to ''
+    #     :type description: str, optional
+    #     :param previousEfforts: Description of previous efforts in the assignment; defaults to ''
+    #     :type previousEfforts: str, optional
+    #     :param transportation: Description of how the team should transport to and from the assignment; defaults to ''
+    #     :type transportation: str, optional
+    #     :param timeAllocated: Allotted time (typically a number of hours) to complete the assignment; can be a string or integer; defaults to 0
+    #     :type timeAllocated: str, optional
+    #     :param primaryFrequency: Primary radio frequency or channel name; defaults to ''
+    #     :type primaryFrequency: str, optional
+    #     :param secondaryFrequency: Secondary radio frequency or channel name; defaults to ''
+    #     :type secondaryFrequency: str, optional
+    #     :param preparedBy: Name or ID of the person who prepared the assignment; defaults to ''
+    #     :type preparedBy: str, optional
+    #     :param status: Overall status of the assignment; must be one of DRAFT, PREPARED, INPROGRESS, or COMPLETED; defaults to 'DRAFT'
+    #     :type status: str, optional
+    #     :param returnJson: see 'Returns' section below; defaults to 'ID'
+    #     :type returnJson: str, optional
+    #     :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
+    #     :type timeout: int, optional
+    #     :param dataQueue: If True, the area assignment creation will be endataQueued / deferred until a call to .flush; defaults to False
+    #     :type dataQueue: bool, optional
+    #     :param callbacks: optional list of callback specifications; see the callbacks documentation
+    #     :type callbacks: list, optional
+    #     :param blocking: If True, the request is blocking: the request takes place in the main thread, and execution will stop until the response is available; if False, the request is non-blocking: the request takes place in a separate thread, and its response is handled by callbacks; if None, the value of .blockingByDefault is applied.  See the blocking / non-blocking documentation for more detail; defaults to None
+    #     :type blocking: bool or None, optional
+    #     :return: various, depending on request details: \n
+    #       - False for any error or failure, whether queued or blocking
+    #       - True for a non-blocking request successfully submitted to the queue
+    #       - for blocking requests:
+    #        - Entire response json structure (dict) if returnJson is 'ALL'
+    #        - ID only, if returnJson is 'ID'
+    #     """            
+    #     if not self.mapID or self.apiVersion<0:
+    #         logging.error('addAreaAssignment request invalid: this caltopo session is not associated with a map.')
+    #         return False
+    #     j={}
+    #     jp={}
+    #     jg={}
+    #     # calculating the title property from the title, letter, and number arguments:
+    #     # build a space-delimited string from all of the arguments that are given;
+    #     #   this way, at least it will be clear to the viewer that something is amiss;
+    #     #   also flag a warning if either letter or number are specified along with title
+    #     titleParts=[]
+    #     if title is not None:
+    #         titleParts.append(str(title))
+    #         if letter is not None:
+    #             logging.warning(f'When title is specified ({title}), letter should not be specified ({letter}).  It is included in the title for clarity.')
+    #         if number is not None:
+    #             logging.warning(f'When title is specified ({title}), number should not be specified ({number}).  It is included in the title for clarity.')
+    #     if letter is not None:
+    #         titleParts.append(str(letter))
+    #     if number is not None:
+    #         titleParts.append(str(number))
+    #     jp['title']=' '.join(titleParts)
+    #     if number is not None:
+    #         jp['number']=str(number)
+    #     if letter is not None:
+    #         jp['letter']=str(letter)
+    #     if opId is not None:
+    #         jp['operationalPeriodId']=opId
+    #     if folderId is not None:
+    #         jp['folderId']=folderId
+    #     jp['resourceType']=resourceType
+    #     jp['teamSize']=teamSize
+    #     jp['priority']=priority
+    #     jp['responsivePOD']=responsivePOD
+    #     jp['unresponsivePOD']=unresponsivePOD
+    #     jp['cluePOD']=cluePOD
+    #     jp['description']=description
+    #     jp['previousEfforts']=previousEfforts
+    #     jp['transportation']=transportation
+    #     jp['timeAllocated']=timeAllocated
+    #     jp['primaryFrequency']=primaryFrequency
+    #     jp['secondaryFrequency']=secondaryFrequency
+    #     jp['preparedBy']=preparedBy
+    #     jp['status']=status
+    #     jg['type']='Polygon'
+    #     jg['coordinates']=[points]
+    #     j['properties']=jp
+    #     j['geometry']=jg
+    #     # if existingId is not None:
+    #     #     j['id']=existingId
+    #     # logging.info("sending json: "+json.dumps(j,indent=3))
+    #     # return self._addFeature('Assignment',j,existingId=existingId,callbacks=callbacks,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+    #     return self._addFeature('Assignment',j,callbacks=callbacks,returnJson=returnJson,timeout=timeout,dataQueue=dataQueue,blocking=blocking)
+    #     # if dataQueue:
+    #     #     self.dataQueue.setdefault('Assignment',[]).append(j)
+    #     #     return 0
+    #     # else:
+    #     #     return self._sendRequest('post','Assignment',j,id=existingId,returnJson='ID',timeout=timeout,callbacks=callbacks)
+
+    addAreaAssignment=functools.partialmethod(addAssignment,geomType='Area')
+    addLineAssignment=functools.partialmethod(addAssignment,geomType='Line')
+
+    functools.update_wrapper(addAreaAssignment,addAssignment)
+    functools.update_wrapper(addLineAssignment,addAssignment)
+
+    addAreaAssignment.__doc__="""Convenince function that calls addAssignment with geomType='Area'; see addAssignment for details."""
+    addLineAssignment.__doc__="""Convenince function that calls addAssignment with geomType='Line'; see addAssignment for details."""
 
     def flush(self,timeout=20):
         """Saves any dataQueued (deferred) request data to the hosted map.\n

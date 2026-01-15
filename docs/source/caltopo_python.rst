@@ -46,6 +46,7 @@ that calls the appropriate .add... method with existingId specified.
    .. automethod:: CaltopoSession.addLine
    .. automethod:: CaltopoSession.addPolygon
    .. automethod:: CaltopoSession.addOperationalPeriod
+   .. automethod:: CaltopoSession.addAssignment
    .. automethod:: CaltopoSession.addLineAssignment
    .. automethod:: CaltopoSession.addAreaAssignment
    .. automethod:: CaltopoSession.addLiveTrack
