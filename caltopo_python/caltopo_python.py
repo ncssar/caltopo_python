@@ -3037,6 +3037,7 @@ class CaltopoSession():
             points: list,
             number=None,
             letter=None,
+            title=None,
             opId=None,
             folderId=None,
             resourceType='GROUND',
@@ -3123,6 +3124,22 @@ class CaltopoSession():
         j={}
         jp={}
         jg={}
+        # calculating the title property from the title, letter, and number arguments:
+        # build a space-delimited string from all of the arguments that are given;
+        #   this way, at least it will be clear to the viewer that something is amiss;
+        #   also flag a warning if either letter or number are specified along with title
+        titleParts=[]
+        if title is not None:
+            titleParts.append(str(title))
+            if letter is not None:
+                logging.warning(f'When title is specified ({title}), letter should not be specified ({letter}).  It is included in the title for clarity.')
+            if number is not None:
+                logging.warning(f'When title is specified ({title}), number should not be specified ({number}).  It is included in the title for clarity.')
+        if letter is not None:
+            titleParts.append(str(letter))
+        if number is not None:
+            titleParts.append(str(number))
+        jp['title']=' '.join(titleParts)
         if number is not None:
             jp['number']=str(number)
         if letter is not None:
@@ -3185,6 +3202,7 @@ class CaltopoSession():
             points: list,
             number=None,
             letter=None,
+            title=None,
             opId=None,
             folderId=None,
             resourceType='GROUND',
@@ -3272,6 +3290,22 @@ class CaltopoSession():
         j={}
         jp={}
         jg={}
+        # calculating the title property from the title, letter, and number arguments:
+        # build a space-delimited string from all of the arguments that are given;
+        #   this way, at least it will be clear to the viewer that something is amiss;
+        #   also flag a warning if either letter or number are specified along with title
+        titleParts=[]
+        if title is not None:
+            titleParts.append(str(title))
+            if letter is not None:
+                logging.warning(f'When title is specified ({title}), letter should not be specified ({letter}).  It is included in the title for clarity.')
+            if number is not None:
+                logging.warning(f'When title is specified ({title}), number should not be specified ({number}).  It is included in the title for clarity.')
+        if letter is not None:
+            titleParts.append(str(letter))
+        if number is not None:
+            titleParts.append(str(number))
+        jp['title']=' '.join(titleParts)
         if number is not None:
             jp['number']=str(number)
         if letter is not None:
