@@ -314,8 +314,7 @@ class CaltopoSession():
             newTeamAccount: str='',
             newFolderIDOrPath: str='',
             newMode: str='cal',
-            newSharing: str='SECRET',
-            callbacks=[]) -> bool:
+            newSharing: str='SECRET') -> bool:
         """Open a map for usage in the current session.
         This is automatically called during session initialization (by _setupSession) if mapID was specified when the session was created, but can be called later from your code if the session was initially 'mapless'.
         
@@ -2912,7 +2911,7 @@ class CaltopoSession():
         if elevation:
             elevationSuffix=f'&ele={elevation}'
         # url=f'https://caltopo.com/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}'
-        url=f'https://caltopo.com/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}{elevationSuffix}'
+        url=f'https://{self.domainAndPort}/api/v1/position/report/{part1}?id={part2}&lat={lat}&lng={lon}{elevationSuffix}'
         logging.info(f'updateLiveTrack: sending GET to {url}')
         return self.s.get(url)
     
@@ -2938,7 +2937,10 @@ class CaltopoSession():
             ltp=liveTrack['properties']
             ltc=ltp['class']
             if ltc=='LiveTrack':
-                ltg=liveTrack['geometry']
+                ltg=liveTrack.get('geometry',None)
+                if ltg is None:
+                    logging.error('LiveTrack has no geometry data; ending the stopLiveTrack operation')
+                    return False
                 lid=self.addLine(
                     points=ltg['coordinates'],
                     title=ltp['title'],
