@@ -99,6 +99,8 @@ See details in the :doc:`nonblocking` page.
 Examples
 ========
 
+**NOTE** that all of these examples are blocking; view the :doc:`nonblocking` page for details on how to write non-blocking requests and callbacks.
+
 Opening a session
 -----------------
 
@@ -145,6 +147,21 @@ Syncing and callbacks
    def dfcb(*args):
       print('Deleted Feature: dfcb called with args '+str(args))
 
+   def rqccb(q):
+      rprint('request queue changed... length='+str(q.qsize()))
+
+   def frcb(request,response):
+      rprint('failed request callback called: request='+str(request)+' response='+str(response))
+
+   def dccb():
+      rprint('disconnected callback called')
+
+   def rccb():
+      rprint('reconnected callback called')
+
+   def mccb():
+      rprint('map closed callback called')
+
    # open a session, connecting to the defined callbacks;
    #  syncing is enabled by default, since the 'sync' argument defaults to True
    cts=CaltopoSession('caltopo.com','A1B2C3D',
@@ -153,7 +170,12 @@ Syncing and callbacks
          propUpdateCallback=pucb,
          geometryUpdateCallback=gucb,
          newFeatureCallback=nfcb,
-         deletedFeatureCallback=dfcb)
+         deletedFeatureCallback=dfcb,
+         requestQueueChangedCallback=rqccb,
+         failedRequestCallback=frcb,
+         disconnectedCallback=dccb,
+         reconnectedCallback=rccb,
+         mapClosedCallback=mccb)
 
 Getting map data and account data
 ---------------------------------
@@ -204,7 +226,7 @@ This is opposite of the Marker functions, which call for the latitude argument f
    # add a line
    cts.addLine([[-120,39],[-120.1,39.1]],'MyLine')
 
-   # prepare to add a polygon - queue it for later
+   # prepare to add a polygon - queue it for later using the dataQueue feature - not the same as a non-blocking request
    cts.addPolygon([[-120,39],[-120.1,39.1],[-120,39.1]],'MyPolygon',queue=True)
 
    # add an Operational Period
@@ -227,6 +249,9 @@ This is opposite of the Marker functions, which call for the latitude argument f
          responsivePOD='HIGH',
          priority='HIGH')
 
+   # add a LiveTrack feature - this is effectively the 'listener' - it has no points to start with
+   lt=cts.addLiveTrack('MyLiveTrack','MyGroup-MyID')
+
    # add the queued features now (MyPolygon and AA)
    cts.flush()
 
@@ -242,6 +267,10 @@ Querying and editing features
    cts.moveMarker(39,-121.5,myMarker['id'])
 
    cts.editMarkerDescription('New marker description',myMarker['id'])
+
+   cts.updateLiveTrack(lt,lat,lon,elev) # add a point to an existing LiveTrack feature
+
+   cts.stopLiveTrack(lt['id']) # stop the LiveTrack; this converts it to a Line
 
 Geometry operations
 -------------------

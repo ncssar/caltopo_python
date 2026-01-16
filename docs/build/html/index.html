@@ -141,6 +141,7 @@ the number of web requests needed, which reduces the time taken for most tasks.<
 </section>
 <section id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h1>
+<p><strong>NOTE</strong> that all of these examples are blocking; view the <a class="reference internal" href="nonblocking.html"><span class="doc">Non-blocking requests</span></a> page for details on how to write non-blocking requests and callbacks.</p>
 <section id="opening-a-session">
 <h2>Opening a session<a class="headerlink" href="#opening-a-session" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">caltopo_python</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaltopoSession</span>
@@ -183,6 +184,21 @@ the number of web requests needed, which reduces the time taken for most tasks.<
 <span class="k">def</span><span class="w"> </span><span class="nf">dfcb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Deleted Feature: dfcb called with args &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">rqccb</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;request queue changed... length=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">qsize</span><span class="p">()))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">frcb</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="n">response</span><span class="p">):</span>
+   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;failed request callback called: request=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39; response=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">response</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dccb</span><span class="p">():</span>
+   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;disconnected callback called&#39;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rccb</span><span class="p">():</span>
+   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;reconnected callback called&#39;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">mccb</span><span class="p">():</span>
+   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;map closed callback called&#39;</span><span class="p">)</span>
+
 <span class="c1"># open a session, connecting to the defined callbacks;</span>
 <span class="c1">#  syncing is enabled by default, since the &#39;sync&#39; argument defaults to True</span>
 <span class="n">cts</span><span class="o">=</span><span class="n">CaltopoSession</span><span class="p">(</span><span class="s1">&#39;caltopo.com&#39;</span><span class="p">,</span><span class="s1">&#39;A1B2C3D&#39;</span><span class="p">,</span>
@@ -191,7 +207,12 @@ the number of web requests needed, which reduces the time taken for most tasks.<
       <span class="n">propUpdateCallback</span><span class="o">=</span><span class="n">pucb</span><span class="p">,</span>
       <span class="n">geometryUpdateCallback</span><span class="o">=</span><span class="n">gucb</span><span class="p">,</span>
       <span class="n">newFeatureCallback</span><span class="o">=</span><span class="n">nfcb</span><span class="p">,</span>
-      <span class="n">deletedFeatureCallback</span><span class="o">=</span><span class="n">dfcb</span><span class="p">)</span>
+      <span class="n">deletedFeatureCallback</span><span class="o">=</span><span class="n">dfcb</span><span class="p">,</span>
+      <span class="n">requestQueueChangedCallback</span><span class="o">=</span><span class="n">rqccb</span><span class="p">,</span>
+      <span class="n">failedRequestCallback</span><span class="o">=</span><span class="n">frcb</span><span class="p">,</span>
+      <span class="n">disconnectedCallback</span><span class="o">=</span><span class="n">dccb</span><span class="p">,</span>
+      <span class="n">reconnectedCallback</span><span class="o">=</span><span class="n">rccb</span><span class="p">,</span>
+      <span class="n">mapClosedCallback</span><span class="o">=</span><span class="n">mccb</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -236,7 +257,7 @@ specifying points in [lon,lat] sequence.  See the <em>._validatePoints</em> docu
 <span class="c1"># add a line</span>
 <span class="n">cts</span><span class="o">.</span><span class="n">addLine</span><span class="p">([[</span><span class="o">-</span><span class="mi">120</span><span class="p">,</span><span class="mi">39</span><span class="p">],[</span><span class="o">-</span><span class="mf">120.1</span><span class="p">,</span><span class="mf">39.1</span><span class="p">]],</span><span class="s1">&#39;MyLine&#39;</span><span class="p">)</span>
 
-<span class="c1"># prepare to add a polygon - queue it for later</span>
+<span class="c1"># prepare to add a polygon - queue it for later using the dataQueue feature - not the same as a non-blocking request</span>
 <span class="n">cts</span><span class="o">.</span><span class="n">addPolygon</span><span class="p">([[</span><span class="o">-</span><span class="mi">120</span><span class="p">,</span><span class="mi">39</span><span class="p">],[</span><span class="o">-</span><span class="mf">120.1</span><span class="p">,</span><span class="mf">39.1</span><span class="p">],[</span><span class="o">-</span><span class="mi">120</span><span class="p">,</span><span class="mf">39.1</span><span class="p">]],</span><span class="s1">&#39;MyPolygon&#39;</span><span class="p">,</span><span class="n">queue</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># add an Operational Period</span>
@@ -259,6 +280,9 @@ specifying points in [lon,lat] sequence.  See the <em>._validatePoints</em> docu
       <span class="n">responsivePOD</span><span class="o">=</span><span class="s1">&#39;HIGH&#39;</span><span class="p">,</span>
       <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;HIGH&#39;</span><span class="p">)</span>
 
+<span class="c1"># add a LiveTrack feature - this is effectively the &#39;listener&#39; - it has no points to start with</span>
+<span class="n">lt</span><span class="o">=</span><span class="n">cts</span><span class="o">.</span><span class="n">addLiveTrack</span><span class="p">(</span><span class="s1">&#39;MyLiveTrack&#39;</span><span class="p">,</span><span class="s1">&#39;MyGroup-MyID&#39;</span><span class="p">)</span>
+
 <span class="c1"># add the queued features now (MyPolygon and AA)</span>
 <span class="n">cts</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
 </pre></div>
@@ -273,6 +297,10 @@ specifying points in [lon,lat] sequence.  See the <em>._validatePoints</em> docu
 <span class="n">cts</span><span class="o">.</span><span class="n">moveMarker</span><span class="p">(</span><span class="mi">39</span><span class="p">,</span><span class="o">-</span><span class="mf">121.5</span><span class="p">,</span><span class="n">myMarker</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
 
 <span class="n">cts</span><span class="o">.</span><span class="n">editMarkerDescription</span><span class="p">(</span><span class="s1">&#39;New marker description&#39;</span><span class="p">,</span><span class="n">myMarker</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+
+<span class="n">cts</span><span class="o">.</span><span class="n">updateLiveTrack</span><span class="p">(</span><span class="n">lt</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">lon</span><span class="p">,</span><span class="n">elev</span><span class="p">)</span> <span class="c1"># add a point to an existing LiveTrack feature</span>
+
+<span class="n">cts</span><span class="o">.</span><span class="n">stopLiveTrack</span><span class="p">(</span><span class="n">lt</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span> <span class="c1"># stop the LiveTrack; this converts it to a Line</span>
 </pre></div>
 </div>
 </section>
