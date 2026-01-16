@@ -211,19 +211,19 @@ class CaltopoSession():
         :type geometryUpdateCallback: function, optional
         :param newFeatureCallback: Function to call when a new feature was added to the local cache during sync; the function will be called with the new feature object as the only argument; defaults to None
         :type newFeatureCallback: function, optional
-        :param deletedFeatureCallback: Function to call when a feature was deleted from the local cache during sync; the function will be called with the deleted feature object as the only argument; defaults to None
+        :param deletedFeatureCallback: Function to call when a feature was deleted from the local cache during sync; the function will be called with the deleted feature object and class as two separate arguments; defaults to None
         :type deletedFeatureCallback: function, optional
-        :param requestQueueChangedCallback: Function to call when the non-blocking request queue changes; the function will be called with the deleted feature object as the only argument; defaults to None
+        :param requestQueueChangedCallback: Function to call when the non-blocking request queue changes; the function will be called with the updated request queue object (an instance of queue.Queue); defaults to None
         :type requestQueueChangedCallback: function, optional
-        :param failedRequestCallback: Function to call when a web request returns a response other than 200 / OK; the function will be called with the deleted feature object as the only argument; defaults to None
+        :param failedRequestCallback: Function to call when a web request returns a response other than 200 / OK; the function will be called with the queued request (the current element of the request queue) and its response (an instance of requests.Response) as two separate arguments; defaults to None
         :type failedRequestCallback: function, optional
-        :param disconnectedCallback: Function to call when a disconnect is detected, from an invalid response or a request timeout; the function will be called with the deleted feature object as the only argument; defaults to None
+        :param disconnectedCallback: Function to call when a disconnect is detected, from an invalid response or a request timeout; the function is not called with any arguments; defaults to None
         :type disconnectedCallback: function, optional
-        :param reconnectedCallback: Function to call when a resconnect is detected, from the first good response following a disconnect; the function will be called with the deleted feature object as the only argument; defaults to None
+        :param reconnectedCallback: Function to call when a resconnect is detected, from the first good response following a disconnect; the function is not called with any arguments; defaults to None
         :type reconnectedCallback: function, optional
         :param mapClosedCallback: Function to call when a map is closed; the function will optionally be called with a requests.Response object as the only argument; defaults to None
         :type mapClosedCallback: function, optional
-        :param syncCallback: Function to call on each successful sync; the function will be called with no arguments; defaults to None
+        :param syncCallback: Function to call on each successful sync; the function is not called with any arguments; defaults to None
         :type syncCallback: function, optional
         :param useFiddlerProxy: If True, all requests for this session will be sent through the Fiddler proxy, which allows Fiddler to watch outgoing network traffic for debug purposes; defaults to False
         :type useFiddlerProxy: bool, optional

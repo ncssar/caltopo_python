@@ -148,19 +148,22 @@ Syncing and callbacks
       print('Deleted Feature: dfcb called with args '+str(args))
 
    def rqccb(q):
-      rprint('request queue changed... length='+str(q.qsize()))
+      print('request queue changed... length='+str(q.qsize()))
 
    def frcb(request,response):
-      rprint('failed request callback called: request='+str(request)+' response='+str(response))
+      print('failed request callback called: request='+str(request)+' response='+str(response))
 
    def dccb():
-      rprint('disconnected callback called')
+      print('disconnected callback called')
 
    def rccb():
-      rprint('reconnected callback called')
+      print('reconnected callback called')
 
-   def mccb():
-      rprint('map closed callback called')
+   def mccb(*args):
+      print('map closed callback called with args '+str(args))
+
+   def scb():
+      print('sync callback called')
 
    # open a session, connecting to the defined callbacks;
    #  syncing is enabled by default, since the 'sync' argument defaults to True
@@ -175,7 +178,8 @@ Syncing and callbacks
          failedRequestCallback=frcb,
          disconnectedCallback=dccb,
          reconnectedCallback=rccb,
-         mapClosedCallback=mccb)
+         mapClosedCallback=mccb,
+         syncCallback=scb)
 
 Getting map data and account data
 ---------------------------------
