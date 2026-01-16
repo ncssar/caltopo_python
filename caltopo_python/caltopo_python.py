@@ -3477,8 +3477,7 @@ class CaltopoSession():
     # delMarkers - calls asynchronous non-blocking delFeatures
     def delMarkers(self,
             markersOrIds=[],
-            timeout=0,
-            callbacks=[]):
+            timeout=0):
         """Delete one or more markers on the current map, in a non-blocking asynchronous batch of delete requests.\n
         The markers to delete can be specified by ID, or by passing the entire marker data objects; all markers to delete should be specified in the same manner.\n
         This convenience function calls .delFeatures.
@@ -3487,8 +3486,6 @@ class CaltopoSession():
         :type markersOrIds: list, optional
         :param timeout: Request timeout in seconds; if specified as 0 here, uses the value of .syncTimeout; defaults to 0
         :type timeout: int, optional
-        :param callbacks: optional list of callback specifications; see the callbacks documentation
-        :type callbacks: list, optional
         :return: Return value from the delete request, or False if there was an error prior to the request
         """        
         if not self.mapID or self.apiVersion<0:
@@ -3504,7 +3501,7 @@ class CaltopoSession():
         else:
             logging.error('invalid argument in call to delMarkers: '+str(markersOrIds))
             return False
-        self.delFeatures(featuresOrIdAndClassList=[{'id':id,'class':'Marker'} for id in ids],timeout=timeout,callbacks=callbacks)
+        self.delFeatures(featuresOrIdAndClassList=[{'id':id,'class':'Marker'} for id in ids],timeout=timeout)
 
     def delFeature(self,
             featureOrId='',
