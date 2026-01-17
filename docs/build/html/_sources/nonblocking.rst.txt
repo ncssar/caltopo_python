@@ -90,6 +90,8 @@ Each list is of the form [function[,*args[,**kwargs]]] where function is the cal
 
 The callbacks argument is a list of lists because you may need to specify more than one callback function to be called.  The callbacks are called sequentially in whichever thread called _sendRequest and _handleResponse: if the request was blocking (in the main thread), them the callback/s will also be blocking (in the main thread).  But if the request was non-blocking, the callbacks will be run in the request thread meaning that no GUI calls can happen directly in those callbacks: you would need to do callback thread redirection with a signal mechanism, as in the NOTE above.
 
+**CAUTION:** callbacks should be written to return quickly.  Since callbacks from non-blocking requests are run in a blocking manner in requestThread, requestWorker will not go back to listening for the next queued request until all callbacks have returned.  This could be remedied by making the callback start another function in a different thread, in the same manner as the GUI callback redirection mentioned above.
+
 Some pre-processing is done on the callbacks argument value before the callback function/s are actually called:
 
 - For add... methods, a standardized callback _addFeatureCallback is prepended (so that it is called first - even if no other callbacks are specified), with the request response passed as an argument.  _addFeatureCallback immediately adds the new feature to the cache.

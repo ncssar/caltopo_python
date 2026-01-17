@@ -1345,7 +1345,10 @@ class CaltopoSession():
         msg='refresh requested for map '+self.mapID+': '
         if self.syncing:
             msg+='sync already in progress'
-            logging.info(msg)
+            logging.warning(msg)
+        elif self.disconnectedFlag:
+            msg+='currently disconnected; refresh request ignored'
+            logging.warning(msg)
         else:
             d=int(time.time()*1000)-self.lastSuccessfulSyncTSLocal # integer ms since last completed sync
             msg+=str(d)+'ms since last completed sync; '
@@ -2399,8 +2402,11 @@ class CaltopoSession():
             # we need to run _addFeatureCallback to add to .mapData immediately, but, we don't want its presence to force it to be a non-blocking call;
             #  if non-blocking, run _addFeatureCallback as a real callback after the response is eventually received;
             #  if blocking, run it on return from the _sendRequest call
+            # logging.info(f'blocking before logic:{blocking}')
             if blocking is None: # neither True nor False
+                # logging.info(f'blockingByDefault={self.blockingByDefault}')
                 blocking=self.blockingByDefault and not bool(callbacks)
+            # logging.info(f'blocking after logic:{blocking}')
             logging.info('adding '+str(className)+': callbacks before prepend:'+str(callbacks))
             # only prepend _addFeatureCallback if this will be a non-blocking call, since
             #  _addFeatureCallback alone should not be enough to force this to be a non-blocking
@@ -5113,18 +5119,22 @@ def handle_exception(*args,**kwargs):
     #     logging.info(f'Exception dict passed to handle_exception: {exceptionDict}')
     excStr=traceback.format_exc()
     lastLine=excStr.splitlines()[-1]
-    if 'getaddrinfo failed' in lastLine:
-        lastLine=re.sub('object at 0x.*>','object at 0x....>',lastLine)
-        if lastLine in exceptionDict:
-            logFunc(f'{prefix1} repeated getaddrinfo exception from {exceptionDict[lastLine]}; entire traceback suppressed')
+    txtFound=False
+    for txt in ['getaddrinfo failed','ReadTimeout']:
+        if txt in lastLine:
+            txtFound=True
+            lastLine=re.sub('object at 0x.*>','object at 0x....>',lastLine)
+            if lastLine in exceptionDict:
+                logFunc(f'{prefix1} repeated "{txt}" exception from {exceptionDict[lastLine]}; entire traceback suppressed')
+            else:
+                logFunc(f'{prefix1} "{txt}" exception; suppressing possibly-lengthy traceback chain; final line of exception: {lastLine}')
+                return lastLine # so that only the last line is treated as a repeated exception; it includes the expires time and signature
+    if not txtFound:
+        if excStr in exceptionDict:
+            logFunc(f'{prefix1} repeated exception from {exceptionDict[excStr]} ({lastLine}); traceback printing suppressed')
         else:
-            logFunc(f'{prefix1} getaddrinfo exception; suppressing possibly-lengthy traceback chain; final line of exception: {lastLine}')
-            return lastLine # so that only the last line is treated as a repeated exception; it includes the expires time and signature
-    elif excStr in exceptionDict:
-        logFunc(f'{prefix1} repeated exception from {exceptionDict[excStr]} ({lastLine}); traceback printing suppressed')
-    else:
-        logFunc(prefix, exc_info=(exc_type, exc_value, exc_traceback))
-        return excStr # igonored by sys.excepthook and threading.excepthook; can be used by calling code
+            logFunc(prefix, exc_info=(exc_type, exc_value, exc_traceback))
+            return excStr # igonored by sys.excepthook and threading.excepthook; can be used by calling code
     
 sys.excepthook = handle_exception
 threading.excepthook = handle_exception

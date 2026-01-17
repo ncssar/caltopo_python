@@ -185,19 +185,22 @@ the number of web requests needed, which reduces the time taken for most tasks.<
    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Deleted Feature: dfcb called with args &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">rqccb</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
-   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;request queue changed... length=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">qsize</span><span class="p">()))</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;request queue changed... length=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">qsize</span><span class="p">()))</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">frcb</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="n">response</span><span class="p">):</span>
-   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;failed request callback called: request=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39; response=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">response</span><span class="p">))</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;failed request callback called: request=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39; response=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">response</span><span class="p">))</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">dccb</span><span class="p">():</span>
-   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;disconnected callback called&#39;</span><span class="p">)</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;disconnected callback called&#39;</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">rccb</span><span class="p">():</span>
-   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;reconnected callback called&#39;</span><span class="p">)</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;reconnected callback called&#39;</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">mccb</span><span class="p">():</span>
-   <span class="n">rprint</span><span class="p">(</span><span class="s1">&#39;map closed callback called&#39;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mccb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;map closed callback called with args &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">scb</span><span class="p">():</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;sync callback called&#39;</span><span class="p">)</span>
 
 <span class="c1"># open a session, connecting to the defined callbacks;</span>
 <span class="c1">#  syncing is enabled by default, since the &#39;sync&#39; argument defaults to True</span>
@@ -212,7 +215,8 @@ the number of web requests needed, which reduces the time taken for most tasks.<
       <span class="n">failedRequestCallback</span><span class="o">=</span><span class="n">frcb</span><span class="p">,</span>
       <span class="n">disconnectedCallback</span><span class="o">=</span><span class="n">dccb</span><span class="p">,</span>
       <span class="n">reconnectedCallback</span><span class="o">=</span><span class="n">rccb</span><span class="p">,</span>
-      <span class="n">mapClosedCallback</span><span class="o">=</span><span class="n">mccb</span><span class="p">)</span>
+      <span class="n">mapClosedCallback</span><span class="o">=</span><span class="n">mccb</span><span class="p">,</span>
+      <span class="n">syncCallback</span><span class="o">=</span><span class="n">scb</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
