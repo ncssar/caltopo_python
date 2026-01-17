@@ -2938,7 +2938,7 @@ class CaltopoSession():
         #     is fairly invasive without any real benefit.  So - simplfying and 'inverting' the workflow:
         #  1. create a Line with the same properties and geometry as the LiveTrack
         #  2. delete the LiveTrack
-        liveTrack=self.getFeature(id=id)
+        liveTrack=self.getFeature(id=id,forceRefresh=True)
         if liveTrack:
             ltp=liveTrack['properties']
             ltc=ltp['class']
