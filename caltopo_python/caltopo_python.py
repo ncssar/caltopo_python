@@ -1953,6 +1953,7 @@ class CaltopoSession():
                 logging.info('  requestWorker: request queue processing complete...')
         except Exception as e:
             logging.error('exception in _requestWorker; requestThread will end: '+str(e))
+            traceback.print_exc()
 
     def _handleResponse(self,
             r,
@@ -2184,7 +2185,11 @@ class CaltopoSession():
             # second element is the list of positional arguments
             # third element is the dict of kwargs
             logging.info('handleResponse: calling callback '+str(cb[0])+' with args='+str(cb[1])+' and kwargs='+str(cb[2]))
-            cb[0](*cb[1],**cb[2]) # run the callback
+            try:
+                cb[0](*cb[1],**cb[2]) # run the callback
+            except Exception as e:
+                logging.error('exception while running specified callback: '+str(e)+'\nCallback structure:\n'+json.dumps(cb,cls=CustomEncoder,indent=3))
+                traceback.print_exc()
         logging.info('f17: handleResponse: done calling all callbacks; clearing syncPause')
         self._syncPauseClear()
 
