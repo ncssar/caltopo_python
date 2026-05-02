@@ -2185,6 +2185,7 @@ class CaltopoSession():
             # second element is the list of positional arguments
             # third element is the dict of kwargs
             logging.info('handleResponse: calling callback '+str(cb[0])+' with args='+str(cb[1])+' and kwargs='+str(cb[2]))
+            #59: wrap each callback attempt in try/except, with detailed exception report and arguments listing; this should prevent most cases of requestThread death
             try:
                 cb[0](*cb[1],**cb[2]) # run the callback
             except Exception as e:
